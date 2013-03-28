@@ -2,7 +2,7 @@
 #include "fd_processor.h"
 #include "fd_spi0.h"
 
-#include "em_gpio.h"
+#include <em_gpio.h>
 
 #include <stdint.h>
 
@@ -23,7 +23,7 @@ void lis3dh_chip_deselect(void) {
 
 void fd_lis3dh_initialize(void) {
     lis3dh_chip_select();
-    uint8_t who_am_i = fd_spi0_read(LIS3DH_WHO_AM_I);
+    uint8_t who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
     lis3dh_chip_deselect();
     if (who_am_i != 0x33) {
         // log diagnostic

@@ -1,5 +1,8 @@
+#include "fd_processor.h"
 #include "fd_spi1.h"
 
+#include <em_cmu.h>
+#include <em_gpio.h>
 #include <em_usart.h>
 
 #include <string.h>
@@ -25,8 +28,25 @@ void fd_spi1_initialize(void) {
     tx_length = 0;
     rx_length = 0;
 
+    CMU_ClockEnable(cmuClock_USART1, true);
+
     USART_InitSync_TypeDef spi_setup = USART_INITSYNC_DEFAULT;
+    spi_setup.msbf = false;
+    spi_setup.clockMode = usartClockMode0;
+    spi_setup.baudrate = 3000000;
     USART_InitSync(USART1, &spi_setup);
+
+    USART_Enable(USART1, true);
+}
+
+void fd_spi1_power_on(void) {
+    // power up radio section
+    GPIO_PinOutSet(NRF_PWR_PORT_PIN);
+    fd_delay_ms(100); // wait for power to come up (?ms)
+
+    // set radio inputs to initial conditions
+    GPIO_PinOutSet(NRF_REQN_PORT_PIN);
+    GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInputPull, 1);
 }
 
 void fd_spi1_tx_clear(void) {

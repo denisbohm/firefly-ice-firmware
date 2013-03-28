@@ -21,6 +21,12 @@
       <file file_name="src/fd_lis3dh.h"/>
       <file file_name="src/fd_nrf8001.c"/>
       <file file_name="src/fd_nrf8001.h"/>
+      <file file_name="src/fd_tca6507.c"/>
+      <file file_name="src/fd_tca6507.h"/>
+      <file file_name="src/fd_mag3110.c"/>
+      <file file_name="src/fd_mag3110.h"/>
+      <file file_name="src/fd_rtc.c"/>
+      <file file_name="src/fd_rtc.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

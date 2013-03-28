@@ -2,22 +2,14 @@
 #include "fd_processor.h"
 #include "fd_spi1.h"
 
-#include "em_gpio.h"
+#include <em_gpio.h>
 
 #define DeviceStartedEvent 0x81
 
 void fd_nrf8001_initialize(void) {
 }
 
-void fd_nrf8001_power_on(void) {
-    // power up radio section
-    GPIO_PinOutSet(NRF_PWR_PORT_PIN);
-    fd_delay_ms(100); // wait for power to come up (?ms)
-
-    // set radio inputs to initial conditions
-    GPIO_PinOutSet(NRF_REQN_PORT_PIN);
-    GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInputPull, 1);
-
+void fd_nrf8001_reset(void) {
     // release reset
     GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
     fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)

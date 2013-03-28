@@ -1,5 +1,6 @@
 #include "fd_spi0.h"
 
+#include <em_cmu.h>
 #include <em_usart.h>
 
 static fd_spi_transfer *async_transfers;
@@ -22,8 +23,15 @@ static uint32_t tx_index;
 static void (*tx_callback)(void);
 
 void fd_spi0_initialize(void) {
+    CMU_ClockEnable(cmuClock_USART0, true);
+
     USART_InitSync_TypeDef spi_setup = USART_INITSYNC_DEFAULT;
+    spi_setup.msbf = true;
+    spi_setup.clockMode = usartClockMode3;
+    spi_setup.baudrate = 10000000;
     USART_InitSync(USART0, &spi_setup);
+
+    USART_Enable(USART0, true);
 }
 
 void USART0_RX_IRQHandler(void) {
@@ -162,4 +170,16 @@ uint8_t fd_spi0_read(uint8_t address) {
     };
     fd_spi0_io(transfers, 2, 0);
     fd_spi0_wait();
+}
+
+uint8_t fd_spi_sync_io(uint8_t txdata) {
+    USART0->TXDATA = txdata;
+    while ((USART0->STATUS & USART_STATUS_TXC) == 0);
+    uint8_t rxdata = USART0->RXDATA;
+    return rxdata;
+}
+
+uint8_t fd_spi0_sync_read(uint8_t address) {
+    fd_spi_sync_io(SPI_READ | address);
+    return fd_spi_sync_io(0);
 }

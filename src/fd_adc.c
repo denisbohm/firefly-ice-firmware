@@ -13,6 +13,8 @@ static volatile uint32_t adc_bat_vdiv2_value;
 static volatile bool adc_complete;
 
 void fd_adc_initialize(void) {
+    CMU_ClockEnable(cmuClock_ADC0, true);
+
     ADC_Init_TypeDef init = ADC_INIT_DEFAULT;
     init.timebase = ADC_TimebaseCalc(0);
     init.prescale = ADC_PrescaleCalc(7000000, 0);
@@ -25,6 +27,8 @@ void fd_adc_initialize(void) {
     ADC_InitSingle(ADC0, &singleInit);
 
     ADC0->IEN = ADC_IEN_SINGLE;
+
+    CMU_ClockEnable(cmuClock_ADC0, false);
 }
 
 void ADC0_IRQHandler(void) {

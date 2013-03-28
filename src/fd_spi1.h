@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void fd_spi1_initialize(void);
-
+void fd_spi1_power_on(void);
 void fd_spi1_tx_clear(void);
 void fd_spi1_tx_queue(uint8_t *buffer, uint32_t length);
 void fd_spi1_start_transfer(void (*callback)(void));

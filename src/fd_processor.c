@@ -1,10 +1,32 @@
 #include "fd_processor.h"
 
+#include <em_cmu.h>
 #include <em_i2c.h>
 #include <em_gpio.h>
 #include <em_usart.h>
 
+void CMU_IRQHandler(void) {
+    uint32_t interrupts = CMU_IntGet();
+    CMU_IntClear(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
+
+    if (interrupts & CMU_IF_HFXORDY) {
+        CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+        CMU_OscillatorEnable(cmuOsc_HFRCO, false, false);
+    } else
+    if (interrupts & CMU_IF_HFRCORDY) {
+        CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFRCO);
+        CMU_OscillatorEnable(cmuOsc_HFXO, false, false);
+    }
+}
+
 void fd_processor_initialize(void) {
+    CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
+    CMU_IntEnable(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
+    NVIC_EnableIRQ(CMU_IRQn);
+    CMU_OscillatorEnable(cmuOsc_HFXO, true, false);
+
+    CMU_ClockEnable(cmuClock_GPIO, true);
+
     GPIO_PinModeSet(gpioPortA, 0, gpioModeDisabled, 0); // unused port pin
     GPIO_PinModeSet(gpioPortA, 1, gpioModeDisabled, 0); // unused port pin
     GPIO_PinModeSet(gpioPortA, 2, gpioModeDisabled, 0); // unused port pin
@@ -59,8 +81,8 @@ void fd_processor_initialize(void) {
     GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
     GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeDisabled, 0); // analog input
 
-    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 1);
-    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 1);
+    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
 
     GPIO_PinModeSet(USB_DM_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(USB_DP_PORT_PIN, gpioModeInput, 0);

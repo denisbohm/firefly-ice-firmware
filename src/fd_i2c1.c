@@ -1,8 +1,51 @@
 #include "fd_i2c1.h"
+#include "fd_processor.h"
 
+#include <em_cmu.h>
+#include <em_gpio.h>
 #include <em_i2c.h>
 
+static I2C_TransferReturn_TypeDef i2c1_status;
+
 void fd_i2c1_initialize(void) {
-    I2C_Init_TypeDef i2cInit = I2C_INIT_DEFAULT;
-    I2C_Init(I2C0, &i2cInit);
+    CMU_ClockEnable(cmuClock_I2C0, true);
+
+    I2C_Init_TypeDef i2c_init = I2C_INIT_DEFAULT;
+    i2c_init.freq = I2C_FREQ_FAST_MAX; // 400 KHz
+    I2C_Init(I2C0, &i2c_init);
+
+    I2C_Enable(I2C1, true);
+}
+
+void fd_i2c1_power_on(void) {
+    GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModeWiredAnd, 1);
+    GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModeWiredAnd, 1);
+
+    GPIO_PinOutSet(AUX_PWR_PORT_PIN);
+    fd_delay_ms(100); // wait for power to come up (?ms)
+
+    NVIC_ClearPendingIRQ(I2C0_IRQn);
+    NVIC_EnableIRQ(I2C0_IRQn);
+}
+
+void I2C0_IRQHandler(void) {
+    i2c1_status = I2C_Transfer(I2C0);
+}
+
+bool fd_i2c1_read(uint8_t address, uint8_t reg, uint8_t *presult) {
+    I2C_TransferSeq_TypeDef seq;
+    seq.addr = address;
+    seq.flags = I2C_FLAG_WRITE_READ;
+    seq.buf[0].data = &reg;
+    seq.buf[0].len = 1;
+    seq.buf[1].data = presult;
+    seq.buf[1].len = 1;
+
+    i2c1_status = I2C_TransferInit(I2C0, &seq);
+    while (i2c1_status == i2cTransferInProgress);
+    if (i2c1_status != i2cTransferDone) {
+        // log diagnostic
+        return false;
+    }
+    return true;
 }

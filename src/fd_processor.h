@@ -1,6 +1,8 @@
 #ifndef FD_PROCESSOR
 #define FD_PROCESSOR
 
+#include <stdint.h>
+
 #define BAT_VDIV2EN_PORT_PIN gpioPortE, 9
 
 #define LED1_PORT_PIN gpioPortE, 12
@@ -40,9 +42,7 @@
 #define NRF_RDYN_PORT_PIN gpioPortD, 4
 #define NRF_RESETN_PORT_PIN gpioPortD, 5
 #define BAT_VDIV2_PORT_PIN gpioPortD, 6
-#define BAT_VDIV2_ADC_CHANNEL ADC_SCANCTRL_INPUTMASK_CH6
 #define CHG_RATE_PORT_PIN gpioPortD, 7
-#define CHG_RATE_ADC_CHANNEL ADC_SCANCTRL_INPUTMASK_CH7
 #define ACC_INT_PORT_PIN gpioPortD, 8
 
 #define LFXTAL_P_PORT_PIN gpioPortB, 7
@@ -54,5 +54,7 @@
 #define HFXTAL_N_PORT_PIN gpioPortB, 14
 
 void fd_processor_initialize(void);
+
+void fd_delay_ms(uint32_t ms);
 
 #endif

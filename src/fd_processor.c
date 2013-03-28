@@ -81,3 +81,19 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
 }
+
+void __attribute((naked)) fd_delay_3x_cycles(uint32_t cycles) {
+    __asm(
+        "    subs r0, #1\n"
+        "    bne fd_delay_3x_cycles\n"
+        "    bx lr"
+    );
+}
+
+#define CYCLES_PER_SECOND 48000000
+
+void fd_delay_ms(uint32_t ms) {
+    while (ms--) {
+        fd_delay_3x_cycles(CYCLES_PER_SECOND / 3000);
+    }
+}

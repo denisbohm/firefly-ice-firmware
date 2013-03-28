@@ -17,6 +17,10 @@
       <file file_name="src/fd_spi0.c"/>
       <file file_name="src/fd_spi1.c"/>
       <file file_name="src/fd_spi1.h"/>
+      <file file_name="src/fd_lis3dh.c"/>
+      <file file_name="src/fd_lis3dh.h"/>
+      <file file_name="src/fd_nrf8001.c"/>
+      <file file_name="src/fd_nrf8001.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

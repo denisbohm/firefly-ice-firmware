@@ -1,7 +1,7 @@
 #include "fd_i2c1.h"
 #include "fd_mag3110.h"
 
-#define ADDRESS 0x3a
+#define ADDRESS 0x1c
 #define WHO_AM_I 0x07
 
 void fd_mag3110_initialize(void) {

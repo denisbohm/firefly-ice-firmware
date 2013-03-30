@@ -57,23 +57,24 @@ void main(void) {
 
     fd_nrf8001_initialize();
     fd_nrf8001_reset();
-    while (true) {
+//    while (true) {
         fd_nrf8001_transfer();
-    }
+//    }
 
-    fd_rtc_initialize();
-    fd_adc_initialize();
     fd_i2c1_initialize();
-
     fd_i2c1_power_on();
 
     fd_tca6507_initialize();
     fd_tca6507_enable();
     fd_tca6507_test();
 
+    fd_at24c512c_initialize();
+    fd_at24c512c_test();
+
     fd_mag3110_initialize();
     fd_mag3110_test();
 
-    fd_at24c512c_initialize();
-    fd_at24c512c_test();
+    fd_adc_initialize();
+
+    fd_rtc_initialize();
 }

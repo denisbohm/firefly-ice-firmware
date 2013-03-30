@@ -11,11 +11,11 @@ void CMU_IRQHandler(void) {
 
     if (interrupts & CMU_IF_HFXORDY) {
         CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
-        CMU_OscillatorEnable(cmuOsc_HFRCO, false, false);
+//        CMU_OscillatorEnable(cmuOsc_HFRCO, false, false);
     } else
     if (interrupts & CMU_IF_HFRCORDY) {
         CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFRCO);
-        CMU_OscillatorEnable(cmuOsc_HFXO, false, false);
+//        CMU_OscillatorEnable(cmuOsc_HFXO, false, false);
     }
 }
 
@@ -23,7 +23,9 @@ void fd_processor_initialize(void) {
     CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
     CMU_IntEnable(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
     NVIC_EnableIRQ(CMU_IRQn);
-    CMU_OscillatorEnable(cmuOsc_HFXO, true, false);
+//    CMU_OscillatorEnable(cmuOsc_HFXO, true, false);
+
+    CMU_ClockEnable(cmuClock_HFPER, true);
 
     CMU_ClockEnable(cmuClock_GPIO, true);
 
@@ -52,13 +54,11 @@ void fd_processor_initialize(void) {
     GPIO_IntConfig(MAG_INT_PORT_PIN, true /* rising */, false /* falling */, true);
     GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModePushPull, 0);
-    I2C1->ROUTE = I2C_ROUTE_SDAPEN | I2C_ROUTE_SCLPEN | I2C1_LOCATION;
 
     GPIO_PinModeSet(ACC_CSN_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(US0_CLK_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(US0_MISO_PORT_PIN, gpioModeInputPull, 0);
     GPIO_PinModeSet(US0_MOSI_PORT_PIN, gpioModePushPull, 0);
-    USART0->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US0_LOCATION;
     GPIO_PinModeSet(ACC_INT_PORT_PIN, gpioModeInput, 0);
     GPIO_IntConfig(ACC_INT_PORT_PIN, true /* rising */, true /* falling */, true);
 
@@ -81,8 +81,8 @@ void fd_processor_initialize(void) {
     GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
     GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeDisabled, 0); // analog input
 
-    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
 
     GPIO_PinModeSet(USB_DM_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(USB_DP_PORT_PIN, gpioModeInput, 0);
@@ -91,7 +91,6 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(US1_CLK_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(US1_MISO_PORT_PIN, gpioModeInputPull, 0);
     GPIO_PinModeSet(US1_MOSI_PORT_PIN, gpioModePushPull, 0);
-    USART1->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US1_LOCATION;
     GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(NRF_REQN_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInput, 0);

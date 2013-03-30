@@ -21,7 +21,7 @@ void fd_spi0_wait(void);
 // synchronous call that writes the address and reads a 1-byte result using async I/O
 uint8_t fd_spi0_read(uint8_t address);
 
-uint8_t fd_spi_sync_io(uint8_t txdata);
+uint8_t fd_spi0_sync_io(uint8_t txdata);
 uint8_t fd_spi0_sync_read(uint8_t address);
 
 #endif

@@ -1,3 +1,4 @@
+#include "fd_processor.h"
 #include "fd_spi0.h"
 
 #include <em_cmu.h>
@@ -31,7 +32,9 @@ void fd_spi0_initialize(void) {
     spi_setup.baudrate = 10000000;
     USART_InitSync(USART0, &spi_setup);
 
-    USART_Enable(USART0, true);
+    USART0->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US0_LOCATION;
+
+    USART_Enable(USART0, usartEnable);
 }
 
 void USART0_RX_IRQHandler(void) {
@@ -172,7 +175,7 @@ uint8_t fd_spi0_read(uint8_t address) {
     fd_spi0_wait();
 }
 
-uint8_t fd_spi_sync_io(uint8_t txdata) {
+uint8_t fd_spi0_sync_io(uint8_t txdata) {
     USART0->TXDATA = txdata;
     while ((USART0->STATUS & USART_STATUS_TXC) == 0);
     uint8_t rxdata = USART0->RXDATA;
@@ -180,6 +183,6 @@ uint8_t fd_spi_sync_io(uint8_t txdata) {
 }
 
 uint8_t fd_spi0_sync_read(uint8_t address) {
-    fd_spi_sync_io(SPI_READ | address);
-    return fd_spi_sync_io(0);
+    fd_spi0_sync_io(SPI_READ | address);
+    return fd_spi0_sync_io(0);
 }

@@ -41,14 +41,17 @@ void fd_nrf8001_dispatch(uint8_t *buffer, uint32_t length) {
 }
 
 void fd_nrf8001_transfer(void) {
-    if (!GPIO_PinInGet(NRF_RDYN_PORT_PIN)) {
+    if (GPIO_PinInGet(NRF_RDYN_PORT_PIN)) {
         return;
     }
 
     GPIO_PinOutClear(NRF_REQN_PORT_PIN);
-    fd_spi1_start_transfer(0);
-    fd_spi1_wait();
+    fd_spi1_sync_transfer();
+//    fd_spi1_start_transfer(0);
+//    fd_spi1_wait();
     GPIO_PinOutSet(NRF_REQN_PORT_PIN);
+
+    fd_spi1_tx_clear();
 
     uint8_t *buffer;
     uint32_t length;

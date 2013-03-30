@@ -27,6 +27,8 @@
       <file file_name="src/fd_mag3110.h"/>
       <file file_name="src/fd_rtc.c"/>
       <file file_name="src/fd_rtc.h"/>
+      <file file_name="src/fd_at24c512c.c"/>
+      <file file_name="src/fd_at24c512c.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

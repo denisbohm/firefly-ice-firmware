@@ -36,7 +36,9 @@ void fd_spi1_initialize(void) {
     spi_setup.baudrate = 3000000;
     USART_InitSync(USART1, &spi_setup);
 
-    USART_Enable(USART1, true);
+    USART1->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US1_LOCATION;
+
+    USART_Enable(USART1, usartEnable);
 }
 
 void fd_spi1_power_on(void) {
@@ -139,6 +141,42 @@ void fd_spi1_start_transfer(void (*callback)(void)) {
 
 void fd_spi1_wait(void) {
     while (transfer_flags != complete_flag);
+}
+
+uint8_t fd_spi1_sync_io(uint8_t txdata) {
+    USART1->TXDATA = txdata;
+    while ((USART1->STATUS & USART_STATUS_TXC) == 0);
+    uint8_t rxdata = USART1->RXDATA;
+    return rxdata;
+}
+
+void fd_spi1_sync_transfer(void) {
+    transfer_length = tx_length;
+    rx_length = 2; // don't know how much to receive until 2nd byte with the length is read
+    if (rx_length > transfer_length) {
+        transfer_length = rx_length;
+    }
+
+    rx_index = 0;
+    tx_index = 0;
+
+    uint8_t index = 0;
+    while (index++ < transfer_length) {
+        uint8_t txdata = 0;
+        if (tx_index < tx_length) {
+            txdata = tx_buffer[tx_index++];
+        }
+        uint8_t rxdata = fd_spi1_sync_io(txdata);
+        if (rx_index < rx_length) {
+            rx_buffer[rx_index++] = rxdata;
+        }
+        if (rx_index == 2) {
+            rx_length = rxdata + 2;
+            if (rx_length > transfer_length) {
+                transfer_length = rx_length;
+            }
+        }
+    }
 }
 
 void fd_spi1_get_rx(uint8_t **pbuffer, uint32_t *plength) {

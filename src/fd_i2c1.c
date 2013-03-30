@@ -55,6 +55,17 @@ bool fd_i2c1_read(uint8_t device, uint8_t reg, uint8_t *presult) {
     return fd_i2c1_sync_transfer(&seq);
 }
 
+bool fd_i2c1_write(uint8_t device, uint8_t reg, uint8_t value) {
+    I2C_TransferSeq_TypeDef seq;
+    seq.addr = device;
+    seq.flags = I2C_FLAG_WRITE_WRITE;
+    seq.buf[0].data = &reg;
+    seq.buf[0].len = 1;
+    seq.buf[1].data = &value;
+    seq.buf[1].len = 1;
+    return fd_i2c1_sync_transfer(&seq);
+}
+
 bool fd_i2c1_read_bytes(uint8_t device, uint16_t address, uint8_t *buffer, uint32_t length) {
     I2C_TransferSeq_TypeDef seq;
     seq.addr = device;

@@ -3,6 +3,9 @@
 
 #include <em_gpio.h>
 
+#define SELECT0 0x00
+#define SELECT1 0x01
+#define SELECT2 0x02
 #define FADE_ON_TIME 0x03
 #define ADDRESS 0x8a
 
@@ -27,4 +30,7 @@ void fd_tca6507_test(void) {
         // log diagnostic
         return;
     }
+    result = fd_i2c1_write(ADDRESS, SELECT0, 0xff);
+    result = fd_i2c1_write(ADDRESS, SELECT1, 0xff);
+    result = fd_i2c1_write(ADDRESS, SELECT2, 0xff);
 }

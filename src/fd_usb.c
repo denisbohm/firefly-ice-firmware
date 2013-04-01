@@ -54,9 +54,9 @@ STATIC_CONST_STRING_DESC_LANGID( langID, 0x04, 0x09         );
 //STATIC_CONST_STRING_DESC( iManufacturer, L"Energy Micro AS" );
 //STATIC_CONST_STRING_DESC( iProduct     , L"Vendor Unique LED Device"   );
 //STATIC_CONST_STRING_DESC( iSerialNumber, L"000000001234"    );
-STATIC_CONST_STRING_DESC( iManufacturer, {'E', 'n', 'e', 'r', 'g', 'y', ' ', 'M', 'i', 'c', 'r', 'o', ' ', 'A', 'S'});
-STATIC_CONST_STRING_DESC( iProduct , {'V', 'e', 'n', 'd', 'o', 'r', ' ', 'U', 'n', 'i', 'q', 'u', 'e', ' ', 'L', 'E', 'D', ' ', 'D', 'e', 'v', 'i', 'c', 'e'});
-STATIC_CONST_STRING_DESC( iSerialNumber, {'0', '0', '0', '0', '0', '0', '0', '0', '1', '2', '3', '4'});
+STATIC_CONST_STRING_DESC( iManufacturer, {'E', 'n', 'e', 'r', 'g', 'y', ' ', 'M', 'i', 'c', 'r', 'o', ' ', 'A', 'S', '\0'});
+STATIC_CONST_STRING_DESC( iProduct , {'V', 'e', 'n', 'd', 'o', 'r', ' ', 'U', 'n', 'i', 'q', 'u', 'e', ' ', 'L', 'E', 'D', ' ', 'D', 'e', 'v', 'i', 'c', 'e', '\0'});
+STATIC_CONST_STRING_DESC( iSerialNumber, {'0', '0', '0', '0', '0', '0', '0', '0', '1', '2', '3', '4', '\0'});
 
 
 static const void * const strings[] =

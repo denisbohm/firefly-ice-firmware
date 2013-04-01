@@ -5,6 +5,16 @@
 #include <em_gpio.h>
 #include <em_usart.h>
 
+#include <stddef.h>
+
+void *memset(void *s, int c, size_t n) {
+    uint8_t* p = s;
+    while (n--) {
+        *p++ = (uint8_t)c;
+    }
+    return s;
+}
+
 void CMU_IRQHandler(void) {
     uint32_t interrupts = CMU_IntGet();
     CMU_IntClear(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
@@ -23,7 +33,8 @@ void fd_processor_initialize(void) {
     CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
     CMU_IntEnable(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
     NVIC_EnableIRQ(CMU_IRQn);
-//    CMU_OscillatorEnable(cmuOsc_HFXO, true, false);
+
+    CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
 
     CMU_ClockEnable(cmuClock_HFPER, true);
 
@@ -46,7 +57,7 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(gpioPortE, 10, gpioModeDisabled, 0); // unused port pin
     GPIO_PinModeSet(gpioPortE, 11, gpioModeDisabled, 0); // unused port pin
 
-    GPIO_PinModeSet(BAT_VDIV2EN_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(BAT_VDIV2EN_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeDisabled, 0); // analog input
 
     GPIO_PinModeSet(AUX_PWR_PORT_PIN, gpioModePushPull, 0);
@@ -81,8 +92,8 @@ void fd_processor_initialize(void) {
     GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
     GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeDisabled, 0); // analog input
 
-//    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
 //    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
 
     GPIO_PinModeSet(USB_DM_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(USB_DP_PORT_PIN, gpioModeInput, 0);
@@ -96,11 +107,11 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInput, 0);
     GPIO_IntConfig(NRF_RDYN_PORT_PIN, true /* rising */, true /* falling */, true);
 
-    GPIO_PinModeSet(LFXTAL_P_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(LFXTAL_N_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(LFXTAL_P_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(LFXTAL_N_PORT_PIN, gpioModePushPull, 0);
 
-    GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
+//    GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
 }
 
 void __attribute((naked)) fd_delay_3x_cycles(uint32_t cycles) {

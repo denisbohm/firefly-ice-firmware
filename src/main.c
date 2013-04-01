@@ -9,6 +9,7 @@
 #include "fd_spi0.h"
 #include "fd_spi1.h"
 #include "fd_tca6507.h"
+#include "fd_usb.h"
 
 #include <em_gpio.h>
 
@@ -16,6 +17,10 @@
 
 void main(void) {
     fd_processor_initialize();
+
+    fd_usb_initialize();
+
+//    fd_rtc_initialize();
 
     GPIO_PinOutClear(LED1_PORT_PIN);
     fd_delay_ms(250);
@@ -66,7 +71,7 @@ void main(void) {
 
     fd_tca6507_initialize();
     fd_tca6507_enable();
-    fd_tca6507_test();
+//    fd_tca6507_test();
 
     fd_at24c512c_initialize();
     fd_at24c512c_test();
@@ -75,6 +80,4 @@ void main(void) {
     fd_mag3110_test();
 
     fd_adc_initialize();
-
-    fd_rtc_initialize();
 }

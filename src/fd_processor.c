@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 
+/*
 void *memset(void *s, int c, size_t n) {
     uint8_t* p = s;
     while (n--) {
@@ -14,6 +15,7 @@ void *memset(void *s, int c, size_t n) {
     }
     return s;
 }
+*/
 
 void CMU_IRQHandler(void) {
     uint32_t interrupts = CMU_IntGet();

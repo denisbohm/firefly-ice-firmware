@@ -57,15 +57,6 @@ void main(void) {
     fd_spi0_initialize();
     fd_lis3dh_initialize();
 
-    fd_spi1_initialize();
-    fd_spi1_power_on();
-
-    fd_nrf8001_initialize();
-    fd_nrf8001_reset();
-//    while (true) {
-        fd_nrf8001_transfer();
-//    }
-
     fd_i2c1_initialize();
     fd_i2c1_power_on();
 
@@ -80,4 +71,13 @@ void main(void) {
     fd_mag3110_test();
 
     fd_adc_initialize();
+
+    fd_spi1_initialize();
+    fd_spi1_power_on();
+
+    fd_nrf8001_initialize();
+    fd_nrf8001_reset();
+    while (true) {
+        fd_nrf8001_transfer();
+    }
 }

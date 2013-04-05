@@ -42,6 +42,15 @@
       <file file_name="src/fd_nrf8001_commands.c"/>
       <file file_name="src/fd_nrf8001_dispatch.h"/>
       <file file_name="src/fd_bluetooth.c"/>
+      <file file_name="src/fd_storage.c"/>
+      <file file_name="src/fd_storage.h"/>
+      <file file_name="src/fd_crc.c"/>
+      <file file_name="src/fd_crc.h"/>
+      <file file_name="src/fd_binary.h"/>
+      <file file_name="src/fd_binary.c"/>
+      <file file_name="src/fd_log.h"/>
+      <file file_name="src/fd_log.c"/>
+      <file file_name="src/fd_bluetooth.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

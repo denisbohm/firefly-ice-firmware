@@ -1,4 +1,5 @@
 #include "fd_i2c1.h"
+#include "fd_log.h"
 #include "fd_processor.h"
 
 #include <em_cmu.h>
@@ -38,7 +39,7 @@ bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
     i2c1_status = I2C_TransferInit(I2C1, seq);
     while (i2c1_status == i2cTransferInProgress);
     if (i2c1_status != i2cTransferDone) {
-        // log diagnostic
+        fd_log_ram_assert_fail("");
         return false;
     }
     return true;
@@ -85,7 +86,9 @@ bool fd_i2c1_write_bytes(uint8_t device, uint16_t address, uint8_t *buffer, uint
     seq.buf[0].len = 2;
     seq.buf[1].data = buffer;
     seq.buf[1].len = length;
-    return fd_i2c1_sync_transfer(&seq);
+    bool result = fd_i2c1_sync_transfer(&seq);
+    fd_i2c1_poll(device);
+    return result;
 }
 
 bool fd_i2c1_poll(uint8_t device) {

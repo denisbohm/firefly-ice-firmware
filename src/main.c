@@ -1,5 +1,6 @@
 #include "fd_adc.h"
 #include "fd_at24c512c.h"
+#include "fd_bluetooth.h"
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
 #include "fd_mag3110.h"
@@ -77,6 +78,7 @@ void main(void) {
 
     fd_nrf8001_initialize();
     fd_nrf8001_reset();
+    fd_bluetooth_initialize();
     while (true) {
         fd_nrf8001_transfer();
     }

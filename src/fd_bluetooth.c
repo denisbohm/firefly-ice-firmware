@@ -174,7 +174,6 @@ void fd_nrf8001_connected_event(
 void fd_nrf8001_pipe_status_event(uint64_t pipes_open, uint64_t pipes_closed) {
     for (int i = 1; i < 63; ++i) {
         if (pipes_closed & (1 << i)) {
-            // !!! don't these opens need to be spread out over multiple transactions?
             fd_nrf8001_open_remote_pipe(i);
         }
     }

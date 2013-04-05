@@ -1,4 +1,5 @@
 #include "fd_i2c1.h"
+#include "fd_log.h"
 #include "fd_mag3110.h"
 
 #define ADDRESS 0x1c
@@ -14,7 +15,7 @@ void fd_mag3110_test(void) {
         return;
     }
     if (who_am_i != 0xc4) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
 }

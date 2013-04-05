@@ -1,3 +1,4 @@
+#include "fd_log.h"
 #include "fd_processor.h"
 #include "fd_spi1.h"
 
@@ -57,7 +58,7 @@ void fd_spi1_tx_clear(void) {
 
 void fd_spi1_tx_queue(uint8_t *buffer, uint32_t length) {
     if ((tx_length + length) > BUFFER_SIZE) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
 

@@ -1,4 +1,5 @@
 #include "fd_lis3dh.h"
+#include "fd_log.h"
 #include "fd_processor.h"
 #include "fd_spi0.h"
 
@@ -26,7 +27,7 @@ void fd_lis3dh_initialize(void) {
     uint8_t who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
     lis3dh_chip_deselect();
     if (who_am_i != 0x33) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
 }

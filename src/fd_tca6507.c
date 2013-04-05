@@ -1,4 +1,5 @@
 #include "fd_i2c1.h"
+#include "fd_log.h"
 #include "fd_processor.h"
 
 #include <em_gpio.h>
@@ -27,7 +28,7 @@ void fd_tca6507_test(void) {
         return;
     }
     if (fade_on_time != 0x44) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     result = fd_i2c1_write(ADDRESS, SELECT0, 0xff);

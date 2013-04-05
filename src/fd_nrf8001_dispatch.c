@@ -1,23 +1,11 @@
+#include "fd_binary.h"
+#include "fd_log.h"
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_callbacks.h"
 #include "fd_nrf8001_dispatch.h"
 #include "fd_nrf8001_types.h"
 
 #include <stdint.h>
-
-static uint16_t as_uint16(uint8_t *buffer) {
-    return (buffer[1] << 8) | buffer[0];
-}
-
-static uint32_t as_uint32(uint8_t *buffer) {
-    return (buffer[1] << 24) | (buffer[1] << 16) | (buffer[1] << 8) | buffer[0];
-}
-
-static uint64_t as_uint64(uint8_t *buffer) {
-    uint64_t lo = as_uint64(buffer);
-    uint64_t hi = as_uint64(&buffer[8]);
-    return lo | hi;
-}
 
 void fd_nrf8001_dispatch_test_response(
     uint8_t status,
@@ -37,10 +25,10 @@ void fd_nrf8001_dispatch_dtm_command_response(
         return;
     }
     if (response_data_length != 2) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
-    uint16_t dtm_command = as_uint16(response_data);
+    uint16_t dtm_command = fd_binary_get_uint16(response_data);
     fd_nrf8001_dtm_command_success(dtm_command);
 }
 
@@ -122,10 +110,10 @@ void fd_nrf8001_dispatch_get_device_version_response(
         fd_nrf8001_get_device_version_error(status);
         return;
     }
-    uint16_t configuration_id = as_uint16(response_data);
+    uint16_t configuration_id = fd_binary_get_uint16(response_data);
     uint8_t aci_protocol_version = response_data[2];
     uint8_t current_setup_format = response_data[3];
-    uint32_t setup_id = as_uint32(&response_data[4]);
+    uint32_t setup_id = fd_binary_get_uint32(&response_data[4]);
     uint8_t configuration_status = response_data[8];
     fd_nrf8001_get_device_version_success(
         configuration_id,
@@ -159,7 +147,7 @@ void fd_nrf8001_dispatch_get_battery_level_response(
         fd_nrf8001_get_battery_level_error(status);
         return;
     }
-    uint16_t level = as_uint16(response_data);
+    uint16_t level = fd_binary_get_uint16(response_data);
     float voltage = level * 3.52f;
     fd_nrf8001_get_battery_level_success(voltage);
 }
@@ -173,7 +161,7 @@ void fd_nrf8001_dispatch_get_temperature_response(
         fd_nrf8001_get_temperature_error(status);
         return;
     }
-    int16_t level = as_uint16(response_data);
+    int16_t level = fd_binary_get_uint16(response_data);
     float temperature = level * 0.25f;
     fd_nrf8001_get_temperature_success(temperature);
 }
@@ -441,14 +429,14 @@ void fd_nrf8001_command_response_event(
             fd_nrf8001_dispatch_set_local_data_response(status, response_data, response_data_length);
         break;
         default:
-            // log diagnostic
+            fd_log_assert_fail("");
         break;
     }
 }
 
 void fd_nrf8001_decode_device_started_event(uint8_t *buffer, uint32_t length) {
     if (length != 4) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t operating_mode = buffer[1];
@@ -462,14 +450,14 @@ void fd_nrf8001_decode_echo_event(uint8_t *buffer, uint32_t length) {
 }
 
 void fd_nrf8001_decode_hardware_error_event(uint8_t *buffer, uint32_t length) {
-    uint16_t line = as_uint16(&buffer[1]);
+    uint16_t line = fd_binary_get_uint16(&buffer[1]);
     char *filename = (char *)&buffer[3];
     fd_nrf8001_hardware_error_event(line, filename);
 }
 
 void fd_nrf8001_decode_command_response_event(uint8_t *buffer, uint32_t length) {
     if (length < 3) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t command_op_code = buffer[1];
@@ -481,21 +469,21 @@ void fd_nrf8001_decode_command_response_event(uint8_t *buffer, uint32_t length) 
 
 void fd_nrf8001_decode_connected_event(uint8_t *buffer, uint32_t length) {
     if (length != 15) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t address_type = buffer[1];
     uint8_t *peer_address = &buffer[2];
-    uint16_t connection_interval = as_uint16(&buffer[8]);
-    uint16_t slave_latency = as_uint16(&buffer[10]);
-    uint16_t supervision_timeout = as_uint16(&buffer[12]);
+    uint16_t connection_interval = fd_binary_get_uint16(&buffer[8]);
+    uint16_t slave_latency = fd_binary_get_uint16(&buffer[10]);
+    uint16_t supervision_timeout = fd_binary_get_uint16(&buffer[12]);
     uint8_t masterClockAccuracy = buffer[14];
     fd_nrf8001_connected_event(address_type, peer_address, connection_interval, slave_latency, supervision_timeout, masterClockAccuracy);
 }
 
 void fd_nrf8001_decode_disconnected_event(uint8_t *buffer, uint32_t length) {
     if (length != 3) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t aci_status = buffer[1];
@@ -505,7 +493,7 @@ void fd_nrf8001_decode_disconnected_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_bond_status_event(uint8_t *buffer, uint32_t length) {
     if (length != 7) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t bond_status_code = buffer[1];
@@ -526,28 +514,28 @@ void fd_nrf8001_decode_bond_status_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_pipe_status_event(uint8_t *buffer, uint32_t length) {
     if (length != 17) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
-    uint64_t pipes_open = as_uint64(&buffer[1]);
-    uint64_t pipes_closed = as_uint64(&buffer[9]);
+    uint64_t pipes_open = fd_binary_get_uint64(&buffer[1]);
+    uint64_t pipes_closed = fd_binary_get_uint64(&buffer[9]);
     fd_nrf8001_pipe_status_event(pipes_open, pipes_closed);
 }
 
 void fd_nrf8001_decode_timing_event(uint8_t *buffer, uint32_t length) {
     if (length != 7) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
-    uint16_t connection_interval = as_uint16(&buffer[1]);
-    uint16_t slave_latency = as_uint16(&buffer[3]);
-    uint16_t supervision_timeout = as_uint16(&buffer[5]);
+    uint16_t connection_interval = fd_binary_get_uint16(&buffer[1]);
+    uint16_t slave_latency = fd_binary_get_uint16(&buffer[3]);
+    uint16_t supervision_timeout = fd_binary_get_uint16(&buffer[5]);
     fd_nrf8001_timing_event(connection_interval, slave_latency, supervision_timeout);
 }
 
 void fd_nrf8001_decode_display_key_event(uint8_t *buffer, uint32_t length) {
     if (length != 7) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     char *passkey = (char *)&buffer[1];
@@ -556,7 +544,7 @@ void fd_nrf8001_decode_display_key_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_key_request_event(uint8_t *buffer, uint32_t length) {
     if (length != 2) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t key_type = buffer[1];
@@ -565,7 +553,7 @@ void fd_nrf8001_decode_key_request_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_data_credit_event(uint8_t *buffer, uint32_t length) {
     if (length != 2) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t data_credits = buffer[1];
@@ -574,7 +562,7 @@ void fd_nrf8001_decode_data_credit_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_pipe_error_event(uint8_t *buffer, uint32_t length) {
     if (length < 3) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t service_pipe_number = buffer[1];
@@ -586,7 +574,7 @@ void fd_nrf8001_decode_pipe_error_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_data_received_event(uint8_t *buffer, uint32_t length) {
     if (length < 2) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t service_pipe_number = buffer[1];
@@ -597,7 +585,7 @@ void fd_nrf8001_decode_data_received_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_data_ack_event(uint8_t *buffer, uint32_t length) {
     if (length != 2) {
-        // log diagnostic
+        fd_log_assert_fail("");
         return;
     }
     uint8_t service_pipe_number = buffer[1];
@@ -653,7 +641,7 @@ void fd_nrf8001_dispatch(uint8_t *buffer, uint32_t length) {
             fd_nrf8001_decode_data_ack_event(buffer, length);
         break;
         default:
-            // log diagnostic
+            fd_log_assert_fail("");
             return;
         break;
     }

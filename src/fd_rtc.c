@@ -18,9 +18,11 @@ void fd_rtc_initialize(void) {
     CMU_ClockEnable(cmuClock_CORELE, true);
 
     RTC_CompareSet(0, 1024);
+    RTC_CounterReset();
     RTC_IntEnable(RTC_IFC_COMP0);
     NVIC_EnableIRQ(RTC_IRQn);
-    RTC_Enable(true);
+    RTC_Init_TypeDef init = RTC_INIT_DEFAULT;
+    RTC_Init(&init);
 }
 
 void RTC_IRQHandler(void) {

@@ -19,9 +19,9 @@
 void main(void) {
     fd_processor_initialize();
 
-    fd_usb_initialize();
+    fd_rtc_initialize();
 
-//    fd_rtc_initialize();
+    fd_usb_initialize();
 
     GPIO_PinOutClear(LED1_PORT_PIN);
     fd_delay_ms(250);

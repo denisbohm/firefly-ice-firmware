@@ -3,6 +3,7 @@
 #include "fd_bluetooth.h"
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
+#include "fd_log.h"
 #include "fd_mag3110.h"
 #include "fd_nrf8001.h"
 #include "fd_processor.h"
@@ -18,6 +19,8 @@
 
 void main(void) {
     fd_processor_initialize();
+
+    fd_log_initialize();
 
     fd_rtc_initialize();
 
@@ -63,7 +66,8 @@ void main(void) {
 
     fd_tca6507_initialize();
     fd_tca6507_enable();
-//    fd_tca6507_test();
+    fd_tca6507_test();
+    fd_tca6507_set_color(false, false, false);
 
     fd_at24c512c_initialize();
     fd_at24c512c_test();
@@ -80,6 +84,20 @@ void main(void) {
     fd_nrf8001_reset();
     fd_bluetooth_initialize();
     while (true) {
+        fd_bluetooth_step();
         fd_nrf8001_transfer();
+
+        if (fd_log_did_log) {
+            fd_tca6507_set_color(true, false, false);
+        } else
+        if (fd_nrf8001_did_receive_data) {
+            fd_tca6507_set_color(false, true, false);
+        } else
+        if (fd_nrf8001_did_connect) {
+            fd_tca6507_set_color(true, true, true);
+        } else
+        if (fd_nrf8001_did_setup) {
+            fd_tca6507_set_color(false, false, true);
+        }
     }
 }

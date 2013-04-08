@@ -1,6 +1,12 @@
 #ifndef FD_LOG_H
 #define FD_LOG_H
 
+#include <stdbool.h>
+
+extern bool fd_log_did_log;
+
+void fd_log_initialize(void);
+
 void fd_log(char *message);
 
 void fd_log_ram(char *message);

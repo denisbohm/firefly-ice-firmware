@@ -352,6 +352,8 @@ void fd_nrf8001_command_response_event(
     uint8_t *response_data,
     uint32_t response_data_length
 ) {
+    fd_nrf8001_add_system_credits(1);
+
     switch (command_op_code) {
         case Test:
             fd_nrf8001_dispatch_test_response(status, response_data, response_data_length);

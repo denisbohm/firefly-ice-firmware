@@ -8,4 +8,6 @@ void fd_tca6507_disable(void);
 
 void fd_tca6507_test(void);
 
+void fd_tca6507_set_color(bool r, bool g, bool b);
+
 #endif

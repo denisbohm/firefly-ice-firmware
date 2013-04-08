@@ -7,7 +7,7 @@
         <Name>Firefly Ice</Name>
         <Uuid BaseUUID="310a00001b955091b0bdb7a681846399" BaseUUIDName="Firefly Ice Base UUID">0001</Uuid>
         <Characteristic>
-            <Name>LEDs</Name>
+            <Name>Detour</Name>
             <Uuid BaseUUID="310a00001b955091b0bdb7a681846399" BaseUUIDName="Firefly Ice Base UUID">0002</Uuid>
             <DefaultValue></DefaultValue>
             <UsePresentationFormat>0</UsePresentationFormat>
@@ -33,7 +33,7 @@
         <Name>FireflyIce</Name>
         <DeviceNameWriteLength>10</DeviceNameWriteLength>
         <LocalPipeOnDeviceName>false</LocalPipeOnDeviceName>
-        <DeviceNameShortLength>10</DeviceNameShortLength>
+        <DeviceNameShortLength>9</DeviceNameShortLength>
         <Apperance>0000</Apperance>
         <SecurityLevel>0</SecurityLevel>
         <AuthenticationReq>0</AuthenticationReq>

@@ -1,3 +1,4 @@
+#include "fd_log.h"
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_dispatch.h"
 #include "fd_processor.h"
@@ -5,7 +6,73 @@
 
 #include <em_gpio.h>
 
+static uint32_t system_credits;
+static uint32_t data_credits;
+
 void fd_nrf8001_initialize(void) {
+    system_credits = 0;
+    data_credits = 0;
+}
+
+void fd_nrf8001_error(void) {
+}
+
+bool fd_nrf8001_has_system_credits(void) {
+    return system_credits > 0;
+}
+
+void fd_nrf8001_set_system_credits(uint32_t credits) {
+    system_credits = credits;
+}
+
+void fd_nrf8001_add_system_credits(uint32_t credits) {
+    system_credits += credits;
+
+    if (system_credits > 1) {
+        fd_log("");
+        fd_nrf8001_error();
+        system_credits = 1;
+    }
+}
+
+void fd_nrf8001_use_system_credits(uint32_t credits) {
+    if (credits > system_credits) {
+        fd_log("");
+        fd_nrf8001_error();
+        system_credits = 0;
+        return;
+    }
+
+    system_credits -= credits;
+}
+
+bool fd_nrf8001_has_data_credits(void) {
+    return data_credits > 0;
+}
+
+void fd_nrf8001_set_data_credits(uint32_t credits) {
+    data_credits = credits;
+}
+
+void fd_nrf8001_add_data_credits(uint32_t credits) {
+    data_credits += credits;
+
+    if (data_credits > 2) {
+        fd_log("");
+        fd_nrf8001_error();
+        data_credits = 2;
+    }
+}
+
+void fd_nrf8001_use_data_credits(uint32_t credits) {
+    if (credits > data_credits) {
+        fd_log("");
+        fd_nrf8001_error();
+        data_credits = 0;
+        return;
+    }
+
+    data_credits -= credits;
 }
 
 void fd_nrf8001_reset(void) {

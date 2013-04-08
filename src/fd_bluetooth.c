@@ -1,10 +1,11 @@
+#include "fd_bluetooth.h"
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_callbacks.h"
 #include "fd_nrf8001_commands.h"
 #include "fd_nrf8001_types.h"
 
-#define PIPE_FIREFLY_ICE_LEDS_TX 1
-#define PIPE_FIREFLY_ICE_LEDS_RX_ACK 2
+#define PIPE_FIREFLY_ICE_DETOUR_TX 1
+#define PIPE_FIREFLY_ICE_DETOUR_RX_ACK 2
 
 #define NB_SETUP_MESSAGES 16
 #define SETUP_MESSAGES_CONTENT {\
@@ -15,7 +16,7 @@
     },\
     {0x00,\
         {\
-            0x1f,0x06,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x02,0x01,0x01,0x00,0x00,0x06,0x00,0x0a,\
+            0x1f,0x06,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x02,0x01,0x01,0x00,0x00,0x06,0x00,0x09,\
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
         },\
     },\
@@ -96,7 +97,7 @@
     },\
     {0x00,\
         {\
-            0x06,0x06,0xf0,0x00,0x03,0xc4,0x8d,\
+            0x06,0x06,0xf0,0x00,0x03,0xd0,0x1b,\
         },\
     },\
 }
@@ -110,12 +111,74 @@ typedef struct hal_aci_data_t {
 
 static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTENT;
 
-static uint32_t credits;
+#define BIT(n) (1 << (n))
 
-static uint32_t setup_index;
+#define fd_nrf8001_setup_continue_step BIT(0)
+#define fd_nrf8001_connect_step BIT(1)
+#define fd_nrf8001_change_timing_request_step BIT(2)
+#define fd_nrf8001_open_remote_pipe_step BIT(3)
+
+static uint32_t fd_bluetooth_steps;
+static uint32_t fd_bluetooth_initial_data_credits;
+static uint32_t fd_bluetooth_setup_index;
+static uint64_t fd_bluetooth_pipes_closed;
+
+bool fd_nrf8001_did_setup;
+bool fd_nrf8001_did_connect;
+bool fd_nrf8001_did_receive_data;
 
 void fd_bluetooth_initialize(void) {
-    credits = 0;
+    fd_bluetooth_steps = 0;
+    fd_bluetooth_initial_data_credits = 0;
+
+    fd_nrf8001_did_setup = false;
+    fd_nrf8001_did_connect = false;
+    fd_nrf8001_did_receive_data = false;
+}
+
+void fd_bluetooth_step_queue(uint32_t step) {
+    fd_bluetooth_steps |= step;
+}
+
+void fd_bluetooth_step_complete(uint32_t step) {
+    fd_bluetooth_steps &= ~step;
+}
+
+void fd_bluetooth_step(void) {
+    if (!fd_nrf8001_has_system_credits()) {
+        return;
+    }
+
+    if (fd_bluetooth_steps & fd_nrf8001_setup_continue_step) {
+        fd_nrf8001_setup_continue();
+    } else
+    if (fd_bluetooth_steps & fd_nrf8001_connect_step) {
+        uint16_t timeout = 0; // infinite advertisement - no timeout
+        uint16_t interval = 32; // 20ms (0.625ms units)
+        fd_nrf8001_connect(timeout, interval);
+        fd_bluetooth_step_complete(fd_nrf8001_connect_step);
+    } else
+    if (fd_bluetooth_steps & fd_nrf8001_change_timing_request_step) {
+        uint16_t interval_min = 16; // 20ms (1.25ms units)
+        uint16_t interval_max = 32; // 40ms (1.25ms units)
+        uint16_t latency = 0;
+        uint16_t timeout = 600; // 6s (10ms units)
+        fd_nrf8001_change_timing_request(interval_min, interval_max, latency, timeout);
+        fd_bluetooth_step_complete(fd_nrf8001_change_timing_request_step);
+    } else
+    if (fd_bluetooth_steps & fd_nrf8001_open_remote_pipe_step) {
+        for (int i = 1; i < 63; ++i) {
+            uint64_t mask = 1 << i;
+            if (fd_bluetooth_pipes_closed & mask) {
+                fd_nrf8001_open_remote_pipe(i);
+                fd_bluetooth_pipes_closed &= ~mask;
+                break;
+            }
+        }
+        if (fd_bluetooth_pipes_closed == 0) {
+            fd_bluetooth_step_complete(fd_nrf8001_open_remote_pipe_step);
+        }
+    }
 }
 
 void fd_nrf8001_device_started_event(
@@ -123,37 +186,48 @@ void fd_nrf8001_device_started_event(
     uint8_t hardware_error,
     uint8_t data_credit_available
 ) {
-    credits = data_credit_available;
+    fd_bluetooth_initial_data_credits = data_credit_available;
 
     switch (operating_mode) {
         case OperatingModeTest: {
         } break;
         case OperatingModeStandby: {
-            uint16_t timeout = 0; // infinite advertisement - no timeout
-            uint16_t interval = 32; // 20ms (0.625ms units)
-            fd_nrf8001_connect(timeout, interval);
+            fd_bluetooth_step_queue(fd_nrf8001_connect_step);
         } break;
         case OperatingModeSetup: {
-            setup_index = 0;
-            fd_nrf8001_setup_continue();
+            fd_nrf8001_set_system_credits(1);
+            fd_bluetooth_setup_index = 0;
+            fd_bluetooth_step_queue(fd_nrf8001_setup_continue_step);
         } break;
     }
 }
 
+void fd_nrf8001_pipe_error_event(
+    uint8_t service_pipe_number,
+    uint8_t error_code,
+    uint8_t *error_data,
+    uint32_t error_data_length
+) {
+}
+
 void fd_nrf8001_setup_continue(void) {
-    if (setup_index >= NB_SETUP_MESSAGES) {
+    if (fd_bluetooth_setup_index >= NB_SETUP_MESSAGES) {
         return;
     }
-    const hal_aci_data_t *setup_msg = &setup_msgs[setup_index++];
+    fd_nrf8001_use_system_credits(1);
+    const hal_aci_data_t *setup_msg = &setup_msgs[fd_bluetooth_setup_index++];
     uint8_t *buffer = (uint8_t *)setup_msg->buffer;
     uint32_t length = buffer[0] + 1;
     fd_nrf8001_send(buffer, length);
 }
 
 void fd_nrf8001_setup_complete(void) {
+    fd_bluetooth_step_complete(fd_nrf8001_setup_continue_step);
+    fd_nrf8001_did_setup = true;
 }
 
 void fd_nrf8001_connect_success(void) {
+    fd_nrf8001_did_connect = true;
 }
 
 void fd_nrf8001_connected_event(
@@ -164,19 +238,27 @@ void fd_nrf8001_connected_event(
     uint16_t supervision_timeout,
     uint8_t masterClockAccuracy
 ) {
-    uint16_t interval_min = 16; // 20ms (1.25ms units)
-    uint16_t interval_max = 32; // 40ms (1.25ms units)
-    uint16_t latency = 0;
-    uint16_t timeout = 600; // 6s (10ms units)
-    fd_nrf8001_change_timing_request(interval_min, interval_max, latency, timeout);
+    fd_nrf8001_set_data_credits(fd_bluetooth_initial_data_credits);
+
+    fd_bluetooth_step_queue(fd_nrf8001_change_timing_request_step);
+}
+
+void fd_nrf8001_data_credit_event(uint8_t data_credits) {
+    fd_nrf8001_add_data_credits(data_credits);
 }
 
 void fd_nrf8001_pipe_status_event(uint64_t pipes_open, uint64_t pipes_closed) {
-    for (int i = 1; i < 63; ++i) {
-        if (pipes_closed & (1 << i)) {
-            fd_nrf8001_open_remote_pipe(i);
-        }
+    fd_bluetooth_pipes_closed = pipes_closed;
+    if (fd_bluetooth_pipes_closed) {
+        fd_bluetooth_step_queue(fd_nrf8001_open_remote_pipe_step);
     }
+}
+
+void fd_nrf8001_detour_data_received(
+    uint8_t *data,
+    uint32_t data_length
+) {
+
 }
 
 void fd_nrf8001_data_received_event(
@@ -184,4 +266,9 @@ void fd_nrf8001_data_received_event(
     uint8_t *data,
     uint32_t data_length
 ) {
+    fd_nrf8001_did_receive_data = true;
+    if (service_pipe_number == PIPE_FIREFLY_ICE_DETOUR_RX_ACK) {
+        fd_nrf8001_detour_data_received(data, data_length);
+        return;
+    }
 }

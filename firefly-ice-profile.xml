@@ -12,7 +12,7 @@
             <DefaultValue></DefaultValue>
             <UsePresentationFormat>0</UsePresentationFormat>
             <UserDescription></UserDescription>
-            <MaxDataLength>2</MaxDataLength>
+            <MaxDataLength>20</MaxDataLength>
             <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <Properties>

@@ -3,4 +3,6 @@
 
 void fd_usb_initialize(void);
 
+void fd_usb_transfer(void);
+
 #endif

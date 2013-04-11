@@ -86,6 +86,7 @@ void main(void) {
     while (true) {
         fd_bluetooth_step();
         fd_nrf8001_transfer();
+        fd_usb_transfer();
 
         if (fd_log_did_log) {
             fd_tca6507_set_color(true, false, false);

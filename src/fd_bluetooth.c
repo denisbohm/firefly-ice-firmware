@@ -119,6 +119,8 @@ typedef struct hal_aci_data_t {
 
 static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTENT;
 
+#define MAX_CHARACTERISTIC_SIZE 20
+
 #define BIT(n) (1 << (n))
 
 #define fd_nrf8001_setup_continue_step BIT(0)
@@ -139,6 +141,11 @@ static uint64_t fd_bluetooth_pipes_closed;
 static uint8_t fd_bluetooth_detour_data[DETOUR_SIZE];
 static fd_detour_t fd_bluetooth_detour;
 
+static uint8_t fd_bluetooth_out_data[MAX_CHARACTERISTIC_SIZE];
+
+static fd_detour_source_collection_t fd_bluetooth_detour_source_collection;
+static fd_detour_source_t fd_bluetooth_detour_source;
+
 bool fd_nrf8001_did_setup;
 bool fd_nrf8001_did_connect;
 bool fd_nrf8001_did_receive_data;
@@ -151,6 +158,8 @@ void fd_bluetooth_initialize(void) {
     fd_bluetooth_pipes_closed = 0;
 
     fd_detour_initialize(&fd_bluetooth_detour, fd_bluetooth_detour_data, DETOUR_SIZE);
+
+    fd_detour_source_collection_initialize(&fd_bluetooth_detour_source_collection);
 
     fd_nrf8001_did_setup = false;
     fd_nrf8001_did_connect = false;
@@ -217,9 +226,24 @@ void fd_bluetooth_data_step(void) {
     }
 }
 
+void fd_bluetooth_transfer(void) {
+    if (fd_nrf8001_has_data_credits()) {
+        fd_detour_source_t *source = fd_bluetooth_detour_source_collection.first;
+        if (source) {
+            if (fd_detour_source_get(source, fd_bluetooth_out_data, MAX_CHARACTERISTIC_SIZE)) {
+                fd_nrf8001_send_data(PIPE_FIREFLY_ICE_DETOUR_TX, fd_bluetooth_out_data, MAX_CHARACTERISTIC_SIZE);
+                if (source->state != fd_detour_state_intermediate) {
+                    fd_detour_source_collection_pop(&fd_bluetooth_detour_source_collection);
+                }
+            }
+        }
+    }
+}
+
 void fd_bluetooth_step(void) {
     fd_bluetooth_system_step();
     fd_bluetooth_data_step();
+    fd_bluetooth_transfer();
 }
 
 void fd_nrf8001_device_started_event(
@@ -309,6 +333,11 @@ void fd_nrf8001_pipe_status_event(uint64_t pipes_open, uint64_t pipes_closed) {
     }
 }
 
+static
+void detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
+    data[0] = 0x5a;
+}
+
 void fd_nrf8001_detour_data_received(
     uint8_t *data,
     uint32_t data_length
@@ -317,6 +346,11 @@ void fd_nrf8001_detour_data_received(
     switch (fd_detour_state(&fd_bluetooth_detour)) {
         case fd_detour_state_success:
             fd_control_process(fd_bluetooth_detour.data, fd_bluetooth_detour.length);
+
+            // !!! just for testing
+            fd_detour_source_initialize(&fd_bluetooth_detour_source, detour_supplier, 1);
+            fd_detour_source_collection_push(&fd_bluetooth_detour_source_collection, &fd_bluetooth_detour_source);
+
             fd_detour_clear(&fd_bluetooth_detour);
         break;
         case fd_detour_state_error:

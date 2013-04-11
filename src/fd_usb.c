@@ -175,19 +175,27 @@ static uint8_t fd_usb_in_data[USB_MAX_EP_SIZE];
 static uint8_t fd_usb_detour_data[DETOUR_SIZE];
 static fd_detour_t fd_usb_detour;
 
+static uint8_t fd_usb_out_data[USB_MAX_EP_SIZE];
+
+static fd_detour_source_collection_t fd_usb_detour_source_collection;
+static fd_detour_source_t fd_usb_detour_source;
+
 void fd_usb_initialize(void) {
     fd_usb_log_index = 0;
 
     USBD_Init(&initstruct);
 
     fd_detour_initialize(&fd_usb_detour, fd_usb_detour_data, DETOUR_SIZE);
+
+    fd_detour_source_collection_initialize(&fd_usb_detour_source_collection);
 }
 
 int fd_usb_WriteChar(char c) {
     fd_usb_log_buffer[fd_usb_log_index++] = c;
 }
 
-static int fd_usb_setup(const USB_Setup_TypeDef *setup) {
+static
+int fd_usb_setup(const USB_Setup_TypeDef *setup) {
   STATIC_UBUF( hidDesc, USB_HID_DESCSIZE );
 
   int retVal = USB_STATUS_REQ_UNHANDLED;
@@ -302,13 +310,20 @@ static int fd_usb_setup(const USB_Setup_TypeDef *setup) {
   return retVal;
 }
 
-static void fd_usb_state_change(USBD_State_TypeDef oldState, USBD_State_TypeDef newState) {
+static
+void fd_usb_state_change(USBD_State_TypeDef oldState, USBD_State_TypeDef newState) {
     if (newState == USBD_STATE_CONFIGURED) {
         fd_detour_clear(&fd_usb_detour);
     }
 }
 
-static int fd_usb_transfer_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining) {
+static
+void detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
+    data[0] = 0x5a;
+}
+
+static
+int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining) {
     if (status != USB_STATUS_OK) {
         fd_log("");
         fd_detour_clear(&fd_usb_detour);
@@ -319,6 +334,11 @@ static int fd_usb_transfer_complete(USB_Status_TypeDef status, uint32_t xferred,
     switch (fd_detour_state(&fd_usb_detour)) {
         case fd_detour_state_success:
             fd_control_process(fd_usb_detour.data, fd_usb_detour.length);
+
+            // !!! just for testing
+            fd_detour_source_initialize(&fd_usb_detour_source, detour_supplier, 1);
+            fd_detour_source_collection_push(&fd_usb_detour_source_collection, &fd_usb_detour_source);
+
             fd_detour_clear(&fd_usb_detour);
         break;
         case fd_detour_state_error:
@@ -329,11 +349,29 @@ static int fd_usb_transfer_complete(USB_Status_TypeDef status, uint32_t xferred,
     return USB_STATUS_OK;
 }
 
+static
+int fd_usb_write_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining) {
+    fd_detour_source_collection_pop(&fd_usb_detour_source_collection);
+}
+
 void fd_usb_transfer(void) {
-    if ((USBD_GetUsbState() == USBD_STATE_CONFIGURED) && !USBD_EpIsBusy(INTR_OUT_EP_ADDR)) {
-        int result = USBD_Read(INTR_OUT_EP_ADDR, fd_usb_in_data, USB_MAX_EP_SIZE, fd_usb_transfer_complete);
+    if (USBD_GetUsbState() != USBD_STATE_CONFIGURED) {
+        return;
+    }
+
+    if (!USBD_EpIsBusy(INTR_OUT_EP_ADDR)) {
+        int result = USBD_Read(INTR_OUT_EP_ADDR, fd_usb_in_data, USB_MAX_EP_SIZE, fd_usb_read_complete);
         if (result != USB_STATUS_OK) {
             ++fd_usb_errors;
+        }
+    }
+
+    if (!USBD_EpIsBusy(INTR_IN_EP_ADDR)) {
+        fd_detour_source_t *source = fd_usb_detour_source_collection.first;
+        if (source) {
+            if (fd_detour_source_get(source, fd_usb_out_data, USB_MAX_EP_SIZE)) {
+                USBD_Write(INTR_IN_EP_ADDR, fd_usb_out_data, USB_MAX_EP_SIZE, fd_usb_write_complete);
+            }
         }
     }
 }

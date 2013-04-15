@@ -178,7 +178,6 @@ static fd_detour_t fd_usb_detour;
 static uint8_t fd_usb_out_data[USB_MAX_EP_SIZE];
 
 static fd_detour_source_collection_t fd_usb_detour_source_collection;
-static fd_detour_source_t fd_usb_detour_source;
 
 void fd_usb_initialize(void) {
     fd_usb_log_index = 0;
@@ -318,11 +317,6 @@ void fd_usb_state_change(USBD_State_TypeDef oldState, USBD_State_TypeDef newStat
 }
 
 static
-void detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
-    data[0] = 0x5a;
-}
-
-static
 int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining) {
     if (status != USB_STATUS_OK) {
         fd_log("");
@@ -333,12 +327,7 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
     fd_detour_event(&fd_usb_detour, fd_usb_in_data, xferred);
     switch (fd_detour_state(&fd_usb_detour)) {
         case fd_detour_state_success:
-            fd_control_process(fd_usb_detour.data, fd_usb_detour.length);
-
-            // !!! just for testing
-            fd_detour_source_initialize(&fd_usb_detour_source, detour_supplier, 1);
-            fd_detour_source_collection_push(&fd_usb_detour_source_collection, &fd_usb_detour_source);
-
+            fd_control_process(&fd_usb_detour_source_collection, fd_usb_detour.data, fd_usb_detour.length);
             fd_detour_clear(&fd_usb_detour);
         break;
         case fd_detour_state_error:

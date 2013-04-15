@@ -5,12 +5,12 @@
 
 #include <stdint.h>
 
-static uint32_t rtc_time_seconds;
-static uint32_t rtc_time_ticks;
+static volatile uint32_t rtc_time_seconds;
+static volatile uint32_t rtc_time_microseconds;
 
 void fd_rtc_initialize(void) {
     rtc_time_seconds = 0;
-    rtc_time_ticks = 0;
+    rtc_time_microseconds = 0;
 
     CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
     CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
@@ -25,11 +25,45 @@ void fd_rtc_initialize(void) {
     RTC_Init(&init);
 }
 
+uint32_t rtc_get_seconds(void) {
+    return rtc_time_seconds;
+}
+
+fd_time_t rtc_get_time(void) {
+    fd_time_t time;
+    while (true) {
+        time.microseconds = rtc_time_microseconds;
+        time.seconds = rtc_time_seconds;
+        uint32_t again = rtc_time_microseconds;
+        if (time.microseconds == again) {
+            break;
+        }
+    }
+    return time;
+}
+
+fd_time_t rtc_get_accurate_time(void) {
+    fd_time_t time;
+    uint32_t counter;
+    while (true) {
+        time.microseconds = rtc_time_microseconds;
+        time.seconds = rtc_time_seconds;
+        counter = RTC_CounterGet();
+        uint32_t again = rtc_time_microseconds;
+        if (time.microseconds == again) {
+            break;
+        }
+    }
+    time.microseconds += (counter * 31250) / 1024;
+    return time;
+}
+
 void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
-    if (++rtc_time_ticks >= 32) {
+    rtc_time_microseconds += 31250;
+    if (rtc_time_microseconds >= 1000000) {
         ++rtc_time_seconds;
-        rtc_time_ticks = 0;
+        rtc_time_microseconds -= 1000000;
     }
 }

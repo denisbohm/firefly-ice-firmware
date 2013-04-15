@@ -28,7 +28,7 @@ void fd_nrf8001_dispatch_dtm_command_response(
         fd_log_assert_fail("");
         return;
     }
-    uint16_t dtm_command = fd_binary_get_uint16(response_data);
+    uint16_t dtm_command = fd_binary_unpack_uint16(response_data);
     fd_nrf8001_dtm_command_success(dtm_command);
 }
 
@@ -110,10 +110,10 @@ void fd_nrf8001_dispatch_get_device_version_response(
         fd_nrf8001_get_device_version_error(status);
         return;
     }
-    uint16_t configuration_id = fd_binary_get_uint16(response_data);
+    uint16_t configuration_id = fd_binary_unpack_uint16(response_data);
     uint8_t aci_protocol_version = response_data[2];
     uint8_t current_setup_format = response_data[3];
-    uint32_t setup_id = fd_binary_get_uint32(&response_data[4]);
+    uint32_t setup_id = fd_binary_unpack_uint32(&response_data[4]);
     uint8_t configuration_status = response_data[8];
     fd_nrf8001_get_device_version_success(
         configuration_id,
@@ -147,7 +147,7 @@ void fd_nrf8001_dispatch_get_battery_level_response(
         fd_nrf8001_get_battery_level_error(status);
         return;
     }
-    uint16_t level = fd_binary_get_uint16(response_data);
+    uint16_t level = fd_binary_unpack_uint16(response_data);
     float voltage = level * 3.52f;
     fd_nrf8001_get_battery_level_success(voltage);
 }
@@ -161,7 +161,7 @@ void fd_nrf8001_dispatch_get_temperature_response(
         fd_nrf8001_get_temperature_error(status);
         return;
     }
-    int16_t level = fd_binary_get_uint16(response_data);
+    int16_t level = fd_binary_unpack_uint16(response_data);
     float temperature = level * 0.25f;
     fd_nrf8001_get_temperature_success(temperature);
 }
@@ -452,7 +452,7 @@ void fd_nrf8001_decode_echo_event(uint8_t *buffer, uint32_t length) {
 }
 
 void fd_nrf8001_decode_hardware_error_event(uint8_t *buffer, uint32_t length) {
-    uint16_t line = fd_binary_get_uint16(&buffer[1]);
+    uint16_t line = fd_binary_unpack_uint16(&buffer[1]);
     char *filename = (char *)&buffer[3];
     fd_nrf8001_hardware_error_event(line, filename);
 }
@@ -476,9 +476,9 @@ void fd_nrf8001_decode_connected_event(uint8_t *buffer, uint32_t length) {
     }
     uint8_t address_type = buffer[1];
     uint8_t *peer_address = &buffer[2];
-    uint16_t connection_interval = fd_binary_get_uint16(&buffer[8]);
-    uint16_t slave_latency = fd_binary_get_uint16(&buffer[10]);
-    uint16_t supervision_timeout = fd_binary_get_uint16(&buffer[12]);
+    uint16_t connection_interval = fd_binary_unpack_uint16(&buffer[8]);
+    uint16_t slave_latency = fd_binary_unpack_uint16(&buffer[10]);
+    uint16_t supervision_timeout = fd_binary_unpack_uint16(&buffer[12]);
     uint8_t masterClockAccuracy = buffer[14];
     fd_nrf8001_connected_event(address_type, peer_address, connection_interval, slave_latency, supervision_timeout, masterClockAccuracy);
 }
@@ -519,8 +519,8 @@ void fd_nrf8001_decode_pipe_status_event(uint8_t *buffer, uint32_t length) {
         fd_log_assert_fail("");
         return;
     }
-    uint64_t pipes_open = fd_binary_get_uint64(&buffer[1]);
-    uint64_t pipes_closed = fd_binary_get_uint64(&buffer[9]);
+    uint64_t pipes_open = fd_binary_unpack_uint64(&buffer[1]);
+    uint64_t pipes_closed = fd_binary_unpack_uint64(&buffer[9]);
     fd_nrf8001_pipe_status_event(pipes_open, pipes_closed);
 }
 
@@ -529,9 +529,9 @@ void fd_nrf8001_decode_timing_event(uint8_t *buffer, uint32_t length) {
         fd_log_assert_fail("");
         return;
     }
-    uint16_t connection_interval = fd_binary_get_uint16(&buffer[1]);
-    uint16_t slave_latency = fd_binary_get_uint16(&buffer[3]);
-    uint16_t supervision_timeout = fd_binary_get_uint16(&buffer[5]);
+    uint16_t connection_interval = fd_binary_unpack_uint16(&buffer[1]);
+    uint16_t slave_latency = fd_binary_unpack_uint16(&buffer[3]);
+    uint16_t supervision_timeout = fd_binary_unpack_uint16(&buffer[5]);
     fd_nrf8001_timing_event(connection_interval, slave_latency, supervision_timeout);
 }
 

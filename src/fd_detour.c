@@ -51,7 +51,7 @@ void fd_detour_start(fd_detour_t *detour, uint8_t *data, uint32_t length) {
         return;
     }
     detour->state = fd_detour_state_intermediate;
-    detour->length = fd_binary_get_uint16(&data[0]);
+    detour->length = fd_binary_unpack_uint16(&data[0]);
     detour->sequence_number = 0;
     detour->offset = 0;
     if (detour->length > detour->size) {

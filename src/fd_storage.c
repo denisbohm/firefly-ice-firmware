@@ -35,7 +35,7 @@ uint32_t fd_storage_used_page_count(void) {
 void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
     uint8_t buffer[128] = {0x00, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
     memcpy(&buffer[4], data, 4 + length);
-    uint32_t hash = fd_crc_16(0xffff, &buffer[4], 4 + length);
+    uint16_t hash = fd_crc_16(0xffff, &buffer[4], 4 + length);
     buffer[2] = hash;
     buffer[3] = hash >> 8;
     uint32_t address = free_page * FD_AT24C512C_PAGE_SIZE;
@@ -55,8 +55,8 @@ bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, 
     uint8_t buffer[128];
     fd_at24c512c_read_page(address, buffer, 128);
     metadata->length = buffer[1];
-    metadata->hash = fd_binary_get_uint16(&buffer[2]);
-    metadata->type = fd_binary_get_uint32(&buffer[4]);
+    metadata->hash = fd_binary_unpack_uint16(&buffer[2]);
+    metadata->type = fd_binary_unpack_uint32(&buffer[4]);
     uint32_t len = metadata->length;
     if (length < len) {
         len = length;

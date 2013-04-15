@@ -55,6 +55,11 @@
       <file file_name="src/fd_detour.h"/>
       <file file_name="src/fd_control.c"/>
       <file file_name="src/fd_control.h"/>
+      <file file_name="src/fd_sync.c"/>
+      <file file_name="src/fd_sync.h"/>
+      <file file_name="src/fd_system.h"/>
+      <file file_name="src/fd_system.c"/>
+      <file file_name="src/fd_time.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

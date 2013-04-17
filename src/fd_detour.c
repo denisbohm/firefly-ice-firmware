@@ -80,9 +80,21 @@ void fd_detour_event(fd_detour_t *detour, uint8_t *data, uint32_t length) {
     }
 }
 
-void fd_detour_source_initialize(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length) {
+void fd_detour_source_initialize(fd_detour_source_t *source) {
     source->next = 0;
     source->previous = 0;
+    source->supplier = 0;
+    source->state = fd_detour_state_clear;
+    source->length = 0;
+    source->sequence_number = 0;
+    source->offset = 0;
+}
+
+bool fd_detour_source_is_transferring(fd_detour_source_t *source) {
+    return (source->state == fd_detour_state_intermediate) && (source->sequence_number != 0);
+}
+
+void fd_detour_source_set(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length) {
     source->supplier = supplier;
     source->state = fd_detour_state_intermediate;
     source->length = length;
@@ -123,6 +135,11 @@ void fd_detour_source_collection_push(fd_detour_source_collection_t *collection,
     if (collection->first == 0) {
         collection->first = source;
         collection->last = source;
+        return;
+    }
+
+    // the source is already in the collection - nothing to do
+    if ((collection->first == source) || (source->previous != 0)) {
         return;
     }
 

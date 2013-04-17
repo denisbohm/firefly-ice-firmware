@@ -153,6 +153,7 @@ void fd_spi0_wait(void) {
 }
 
 #define SPI_READ 0x80
+#define SPI_ADDRESS_INCREMENT 0x40
 
 uint8_t fd_spi0_read(uint8_t address) {
     uint8_t addr = SPI_READ | address;
@@ -185,4 +186,16 @@ uint8_t fd_spi0_sync_io(uint8_t txdata) {
 uint8_t fd_spi0_sync_read(uint8_t address) {
     fd_spi0_sync_io(SPI_READ | address);
     return fd_spi0_sync_io(0);
+}
+
+void fd_spi0_sync_read_bytes(uint8_t address, uint8_t *bytes, uint32_t length) {
+    fd_spi0_sync_io(SPI_READ | SPI_ADDRESS_INCREMENT | address);
+    for (uint32_t i = 0; i < length; ++i) {
+        bytes[i] = fd_spi0_sync_io(0);
+    }
+}
+
+void fd_spi0_sync_write(uint8_t address, uint8_t value) {
+    fd_spi0_sync_io(address);
+    fd_spi0_sync_io(value);
 }

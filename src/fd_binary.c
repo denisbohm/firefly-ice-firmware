@@ -11,13 +11,24 @@ uint16_t fd_binary_unpack_uint16(uint8_t *buffer) {
 }
 
 uint32_t fd_binary_unpack_uint32(uint8_t *buffer) {
-    return (buffer[1] << 24) | (buffer[1] << 16) | (buffer[1] << 8) | buffer[0];
+    return (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
 }
 
 uint64_t fd_binary_unpack_uint64(uint8_t *buffer) {
     uint64_t lo = fd_binary_unpack_uint32(buffer);
     uint64_t hi = fd_binary_unpack_uint32(&buffer[8]);
     return (hi << 32) | lo;
+}
+
+typedef union {
+    uint32_t as_uint32;
+    float as_float32;
+} fd_int32_float32_t;
+
+float fd_binary_unpack_float(uint8_t *buffer) {
+    fd_int32_float32_t u;
+    u.as_uint32 = fd_binary_unpack_uint32(buffer);
+    return u.as_float32;
 }
 
 fd_time_t fd_binary_unpack_time(uint8_t *buffer) {
@@ -45,6 +56,12 @@ void fd_binary_pack_uint32(uint8_t *buffer, uint32_t value) {
 void fd_binary_pack_uint64(uint8_t *buffer, uint64_t value) {
     fd_binary_pack_uint32(buffer, value);
     fd_binary_pack_uint32(&buffer[4], value >> 32);
+}
+
+void fd_binary_pack_float32(uint8_t *buffer, float value) {
+    fd_int32_float32_t u;
+    u.as_float32 = value;
+    fd_binary_pack_uint32(buffer, u.as_uint32);
 }
 
 void fd_binary_pack_time(uint8_t *buffer, fd_time_t value) {
@@ -92,6 +109,12 @@ uint64_t fd_binary_get_uint64(fd_binary_t *binary) {
     return fd_binary_unpack_uint64(buffer);
 }
 
+float fd_binary_get_float32(fd_binary_t *binary) {
+    uint8_t *buffer = &binary->buffer[binary->get_index];
+    binary->get_index += 4;
+    return fd_binary_unpack_float32(buffer);
+}
+
 fd_time_t fd_binary_get_time(fd_binary_t *binary) {
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 8;
@@ -125,6 +148,12 @@ void fd_binary_put_uint64(fd_binary_t *binary, uint64_t value) {
     uint8_t *buffer = &binary->buffer[binary->put_index];
     binary->put_index += 8;
     fd_binary_pack_uint64(buffer, value);
+}
+
+void fd_binary_put_float32(fd_binary_t *binary, float value) {
+    uint8_t *buffer = &binary->buffer[binary->put_index];
+    binary->put_index += 4;
+    fd_binary_pack_float32(buffer, value);
 }
 
 void fd_binary_put_time(fd_binary_t *binary, fd_time_t value) {

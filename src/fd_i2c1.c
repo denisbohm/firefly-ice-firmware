@@ -45,7 +45,7 @@ bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
     return true;
 }
 
-bool fd_i2c1_read(uint8_t device, uint8_t reg, uint8_t *presult) {
+bool fd_i2c1_register_read(uint8_t device, uint8_t reg, uint8_t *presult) {
     I2C_TransferSeq_TypeDef seq;
     seq.addr = device;
     seq.flags = I2C_FLAG_WRITE_READ;
@@ -56,7 +56,7 @@ bool fd_i2c1_read(uint8_t device, uint8_t reg, uint8_t *presult) {
     return fd_i2c1_sync_transfer(&seq);
 }
 
-bool fd_i2c1_write(uint8_t device, uint8_t reg, uint8_t value) {
+bool fd_i2c1_register_write(uint8_t device, uint8_t reg, uint8_t value) {
     I2C_TransferSeq_TypeDef seq;
     seq.addr = device;
     seq.flags = I2C_FLAG_WRITE_WRITE;
@@ -64,6 +64,28 @@ bool fd_i2c1_write(uint8_t device, uint8_t reg, uint8_t value) {
     seq.buf[0].len = 1;
     seq.buf[1].data = &value;
     seq.buf[1].len = 1;
+    return fd_i2c1_sync_transfer(&seq);
+}
+
+bool fd_i2c1_register_read_bytes(uint8_t device, uint8_t reg, uint8_t *buffer, uint32_t length) {
+    I2C_TransferSeq_TypeDef seq;
+    seq.addr = device;
+    seq.flags = I2C_FLAG_WRITE_READ;
+    seq.buf[0].data = &reg;
+    seq.buf[0].len = 1;
+    seq.buf[1].data = buffer;
+    seq.buf[1].len = length;
+    return fd_i2c1_sync_transfer(&seq);
+}
+
+bool fd_i2c1_register_write_bytes(uint8_t device, uint8_t reg, uint8_t *buffer, uint32_t length) {
+    I2C_TransferSeq_TypeDef seq;
+    seq.addr = device;
+    seq.flags = I2C_FLAG_WRITE_WRITE;
+    seq.buf[0].data = &reg;
+    seq.buf[0].len = 1;
+    seq.buf[1].data = buffer;
+    seq.buf[1].len = length;
     return fd_i2c1_sync_transfer(&seq);
 }
 

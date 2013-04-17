@@ -14,6 +14,7 @@ fd_detour_source_t fd_sync_detour_source;
 uint8_t fd_detour_buffer[SYNC_SIZE];
 
 void fd_sync_initialize(void) {
+    fd_detour_source_initialize(&fd_sync_detour_source);
 }
 
 static
@@ -40,7 +41,7 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     uint32_t sync_length = COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE + metadata.length;
     // encrypt
 
-    fd_detour_source_initialize(&fd_sync_detour_source, fd_sync_detour_supplier, sync_length);
+    fd_detour_source_set(&fd_sync_detour_source, fd_sync_detour_supplier, sync_length);
     fd_detour_source_collection_push(detour_source_collection, &fd_sync_detour_source);
 }
 

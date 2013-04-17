@@ -3,6 +3,6 @@
 
 void fd_mag3110_initialize(void);
 
-void fd_mag3110_test(void);
+void fd_mag3110_read(float *x, float *y, float *z);
 
 #endif

@@ -15,6 +15,7 @@ void fd_nrf8001_initialize(void) {
 }
 
 void fd_nrf8001_error(void) {
+    fd_log_assert_fail("");
 }
 
 bool fd_nrf8001_has_system_credits(void) {

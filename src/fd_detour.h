@@ -58,7 +58,11 @@ fd_detour_state_t fd_detour_state(fd_detour_t *detour);
 
 void fd_detour_event(fd_detour_t *detour, uint8_t *data, uint32_t length);
 
-void fd_detour_source_initialize(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length);
+void fd_detour_source_initialize(fd_detour_source_t *source);
+
+bool fd_detour_source_is_transferring(fd_detour_source_t *source);
+
+void fd_detour_source_set(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length);
 
 bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t length);
 
@@ -67,5 +71,7 @@ void fd_detour_source_collection_initialize(fd_detour_source_collection_t *colle
 void fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source);
 
 void fd_detour_source_collection_pop(fd_detour_source_collection_t *collection);
+
+extern fd_detour_source_collection_t fd_bluetooth_detour_source_collection;
 
 #endif

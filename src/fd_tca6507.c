@@ -47,7 +47,7 @@ void fd_tca6507_set_color(bool r, bool g, bool b) {
     if (b) {
         value |= 0b00010010;
     }
-    bool result = fd_i2c1_write(FD_TCA6507_ADDRESS, FD_TCA6507_SELECT2, value);
+    bool result = fd_i2c1_register_write(FD_TCA6507_ADDRESS, FD_TCA6507_SELECT2, value);
     if (!result) {
         fd_log_assert_fail("");
     }
@@ -55,7 +55,7 @@ void fd_tca6507_set_color(bool r, bool g, bool b) {
 
 void fd_tca6507_test(void) {
     uint8_t fade_on_time;
-    bool result = fd_i2c1_read(FD_TCA6507_ADDRESS, FD_TCA6507_FADE_ON_TIME, &fade_on_time);
+    bool result = fd_i2c1_register_read(FD_TCA6507_ADDRESS, FD_TCA6507_FADE_ON_TIME, &fade_on_time);
     if (!result) {
         fd_log_assert_fail("");
         return;

@@ -23,5 +23,7 @@ uint8_t fd_spi0_read(uint8_t address);
 
 uint8_t fd_spi0_sync_io(uint8_t txdata);
 uint8_t fd_spi0_sync_read(uint8_t address);
+void fd_spi0_sync_write(uint8_t address, uint8_t value);
+void fd_spi0_sync_read_bytes(uint8_t address, uint8_t *bytes, uint32_t length);
 
 #endif

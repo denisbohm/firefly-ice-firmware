@@ -30,10 +30,10 @@
         </Characteristic>
     </Service>
     <Gapsettings>
-        <Name>FireflyIce</Name>
-        <DeviceNameWriteLength>10</DeviceNameWriteLength>
+        <Name>Firefly</Name>
+        <DeviceNameWriteLength>7</DeviceNameWriteLength>
         <LocalPipeOnDeviceName>false</LocalPipeOnDeviceName>
-        <DeviceNameShortLength>9</DeviceNameShortLength>
+        <DeviceNameShortLength>7</DeviceNameShortLength>
         <Apperance>0000</Apperance>
         <SecurityLevel>0</SecurityLevel>
         <AuthenticationReq>0</AuthenticationReq>
@@ -43,7 +43,7 @@
         <MinimumKeySize>7</MinimumKeySize>
         <MaximumKeySize>16</MaximumKeySize>
         <AdvertisingDataBondedBitmap>0</AdvertisingDataBondedBitmap>
-        <AdvertisingDataGeneralBitmap>0</AdvertisingDataGeneralBitmap>
+        <AdvertisingDataGeneralBitmap>1a</AdvertisingDataGeneralBitmap>
         <AdvertisingDataBrodcastBitmap>0</AdvertisingDataBrodcastBitmap>
         <AdvertisingDataBondedScanResponseBitmap>0</AdvertisingDataBondedScanResponseBitmap>
         <AdvertisingDataGeneralScanResponseBitmap>0</AdvertisingDataGeneralScanResponseBitmap>
@@ -59,7 +59,19 @@
         <MaximumConnectionInterval>65535</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>65535</TimeoutMultipler>
-        <CustomAdTypes/>
+        <ServiceToAdvertise>
+            <Uuid BaseUUID="310a00001b955091b0bdb7a681846399" BaseUUIDName="Firefly Ice Base UUID">0001</Uuid>
+        </ServiceToAdvertise>
+        <CustomAdTypes>
+            <AdType index="1">
+                <Type>19</Type>
+                <Value>4003</Value>
+            </AdType>
+            <AdType index="2">
+                <Type>18</Type>
+                <Value></Value>
+            </AdType>
+        </CustomAdTypes>
     </Gapsettings>
     <Hardwaresettings>
         <Clocksource>1</Clocksource>

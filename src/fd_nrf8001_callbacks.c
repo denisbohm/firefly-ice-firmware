@@ -1,4 +1,4 @@
-#include "fd_log.h"
+#include "fd_nrf8001.h"
 #include "fd_nrf8001_callbacks.h"
 
 #define WEAK __attribute__((weak))
@@ -6,12 +6,12 @@
 
 WEAK
 void fd_nrf8001_test_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
 void fd_nrf8001_dtm_command_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -20,7 +20,7 @@ void fd_nrf8001_dtm_command_success(uint16_t dtm_command) {
 
 WEAK
 void fd_nrf8001_wakeup_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -29,7 +29,7 @@ void fd_nrf8001_wakeup_success(void) {
 
 WEAK
 void fd_nrf8001_setup_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -42,7 +42,7 @@ void fd_nrf8001_setup_complete(void) {
 
 WEAK
 void fd_nrf8001_read_dynamic_data_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -55,7 +55,7 @@ void fd_nrf8001_read_dynamic_data_complete(void) {
 
 WEAK
 void fd_nrf8001_write_dynamic_data_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -68,7 +68,7 @@ void fd_nrf8001_write_dynamic_data_complete(void) {
 
 WEAK
 void fd_nrf8001_get_device_version_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -83,7 +83,7 @@ void fd_nrf8001_get_device_version_success(
 
 WEAK
 void fd_nrf8001_get_device_address_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -95,7 +95,7 @@ void fd_nrf8001_get_device_address_success(
 
 WEAK
 void fd_nrf8001_get_battery_level_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -104,7 +104,7 @@ void fd_nrf8001_get_battery_level_success(float voltage) {
 
 WEAK
 void fd_nrf8001_get_temperature_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -113,7 +113,7 @@ void fd_nrf8001_get_temperature_success(float temperature) {
 
 WEAK
 void fd_nrf8001_radio_reset_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -122,7 +122,7 @@ void fd_nrf8001_radio_reset_success(void) {
 
 WEAK
 void fd_nrf8001_connect_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -131,7 +131,7 @@ void fd_nrf8001_connect_success(void) {
 
 WEAK
 void fd_nrf8001_bond_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -140,7 +140,7 @@ void fd_nrf8001_bond_success(void) {
 
 WEAK
 void fd_nrf8001_disconnect_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -149,7 +149,7 @@ void fd_nrf8001_disconnect_success(void) {
 
 WEAK
 void fd_nrf8001_set_tx_power_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -158,7 +158,7 @@ void fd_nrf8001_set_tx_power_success(void) {
 
 WEAK
 void fd_nrf8001_change_timing_request_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -167,7 +167,7 @@ void fd_nrf8001_change_timing_request_success(void) {
 
 WEAK
 void fd_nrf8001_open_remove_pipe_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -176,7 +176,7 @@ void fd_nrf8001_open_remove_pipe_success(void) {
 
 WEAK
 void fd_nrf8001_set_application_latency_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -185,7 +185,7 @@ void fd_nrf8001_set_application_latency_success(void) {
 
 WEAK
 void fd_nrf8001_set_key_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -194,7 +194,7 @@ void fd_nrf8001_set_key_success(void) {
 
 WEAK
 void fd_nrf8001_open_advertising_pipe_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -203,7 +203,7 @@ void fd_nrf8001_open_advertising_pipe_success(void) {
 
 WEAK
 void fd_nrf8001_broadcast_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -212,7 +212,7 @@ void fd_nrf8001_broadcast_success(void) {
 
 WEAK
 void fd_nrf8001_bond_security_request_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -221,7 +221,7 @@ void fd_nrf8001_bond_security_request_success(void) {
 
 WEAK
 void fd_nrf8001_directed_connect_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -230,7 +230,7 @@ void fd_nrf8001_directed_connect_success(void) {
 
 WEAK
 void fd_nrf8001_close_remote_pipe_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -239,7 +239,7 @@ void fd_nrf8001_close_remote_pipe_success(void) {
 
 WEAK
 void fd_nrf8001_set_local_data_error(uint8_t status) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -258,7 +258,7 @@ void fd_nrf8001_echo_event(uint8_t *buffer, uint32_t length) {
 
 WEAK
 void fd_nrf8001_hardware_error_event(uint16_t line, char *filename) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK
@@ -321,7 +321,7 @@ void fd_nrf8001_pipe_error_event(
     uint8_t *error_data,
     uint32_t error_data_length
 ) {
-    fd_log_assert_fail("");
+    fd_nrf8001_error();
 }
 
 WEAK

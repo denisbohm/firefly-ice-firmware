@@ -7,9 +7,6 @@
 
 #include <stdint.h>
 
-#define LIS3DH_READ 0x80
-#define LIS3DH_INCREMENT 0x40
-
 #define LIS3DH_WHO_AM_I 0x0f
 
 #define LIS3DH_CTRL_REG1 0x20
@@ -73,6 +70,13 @@
 #define LIS3DH_FIFO_CTRL_REG_FM_TRIGGER 0xc0
 #define LIS3DH_FIFO_CTRL_REG_TR_INT2 0x20
 
+#define LIS3DH_OUT_X_L 0x28
+#define LIS3DH_OUT_X_H 0x29
+#define LIS3DH_OUT_Y_L 0x2a
+#define LIS3DH_OUT_Y_H 0x2b
+#define LIS3DH_OUT_Z_L 0x2c
+#define LIS3DH_OUT_Z_H 0x2d
+
 static
 void lis3dh_chip_select(void) {
     GPIO_PinOutClear(ACC_CSN_PORT_PIN);
@@ -91,4 +95,47 @@ void fd_lis3dh_initialize(void) {
         fd_log_assert_fail("");
         return;
     }
+
+    lis3dh_chip_select();
+    fd_spi0_sync_write(
+        LIS3DH_CTRL_REG1,
+        LIS3DH_CTRL_REG1_ODR_100HZ |
+        LIS3DH_CTRL_REG1_ZEN |
+        LIS3DH_CTRL_REG1_YEN |
+        LIS3DH_CTRL_REG1_XEN
+    );
+    lis3dh_chip_deselect();
+    lis3dh_chip_select();
+    fd_spi0_sync_write(
+        LIS3DH_CTRL_REG4,
+        LIS3DH_CTRL_REG4_BDU |
+        LIS3DH_CTRL_REG4_FS_2G |
+        LIS3DH_CTRL_REG4_HR
+    );
+    lis3dh_chip_deselect();
+    lis3dh_chip_select();
+    who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
+    lis3dh_chip_deselect();
+}
+
+typedef union {
+    uint8_t bytes[6];
+    struct {
+        int16_t x;
+        int16_t y;
+        int16_t z;
+    };
+} fd_lis3dh_out_t;
+
+void fd_lis3dh_read(float *x, float *y, float *z) {
+    fd_lis3dh_out_t out;
+    lis3dh_chip_select();
+    fd_spi0_sync_read_bytes(LIS3DH_OUT_X_L, out.bytes, sizeof(out));
+    lis3dh_chip_deselect();
+    lis3dh_chip_select();
+    uint8_t who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
+    lis3dh_chip_deselect();
+    *x = out.x / 16384.0f;
+    *y = out.y / 16384.0f;
+    *z = out.z / 16384.0f;
 }

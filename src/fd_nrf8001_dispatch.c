@@ -25,7 +25,7 @@ void fd_nrf8001_dispatch_dtm_command_response(
         return;
     }
     if (response_data_length != 2) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint16_t dtm_command = fd_binary_unpack_uint16(response_data);
@@ -431,14 +431,14 @@ void fd_nrf8001_command_response_event(
             fd_nrf8001_dispatch_set_local_data_response(status, response_data, response_data_length);
         break;
         default:
-            fd_log_assert_fail("");
+            fd_nrf8001_error();
         break;
     }
 }
 
 void fd_nrf8001_decode_device_started_event(uint8_t *buffer, uint32_t length) {
     if (length != 4) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t operating_mode = buffer[1];
@@ -459,7 +459,7 @@ void fd_nrf8001_decode_hardware_error_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_command_response_event(uint8_t *buffer, uint32_t length) {
     if (length < 3) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t command_op_code = buffer[1];
@@ -471,7 +471,7 @@ void fd_nrf8001_decode_command_response_event(uint8_t *buffer, uint32_t length) 
 
 void fd_nrf8001_decode_connected_event(uint8_t *buffer, uint32_t length) {
     if (length != 15) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t address_type = buffer[1];
@@ -485,7 +485,7 @@ void fd_nrf8001_decode_connected_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_disconnected_event(uint8_t *buffer, uint32_t length) {
     if (length != 3) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t aci_status = buffer[1];
@@ -495,7 +495,7 @@ void fd_nrf8001_decode_disconnected_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_bond_status_event(uint8_t *buffer, uint32_t length) {
     if (length != 7) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t bond_status_code = buffer[1];
@@ -516,7 +516,7 @@ void fd_nrf8001_decode_bond_status_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_pipe_status_event(uint8_t *buffer, uint32_t length) {
     if (length != 17) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint64_t pipes_open = fd_binary_unpack_uint64(&buffer[1]);
@@ -526,7 +526,7 @@ void fd_nrf8001_decode_pipe_status_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_timing_event(uint8_t *buffer, uint32_t length) {
     if (length != 7) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint16_t connection_interval = fd_binary_unpack_uint16(&buffer[1]);
@@ -537,7 +537,7 @@ void fd_nrf8001_decode_timing_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_display_key_event(uint8_t *buffer, uint32_t length) {
     if (length != 7) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     char *passkey = (char *)&buffer[1];
@@ -546,7 +546,7 @@ void fd_nrf8001_decode_display_key_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_key_request_event(uint8_t *buffer, uint32_t length) {
     if (length != 2) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t key_type = buffer[1];
@@ -555,7 +555,7 @@ void fd_nrf8001_decode_key_request_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_data_credit_event(uint8_t *buffer, uint32_t length) {
     if (length != 2) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t data_credits = buffer[1];
@@ -564,7 +564,7 @@ void fd_nrf8001_decode_data_credit_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_pipe_error_event(uint8_t *buffer, uint32_t length) {
     if (length < 3) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t service_pipe_number = buffer[1];
@@ -576,7 +576,7 @@ void fd_nrf8001_decode_pipe_error_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_data_received_event(uint8_t *buffer, uint32_t length) {
     if (length < 2) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t service_pipe_number = buffer[1];
@@ -587,7 +587,7 @@ void fd_nrf8001_decode_data_received_event(uint8_t *buffer, uint32_t length) {
 
 void fd_nrf8001_decode_data_ack_event(uint8_t *buffer, uint32_t length) {
     if (length != 2) {
-        fd_log_assert_fail("");
+        fd_nrf8001_error();
         return;
     }
     uint8_t service_pipe_number = buffer[1];
@@ -643,7 +643,7 @@ void fd_nrf8001_dispatch(uint8_t *buffer, uint32_t length) {
             fd_nrf8001_decode_data_ack_event(buffer, length);
         break;
         default:
-            fd_log_assert_fail("");
+            fd_nrf8001_error();
             return;
         break;
     }

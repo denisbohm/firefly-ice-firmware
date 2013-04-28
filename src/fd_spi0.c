@@ -174,6 +174,7 @@ uint8_t fd_spi0_read(uint8_t address) {
     };
     fd_spi0_io(transfers, 2, 0);
     fd_spi0_wait();
+    return result;
 }
 
 uint8_t fd_spi0_sync_io(uint8_t txdata) {

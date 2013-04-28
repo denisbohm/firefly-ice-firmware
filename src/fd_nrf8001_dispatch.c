@@ -9,8 +9,8 @@
 
 void fd_nrf8001_dispatch_test_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     fd_nrf8001_test_error(status);
 }
@@ -34,8 +34,8 @@ void fd_nrf8001_dispatch_dtm_command_response(
 
 void fd_nrf8001_dispatch_wakeup_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_wakeup_error(status);
@@ -46,8 +46,8 @@ void fd_nrf8001_dispatch_wakeup_response(
 
 void fd_nrf8001_dispatch_setup_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     switch (status) {
         case ACI_STATUS_TRANSACTION_CONTINUE:
@@ -72,7 +72,7 @@ void fd_nrf8001_dispatch_read_dynamic_data_response(
             uint8_t sequence_number = response_data[0];
             uint8_t *data = &response_data[1];
             uint32_t length = response_data_length - 1;
-            fd_nrf8001_read_dynamic_data_continue(data, length);
+            fd_nrf8001_read_dynamic_data_continue(sequence_number, data, length);
         } break;
         case ACI_STATUS_TRANSACTION_COMPLETE:
             fd_nrf8001_read_dynamic_data_complete();
@@ -85,8 +85,8 @@ void fd_nrf8001_dispatch_read_dynamic_data_response(
 
 void fd_nrf8001_dispatch_write_dynamic_data_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     switch (status) {
         case ACI_STATUS_TRANSACTION_CONTINUE:
@@ -104,7 +104,7 @@ void fd_nrf8001_dispatch_write_dynamic_data_response(
 void fd_nrf8001_dispatch_get_device_version_response(
     uint8_t status,
     uint8_t *response_data,
-    uint32_t response_data_length
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_get_device_version_error(status);
@@ -127,7 +127,7 @@ void fd_nrf8001_dispatch_get_device_version_response(
 void fd_nrf8001_dispatch_get_device_address_response(
     uint8_t status,
     uint8_t *response_data,
-    uint32_t response_data_length
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_get_device_address_error(status);
@@ -141,7 +141,7 @@ void fd_nrf8001_dispatch_get_device_address_response(
 void fd_nrf8001_dispatch_get_battery_level_response(
     uint8_t status,
     uint8_t *response_data,
-    uint32_t response_data_length
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_get_battery_level_error(status);
@@ -155,7 +155,7 @@ void fd_nrf8001_dispatch_get_battery_level_response(
 void fd_nrf8001_dispatch_get_temperature_response(
     uint8_t status,
     uint8_t *response_data,
-    uint32_t response_data_length
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_get_temperature_error(status);
@@ -168,8 +168,8 @@ void fd_nrf8001_dispatch_get_temperature_response(
 
 void fd_nrf8001_dispatch_radio_reset_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_radio_reset_error(status);
@@ -180,8 +180,8 @@ void fd_nrf8001_dispatch_radio_reset_response(
 
 void fd_nrf8001_dispatch_connect_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_connect_error(status);
@@ -192,8 +192,8 @@ void fd_nrf8001_dispatch_connect_response(
 
 void fd_nrf8001_dispatch_bond_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_bond_error(status);
@@ -204,8 +204,8 @@ void fd_nrf8001_dispatch_bond_response(
 
 void fd_nrf8001_dispatch_disconnect_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_disconnect_error(status);
@@ -216,8 +216,8 @@ void fd_nrf8001_dispatch_disconnect_response(
 
 void fd_nrf8001_dispatch_set_tx_power_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_set_tx_power_error(status);
@@ -228,8 +228,8 @@ void fd_nrf8001_dispatch_set_tx_power_response(
 
 void fd_nrf8001_dispatch_change_timing_request_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_change_timing_request_error(status);
@@ -240,8 +240,8 @@ void fd_nrf8001_dispatch_change_timing_request_response(
 
 void fd_nrf8001_dispatch_open_remove_pipe_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_open_remove_pipe_error(status);
@@ -252,8 +252,8 @@ void fd_nrf8001_dispatch_open_remove_pipe_response(
 
 void fd_nrf8001_dispatch_set_application_latency_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_set_application_latency_error(status);
@@ -264,8 +264,8 @@ void fd_nrf8001_dispatch_set_application_latency_response(
 
 void fd_nrf8001_dispatch_set_key_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_set_key_error(status);
@@ -276,8 +276,8 @@ void fd_nrf8001_dispatch_set_key_response(
 
 void fd_nrf8001_dispatch_open_advertising_pipe_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_open_advertising_pipe_error(status);
@@ -288,8 +288,8 @@ void fd_nrf8001_dispatch_open_advertising_pipe_response(
 
 void fd_nrf8001_dispatch_broadcast_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_broadcast_error(status);
@@ -300,8 +300,8 @@ void fd_nrf8001_dispatch_broadcast_response(
 
 void fd_nrf8001_dispatch_bond_security_request_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_bond_security_request_error(status);
@@ -312,8 +312,8 @@ void fd_nrf8001_dispatch_bond_security_request_response(
 
 void fd_nrf8001_dispatch_directed_connect_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_directed_connect_error(status);
@@ -324,8 +324,8 @@ void fd_nrf8001_dispatch_directed_connect_response(
 
 void fd_nrf8001_dispatch_close_remote_pipe_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_close_remote_pipe_error(status);
@@ -336,8 +336,8 @@ void fd_nrf8001_dispatch_close_remote_pipe_response(
 
 void fd_nrf8001_dispatch_set_local_data_response(
     uint8_t status,
-    uint8_t *response_data,
-    uint32_t response_data_length
+    uint8_t *response_data __attribute__((unused)),
+    uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
         fd_nrf8001_set_local_data_error(status);
@@ -451,7 +451,7 @@ void fd_nrf8001_decode_echo_event(uint8_t *buffer, uint32_t length) {
     fd_nrf8001_echo_event(&buffer[1], length - 1);
 }
 
-void fd_nrf8001_decode_hardware_error_event(uint8_t *buffer, uint32_t length) {
+void fd_nrf8001_decode_hardware_error_event(uint8_t *buffer, uint32_t length __attribute__((unused))) {
     uint16_t line = fd_binary_unpack_uint16(&buffer[1]);
     char *filename = (char *)&buffer[3];
     fd_nrf8001_hardware_error_event(line, filename);

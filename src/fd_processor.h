@@ -12,6 +12,7 @@
 
 #define LED_EN_PORT_PIN gpioPortA, 8
 #define AUX_PWR_PORT_PIN gpioPortA, 9
+#define MAG_INT_PIN 10
 #define MAG_INT_PORT_PIN gpioPortA, 10
 
 #define LED5_PORT_PIN gpioPortC, 0
@@ -28,6 +29,7 @@
 
 #define SWD_CLK_PORT_PIN gpioPortF, 0
 #define SWD_IO_PORT_PIN gpioPortF, 1
+#define CHG_STAT_PIN 2
 #define CHG_STAT_PORT_PIN gpioPortF, 2
 #define PWR_HIGH_PORT_PIN gpioPortF, 5
 #define USB_DM_PORT_PIN gpioPortF, 10
@@ -39,10 +41,12 @@
 #define US1_MISO_PORT_PIN gpioPortD, 1
 #define US1_CLK_PORT_PIN gpioPortD, 2
 #define NRF_REQN_PORT_PIN gpioPortD, 3
+#define NRF_RDYN_PIN 4
 #define NRF_RDYN_PORT_PIN gpioPortD, 4
 #define NRF_RESETN_PORT_PIN gpioPortD, 5
 #define BAT_VDIV2_PORT_PIN gpioPortD, 6
 #define CHG_RATE_PORT_PIN gpioPortD, 7
+#define ACC_INT_PIN 8
 #define ACC_INT_PORT_PIN gpioPortD, 8
 
 #define LFXTAL_P_PORT_PIN gpioPortB, 7
@@ -56,5 +60,8 @@
 void fd_processor_initialize(void);
 
 void fd_delay_ms(uint32_t ms);
+
+void fd_interrupts_disable(void);
+void fd_interrupts_enable(void);
 
 #endif

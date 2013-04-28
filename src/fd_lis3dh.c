@@ -113,9 +113,6 @@ void fd_lis3dh_initialize(void) {
         LIS3DH_CTRL_REG4_HR
     );
     lis3dh_chip_deselect();
-    lis3dh_chip_select();
-    who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
-    lis3dh_chip_deselect();
 }
 
 typedef union {
@@ -131,9 +128,6 @@ void fd_lis3dh_read(float *x, float *y, float *z) {
     fd_lis3dh_out_t out;
     lis3dh_chip_select();
     fd_spi0_sync_read_bytes(LIS3DH_OUT_X_L, out.bytes, sizeof(out));
-    lis3dh_chip_deselect();
-    lis3dh_chip_select();
-    uint8_t who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
     lis3dh_chip_deselect();
     *x = out.x / 16384.0f;
     *y = out.y / 16384.0f;

@@ -22,7 +22,7 @@ void fd_sync_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
     memcpy(data, &fd_detour_buffer[offset], length);
 }
 
-void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
     fd_storage_metadata_t metadata;
     bool has_page = fd_storage_read_first_page(&metadata, &fd_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
     if (!has_page) {
@@ -45,7 +45,7 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     fd_detour_source_collection_push(detour_source_collection, &fd_sync_detour_source);
 }
 
-void fd_sync_ack(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_sync_ack(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     // decrypt
 
     fd_storage_metadata_t metadata;

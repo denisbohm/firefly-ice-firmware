@@ -44,7 +44,10 @@ void fd_spi1_initialize(void) {
 
 void fd_spi1_power_on(void) {
     // power up radio section
-    GPIO_PinOutSet(NRF_PWR_PORT_PIN);
+    for (int i = 0; i < 100; ++i) {
+        GPIO_PinOutClear(NRF_PWR_PORT_PIN);
+        GPIO_PinOutSet(NRF_PWR_PORT_PIN);
+    }
     fd_delay_ms(100); // wait for power to come up (?ms)
 
     // set radio inputs to initial conditions

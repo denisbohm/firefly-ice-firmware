@@ -13,6 +13,12 @@
 #define OUT_Z_LSB 0x06
 #define WHO_AM_I 0x07
 #define SYSMOD 0x08
+#define OFF_X_MSB 0x09
+#define OFF_X_LSB 0x0a
+#define OFF_Y_MSB 0x0b
+#define OFF_Y_LSB 0x0c
+#define OFF_Z_MSB 0x0d
+#define OFF_Z_LSB 0x0e
 #define DIE_TEMP 0x0f
 #define CTRL_REG1 0x10
 #define CTRL_REG2 0x11
@@ -49,8 +55,26 @@ void fd_mag3110_initialize(void) {
          fd_log_assert_fail("");
          return;
     }
-    uint8_t ctrl_reg1 = 0xff;
-    result = fd_i2c1_register_read(ADDRESS, CTRL_REG1, &ctrl_reg1);
+    /*
+    uint8_t bytes[6];
+    result = fd_i2c1_register_read_bytes(ADDRESS, OUT_X_MSB, bytes, sizeof(bytes));
+    if (!result) {
+        return;
+    }
+    int16_t off_x = (int16_t)((bytes[0] << 8) | bytes[1]);
+    int16_t off_y = (int16_t)((bytes[2] << 8) | bytes[3]);
+    int16_t off_z = (int16_t)((bytes[4] << 8) | bytes[5]);
+    bytes[0] = off_x >> 8;
+    bytes[1] = off_x;
+    bytes[2] = off_y >> 8;
+    bytes[3] = off_y;
+    bytes[4] = off_z >> 8;
+    bytes[5] = off_z;
+    result = fd_i2c1_register_write_bytes(ADDRESS, OFF_X_MSB, bytes, sizeof(bytes));
+    if (!result) {
+        return;
+    }
+    */
 }
 
 #define SCALE (0.001 / 30000.0f)
@@ -62,9 +86,9 @@ void fd_mag3110_read(float *x, float *y, float *z) {
         return;
     }
 
-    uint16_t out_x = (bytes[1] << 8) | (bytes[2]);
-    uint16_t out_y = (bytes[3] << 8) | (bytes[4]);
-    uint16_t out_z = (bytes[5] << 8) | (bytes[6]);
+    int16_t out_x = (bytes[1] << 8) | (bytes[2]);
+    int16_t out_y = (bytes[3] << 8) | (bytes[4]);
+    int16_t out_z = (bytes[5] << 8) | (bytes[6]);
     *x = out_x * SCALE;
     *y = out_y * SCALE;
     *z = out_z * SCALE;

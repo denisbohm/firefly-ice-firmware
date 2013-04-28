@@ -191,6 +191,7 @@ void fd_usb_initialize(void) {
 
 int fd_usb_WriteChar(char c) {
     fd_usb_log_buffer[fd_usb_log_index++] = c;
+    return 0;
 }
 
 static
@@ -310,14 +311,14 @@ int fd_usb_setup(const USB_Setup_TypeDef *setup) {
 }
 
 static
-void fd_usb_state_change(USBD_State_TypeDef oldState, USBD_State_TypeDef newState) {
+void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), USBD_State_TypeDef newState __attribute__((unused))) {
     if (newState == USBD_STATE_CONFIGURED) {
         fd_detour_clear(&fd_usb_detour);
     }
 }
 
 static
-int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining) {
+int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining __attribute__((unused))) {
     if (status != USB_STATUS_OK) {
         fd_log("");
         fd_detour_clear(&fd_usb_detour);
@@ -326,6 +327,9 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
 
     fd_detour_event(&fd_usb_detour, fd_usb_in_data, xferred);
     switch (fd_detour_state(&fd_usb_detour)) {
+        case fd_detour_state_clear:
+        case fd_detour_state_intermediate:
+        break;
         case fd_detour_state_success:
             fd_control_process(&fd_usb_detour_source_collection, fd_usb_detour.data, fd_usb_detour.length);
             fd_detour_clear(&fd_usb_detour);
@@ -339,8 +343,9 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
 }
 
 static
-int fd_usb_write_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining) {
+int fd_usb_write_complete(USB_Status_TypeDef status __attribute__((unused)), uint32_t xferred __attribute__((unused)), uint32_t remaining __attribute__((unused))) {
     fd_detour_source_collection_pop(&fd_usb_detour_source_collection);
+    return USB_STATUS_OK;
 }
 
 void fd_usb_transfer(void) {

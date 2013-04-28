@@ -1,5 +1,7 @@
 #include "fd_rtc.h"
 
+#include "fd_processor.h"
+
 #include <em_cmu.h>
 #include <em_rtc.h>
 
@@ -31,14 +33,10 @@ uint32_t rtc_get_seconds(void) {
 
 fd_time_t rtc_get_time(void) {
     fd_time_t time;
-    while (true) {
-        time.microseconds = rtc_time_microseconds;
-        time.seconds = rtc_time_seconds;
-        uint32_t again = rtc_time_microseconds;
-        if (time.microseconds == again) {
-            break;
-        }
-    }
+    fd_interrupts_disable();
+    time.microseconds = rtc_time_microseconds;
+    time.seconds = rtc_time_seconds;
+    fd_interrupts_enable();
     return time;
 }
 
@@ -61,9 +59,10 @@ fd_time_t rtc_get_accurate_time(void) {
 void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
-    rtc_time_microseconds += 31250;
-    if (rtc_time_microseconds >= 1000000) {
+    uint32_t microseconds = rtc_time_microseconds + 31250;
+    if (microseconds >= 1000000) {
+        microseconds -= 1000000;
         ++rtc_time_seconds;
-        rtc_time_microseconds -= 1000000;
     }
+    rtc_time_microseconds = microseconds;
 }

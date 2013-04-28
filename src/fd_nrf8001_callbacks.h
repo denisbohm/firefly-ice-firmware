@@ -23,7 +23,7 @@ void fd_nrf8001_setup_complete(void);
 
 void fd_nrf8001_read_dynamic_data_error(uint8_t status);
 
-void fd_nrf8001_read_dynamic_data_continue(uint8_t *data, uint32_t length);
+void fd_nrf8001_read_dynamic_data_continue(uint32_t sequence_number, uint8_t *data, uint32_t length);
 
 void fd_nrf8001_read_dynamic_data_complete(void);
 

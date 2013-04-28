@@ -3,6 +3,7 @@
 #include "fd_binary.h"
 #include "fd_bluetooth.h"
 #include "fd_detour.h"
+#include "fd_event.h"
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
 #include "fd_log.h"
@@ -15,15 +16,18 @@
 #include "fd_tca6507.h"
 #include "fd_usb.h"
 
+#include <em_cmu.h>
 #include <em_gpio.h>
+#include <em_wdog.h>
 
+#include <float.h>
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
 
 uint32_t led_n = 0;
 
-void set_led(int n) {
+void set_led(uint32_t n) {
     if (led_n == n) {
         return;
     }
@@ -93,8 +97,24 @@ void fd_sensing_push(
     fd_detour_source_collection_push(detour_source_collection, &fd_sensing_detour_source);
 }
 
-void main(void) {
+int main(void) {
     fd_processor_initialize();
+
+#ifdef DEBUG
+#warning debug is defined - watchdog is not enabled
+#else
+    CMU_ClockEnable(cmuClock_CORELE, true);
+    WDOG_Init_TypeDef wdog_init = WDOG_INIT_DEFAULT;
+    wdog_init.perSel = wdogPeriod_8k;
+    wdog_init.swoscBlock = true;
+    wdog_init.lock = true;
+    WDOG_Init(&wdog_init);
+#endif
+
+    fd_spi1_power_on();
+    fd_i2c1_power_on();
+
+    fd_event_initialize();
 
     fd_log_initialize();
 
@@ -103,42 +123,42 @@ void main(void) {
     fd_usb_initialize();
 
     GPIO_PinOutClear(LED1_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED1_PORT_PIN);
 
     GPIO_PinOutClear(LED2_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED2_PORT_PIN);
 
     GPIO_PinOutClear(LED3_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED3_PORT_PIN);
 
     GPIO_PinOutClear(LED4_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED4_PORT_PIN);
 
     GPIO_PinOutClear(LED5_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED5_PORT_PIN);
 
     GPIO_PinOutClear(LED6_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED6_PORT_PIN);
 
     GPIO_PinOutClear(LED7_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED7_PORT_PIN);
 
     GPIO_PinOutClear(LED8_PORT_PIN);
-    fd_delay_ms(250);
+    fd_delay_ms(100);
     GPIO_PinOutSet(LED8_PORT_PIN);
 
     fd_spi0_initialize();
     fd_lis3dh_initialize();
 
     fd_i2c1_initialize();
-    fd_i2c1_power_on();
+//    fd_i2c1_power_on();
 
     fd_tca6507_initialize();
     fd_tca6507_enable();
@@ -152,17 +172,18 @@ void main(void) {
 
     fd_adc_initialize();
 
+//    fd_spi1_power_on();
     fd_spi1_initialize();
-    fd_spi1_power_on();
 
     fd_nrf8001_initialize();
     fd_nrf8001_reset();
     fd_bluetooth_initialize();
     fd_sensing_initialize();
     int this_n = 0;
-    float last_v = 0.0f;
+    float last_v = FLT_MAX;
     double time = 0.0;
     while (true) {
+        WDOG_Feed();
         fd_bluetooth_step();
         fd_nrf8001_transfer();
         fd_usb_transfer();
@@ -183,7 +204,7 @@ void main(void) {
         float ax, ay, az;
         fd_lis3dh_read(&ax, &ay, &az);
         v = 8.0f * (ax - 0.0f);
-        fd_sensing_push(&fd_bluetooth_detour_source_collection, ax, ay, ax, mx, my, mz);
+        fd_sensing_push(&fd_bluetooth_detour_source_collection, ax, ay, az, mx, my, mz);
         int n = this_n;
         if (fabs(v - last_v) > 0.75) {
             int n = 1 + (int)v;
@@ -198,17 +219,12 @@ void main(void) {
         }
         set_led(n);
 
-        if (fd_log_did_log) {
-            fd_tca6507_set_color(true, false, false);
-        } else
-        if (fd_nrf8001_did_receive_data) {
-            fd_tca6507_set_color(false, true, false);
-        } else
         if (fd_nrf8001_did_connect) {
-            fd_tca6507_set_color(true, true, true);
-        } else
-        if (fd_nrf8001_did_setup) {
             fd_tca6507_set_color(false, false, true);
+        } else {
+            fd_tca6507_set_color(false, false, false);
         }
     }
+
+    return 0;
 }

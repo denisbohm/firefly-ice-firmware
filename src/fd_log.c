@@ -25,10 +25,10 @@ void fd_log(char *message) {
     if (length > remaining_length) {
         length = remaining_length;
     }
-    fd_binary_put_bytes(&binary, message, length);
+    fd_binary_put_bytes(&binary, (uint8_t *)message, length);
     fd_storage_append_page(FD_LOG_STORAGE_TYPE, data, binary.put_index);
 }
 
-void fd_log_ram(char *message) {
+void fd_log_ram(char *message __attribute__((unused))) {
     fd_log_did_log = true;
 }

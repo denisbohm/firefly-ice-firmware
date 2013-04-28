@@ -255,7 +255,7 @@ void fd_bluetooth_step(void) {
 
 void fd_nrf8001_device_started_event(
     uint8_t operating_mode,
-    uint8_t hardware_error,
+    uint8_t hardware_error __attribute__((unused)),
     uint8_t data_credit_available
 ) {
     fd_bluetooth_initial_data_credits = data_credit_available;
@@ -275,10 +275,10 @@ void fd_nrf8001_device_started_event(
 }
 
 void fd_nrf8001_pipe_error_event(
-    uint8_t service_pipe_number,
-    uint8_t error_code,
-    uint8_t *error_data,
-    uint32_t error_data_length
+    uint8_t service_pipe_number __attribute__((unused)),
+    uint8_t error_code __attribute__((unused)),
+    uint8_t *error_data __attribute__((unused)),
+    uint32_t error_data_length __attribute__((unused))
 ) {
     fd_nrf8001_error();
 }
@@ -301,12 +301,12 @@ void fd_nrf8001_setup_complete(void) {
 }
 
 void fd_nrf8001_connected_event(
-    uint8_t address_type,
-    uint8_t *peer_address,
-    uint16_t connection_interval,
-    uint16_t slave_latency,
-    uint16_t supervision_timeout,
-    uint8_t masterClockAccuracy
+    uint8_t address_type __attribute__((unused)),
+    uint8_t *peer_address __attribute__((unused)),
+    uint16_t connection_interval __attribute__((unused)),
+    uint16_t slave_latency __attribute__((unused)),
+    uint16_t supervision_timeout __attribute__((unused)),
+    uint8_t masterClockAccuracy __attribute__((unused))
 ) {
     fd_nrf8001_did_connect = true;
 
@@ -317,8 +317,8 @@ void fd_nrf8001_connected_event(
 }
 
 void fd_nrf8001_disconnected_event(
-    uint8_t aci_status,
-    uint8_t btle_status
+    uint8_t aci_status __attribute__((unused)),
+    uint8_t btle_status __attribute__((unused))
 ) {
     fd_bluetooth_system_steps = 0;
     fd_bluetooth_data_steps = 0;
@@ -353,6 +353,9 @@ void fd_nrf8001_detour_data_received(
 ) {
     fd_detour_event(&fd_bluetooth_detour, data, data_length);
     switch (fd_detour_state(&fd_bluetooth_detour)) {
+        case fd_detour_state_clear:
+        case fd_detour_state_intermediate:
+        break;
         case fd_detour_state_success:
             fd_control_process(&fd_bluetooth_detour_source_collection, fd_bluetooth_detour.data, fd_bluetooth_detour.length);
             fd_detour_clear(&fd_bluetooth_detour);

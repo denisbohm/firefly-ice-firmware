@@ -17,6 +17,26 @@ void *memset(void *s, int c, size_t n) {
 }
 */
 
+volatile int32_t fd_interrupts_disable_level;
+
+void fd_interrupts_disable() {
+    __disable_irq();
+    ++fd_interrupts_disable_level;
+}
+
+void fd_interrupts_enable() {
+    --fd_interrupts_disable_level;
+
+    // paranoia: check for unmatched enable call and try to recover
+    if (fd_interrupts_disable_level < 0) {
+        fd_interrupts_disable_level = 0;
+    }
+
+    if (fd_interrupts_disable_level == 0) {
+        __enable_irq();
+    }
+}
+
 void CMU_IRQHandler(void) {
     uint32_t interrupts = CMU_IntGet();
     CMU_IntClear(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
@@ -32,6 +52,8 @@ void CMU_IRQHandler(void) {
 }
 
 void fd_processor_initialize(void) {
+    fd_interrupts_disable_level = 0;
+
     CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
     CMU_IntEnable(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
     NVIC_EnableIRQ(CMU_IRQn);
@@ -116,7 +138,7 @@ void fd_processor_initialize(void) {
 //    GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
 }
 
-void __attribute((naked)) fd_delay_3x_cycles(uint32_t cycles) {
+void __attribute((naked)) fd_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
     __asm(
         "    subs r0, #1\n"
         "    bne fd_delay_3x_cycles\n"

@@ -9,5 +9,5 @@
 MEMORY
 {
   FLASH (rx) : ORIGIN = 0x0, LENGTH = 0x40000 /* 256K */
-  RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x8000 /* 32K */
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x8000 /* 32K */
 }

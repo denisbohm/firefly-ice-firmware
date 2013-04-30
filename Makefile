@@ -95,7 +95,7 @@ all:: $(BinDir)/$(PROJECT).elf
 
 $(BinDir)/$(PROJECT).elf: $(OBJECTS) $(STARTUP)
 	@echo building output ...
-	$(CC) $(LFLAGS) -o $@ $(OBJECTS) $(STARTUP) -lm
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $(OBJECTS) $(STARTUP) -lm
 
 $(ObjDir)/%.o : %.c
 	@echo creating $@ ...

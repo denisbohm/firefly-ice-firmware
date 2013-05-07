@@ -62,6 +62,14 @@
       <file file_name="src/fd_time.h"/>
       <file file_name="src/fd_event.c"/>
       <file file_name="src/fd_event.h"/>
+      <file file_name="src/fd_activity.c"/>
+      <file file_name="src/fd_activity.h"/>
+      <file file_name="src/fd_sensing.c"/>
+      <file file_name="src/fd_sensing.h"/>
+      <file file_name="src/fd_ui.c"/>
+      <file file_name="src/fd_ui.h"/>
+      <file file_name="src/fd_storage_buffer.h"/>
+      <file file_name="src/fd_storage_buffer.c"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

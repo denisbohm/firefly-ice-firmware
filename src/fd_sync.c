@@ -1,6 +1,7 @@
 #include "fd_binary.h"
 #include "fd_control.h"
 #include "fd_storage.h"
+#include "fd_storage_buffer.h"
 #include "fd_sync.h"
 #include "fd_system.h"
 
@@ -26,7 +27,10 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     fd_storage_metadata_t metadata;
     bool has_page = fd_storage_read_first_page(&metadata, &fd_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
     if (!has_page) {
-        return;
+        has_page = fd_storage_buffer_get_first_page(&metadata);
+        if (!has_page) {
+            return;
+        }
     }
 
     fd_binary_t binary;
@@ -55,5 +59,9 @@ void fd_sync_ack(fd_detour_source_collection_t *detour_source_collection __attri
     metadata.length = fd_binary_get_uint16(&binary);
     metadata.hash = fd_binary_get_uint16(&binary);
     metadata.type = fd_binary_get_uint32(&binary);
-    fd_storage_erase_page(&metadata);
+    if (metadata.page == 0xffffffff) {
+        fd_storage_buffer_clear_page(&metadata);
+    } else {
+        fd_storage_erase_page(&metadata);
+    }
 }

@@ -34,7 +34,7 @@ uint32_t fd_storage_used_page_count(void) {
 
 void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
     uint8_t buffer[128] = {0x00, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
-    memcpy(&buffer[4], data, 4 + length);
+    memcpy(&buffer[8], data, length);
     uint16_t hash = fd_crc_16(0xffff, &buffer[4], 4 + length);
     buffer[2] = hash;
     buffer[3] = hash >> 8;

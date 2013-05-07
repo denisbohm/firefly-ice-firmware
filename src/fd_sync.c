@@ -27,7 +27,7 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     fd_storage_metadata_t metadata;
     bool has_page = fd_storage_read_first_page(&metadata, &fd_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
     if (!has_page) {
-        has_page = fd_storage_buffer_get_first_page(&metadata);
+        has_page = fd_storage_buffer_get_first_page(&metadata, &fd_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
         if (!has_page) {
             return;
         }

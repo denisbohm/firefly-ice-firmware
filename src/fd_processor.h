@@ -59,6 +59,9 @@
 
 void fd_processor_initialize(void);
 
+void fd_processor_sleep(void);
+void fd_processor_wake(void);
+
 void fd_delay_ms(uint32_t ms);
 
 void fd_interrupts_disable(void);

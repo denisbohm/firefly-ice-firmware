@@ -4,14 +4,17 @@
 #include <em_cmu.h>
 #include <em_usart.h>
 
+static GPIO_Port_TypeDef async_csn_port;
+static unsigned int async_csn_pin;
 static fd_spi_transfer *async_transfers;
 static uint32_t async_count;
 static void (*async_callback)(void);
 static uint32_t async_index;
 static uint32_t async_flags;
-#define rx_complete_flag 0x01
-#define tx_complete_flag 0x02
-#define complete_flag 0x04
+#define started_flag 0x01
+#define rx_complete_flag 0x02
+#define tx_complete_flag 0x04
+#define complete_flag 0x08
 
 static uint8_t *rx_buffer;
 static uint32_t rx_length;
@@ -34,6 +37,16 @@ void fd_spi0_initialize(void) {
 
     USART0->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US0_LOCATION;
 
+    USART_Enable(USART0, usartEnable);
+}
+
+void fd_spi0_sleep(void) {
+    USART_Enable(USART0, usartDisable);
+    CMU_ClockEnable(cmuClock_USART0, false);
+}
+
+void fd_spi0_wake(void) {
+    CMU_ClockEnable(cmuClock_USART0, true);
     USART_Enable(USART0, usartEnable);
 }
 
@@ -100,11 +113,12 @@ void start_async_transfer(void);
 static
 void complete(uint32_t flag) {
     async_flags |= flag;
-    if (async_flags == (rx_complete_flag | tx_complete_flag)) {
+    if (async_flags == (started_flag | rx_complete_flag | tx_complete_flag)) {
         if (++async_index < async_count) {
             start_async_transfer();
         } else {
-            async_flags = complete_flag;
+            GPIO_PinOutSet(async_csn_port, async_csn_pin);
+            async_flags |= complete_flag;
             if (async_callback != 0) {
                 (*async_callback)();
             }
@@ -124,7 +138,9 @@ void tx_complete(void) {
 
 static
 void start_async_transfer(void) {
-    async_flags = 0;
+    async_flags = started_flag;
+
+    GPIO_PinOutClear(async_csn_port, async_csn_pin);
 
     fd_spi_transfer *transfer = &async_transfers[async_index];
     if (transfer->op & fd_spi_op_read) {
@@ -139,7 +155,9 @@ void start_async_transfer(void) {
     }
 }
 
-void fd_spi0_io(fd_spi_transfer *transfers, uint32_t count, void (*callback)(void)) {
+void fd_spi0_io(GPIO_Port_TypeDef csn_port, unsigned int csn_pin, fd_spi_transfer *transfers, uint32_t count, void (*callback)(void)) {
+    async_csn_port = csn_port;
+    async_csn_pin = csn_pin;
     async_transfers = transfers;
     async_count = count;
     async_callback = callback;
@@ -149,13 +167,15 @@ void fd_spi0_io(fd_spi_transfer *transfers, uint32_t count, void (*callback)(voi
 }
 
 void fd_spi0_wait(void) {
-    while (async_flags != complete_flag);
+    if (async_flags & started_flag) {
+        while (!(async_flags & complete_flag));
+    }
 }
 
 #define SPI_READ 0x80
 #define SPI_ADDRESS_INCREMENT 0x40
 
-uint8_t fd_spi0_read(uint8_t address) {
+uint8_t fd_spi0_read(GPIO_Port_TypeDef csn_port, unsigned int csn_pin, uint8_t address) {
     uint8_t addr = SPI_READ | address;
     uint8_t result;
     fd_spi_transfer transfers[2] = {
@@ -172,7 +192,7 @@ uint8_t fd_spi0_read(uint8_t address) {
             .rx_buffer = &result
         }
     };
-    fd_spi0_io(transfers, 2, 0);
+    fd_spi0_io(csn_port, csn_pin, transfers, 2, 0);
     fd_spi0_wait();
     return result;
 }

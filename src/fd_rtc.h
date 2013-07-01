@@ -7,10 +7,13 @@
 
 void fd_rtc_initialize(void);
 
-uint32_t rtc_get_seconds(void);
+void fd_rtc_sleep(void);
+void fd_rtc_wake(void);
 
-fd_time_t rtc_get_time(void);
+uint32_t fd_rtc_get_seconds(void);
 
-fd_time_t rtc_get_accurate_time(void);
+fd_time_t fd_rtc_get_time(void);
+
+fd_time_t fd_rtc_get_accurate_time(void);
 
 #endif

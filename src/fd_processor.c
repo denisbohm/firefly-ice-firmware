@@ -51,16 +51,30 @@ void CMU_IRQHandler(void) {
     }
 }
 
+void fd_processor_sleep(void) {
+    CMU_ClockEnable(cmuClock_HFPER, false);
+    CMU_ClockSelectSet(cmuClock_HF, cmuSelect_LFXO);
+    CMU_OscillatorEnable(cmuOsc_HFRCO, false, false);
+}
+
+void fd_processor_wake(void) {
+    CMU_OscillatorEnable(cmuOsc_HFRCO, true, true);
+    CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFRCO);
+    CMU_ClockEnable(cmuClock_HFPER, true);
+}
+
 void fd_processor_initialize(void) {
     fd_interrupts_disable_level = 0;
 
-    CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
-    CMU_IntEnable(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
-    NVIC_EnableIRQ(CMU_IRQn);
 
-    CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
+//    CMU_HFRCOBandSet(cmuHFRCOBand_14MHz);
 
-    CMU_ClockEnable(cmuClock_HFPER, true);
+//    CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
+//    CMU_IntEnable(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
+//    NVIC_EnableIRQ(CMU_IRQn);
+
+//    CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
+//    CMU_ClockEnable(cmuClock_HFPER, true);
 
     CMU_ClockEnable(cmuClock_GPIO, true);
 
@@ -81,18 +95,18 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(gpioPortE, 10, gpioModeDisabled, 0); // unused port pin
     GPIO_PinModeSet(gpioPortE, 11, gpioModeDisabled, 0); // unused port pin
 
-    GPIO_PinModeSet(BAT_VDIV2EN_PORT_PIN, gpioModePushPull, 1);
-    GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeDisabled, 0); // analog input
+    GPIO_PinModeSet(BAT_VDIV2EN_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeInput, 0); // analog input
 
     GPIO_PinModeSet(AUX_PWR_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(MAG_INT_PORT_PIN, gpioModeInputPull, 0);
-    GPIO_IntConfig(MAG_INT_PORT_PIN, true /* rising */, false /* falling */, true);
+//    GPIO_IntConfig(MAG_INT_PORT_PIN, true /* rising */, false /* falling */, true);
     GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModePushPull, 0);
 
     GPIO_PinModeSet(ACC_CSN_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(US0_CLK_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(US0_MISO_PORT_PIN, gpioModeInputPull, 0);
+    GPIO_PinModeSet(US0_MISO_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(US0_MOSI_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(ACC_INT_PORT_PIN, gpioModeInput, 0);
     GPIO_IntConfig(ACC_INT_PORT_PIN, true /* rising */, true /* falling */, true);
@@ -113,11 +127,11 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(SWD_IO_PORT_PIN, gpioModeDisabled, 0);
 
     GPIO_PinModeSet(CHG_STAT_PORT_PIN, gpioModeInput, 0);
-    GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
+//    GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
     GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeDisabled, 0); // analog input
 
-//    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
-//    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0); // !!! Don't change this pin. Voltage regulation will be lost. -denis
 
     GPIO_PinModeSet(USB_DM_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(USB_DP_PORT_PIN, gpioModeInput, 0);
@@ -129,7 +143,7 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(NRF_REQN_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInput, 0);
-    GPIO_IntConfig(NRF_RDYN_PORT_PIN, true /* rising */, true /* falling */, true);
+//    GPIO_IntConfig(NRF_RDYN_PORT_PIN, true /* rising */, true /* falling */, true);
 
 //    GPIO_PinModeSet(LFXTAL_P_PORT_PIN, gpioModePushPull, 0);
 //    GPIO_PinModeSet(LFXTAL_N_PORT_PIN, gpioModePushPull, 0);

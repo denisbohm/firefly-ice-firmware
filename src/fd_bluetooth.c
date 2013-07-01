@@ -127,6 +127,8 @@ static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTE
 #define fd_nrf8001_connect_step BIT(1)
 #define fd_nrf8001_change_timing_request_step BIT(2)
 #define fd_nrf8001_open_remote_pipe_step BIT(3)
+#define fd_nrf8001_sleep_step BIT(4)
+#define fd_nrf8001_wakeup_step BIT(5)
 
 #define fd_nrf8001_detour_send_data_ack_step BIT(0)
 
@@ -136,6 +138,7 @@ static uint32_t fd_bluetooth_initial_data_credits;
 static uint32_t fd_bluetooth_setup_index;
 static uint64_t fd_bluetooth_pipes_open;
 static uint64_t fd_bluetooth_pipes_closed;
+static bool fd_bluetooth_idle;
 
 #define DETOUR_SIZE 256
 
@@ -158,6 +161,7 @@ void fd_bluetooth_initialize(void) {
     fd_bluetooth_setup_index = 0;
     fd_bluetooth_pipes_open = 0;
     fd_bluetooth_pipes_closed = 0;
+    fd_bluetooth_idle = false;
 
     fd_detour_initialize(&fd_bluetooth_detour, fd_bluetooth_detour_data, DETOUR_SIZE);
 
@@ -167,6 +171,19 @@ void fd_bluetooth_initialize(void) {
     fd_nrf8001_did_connect = false;
     fd_nrf8001_did_open_pipes = false;
     fd_nrf8001_did_receive_data = false;
+}
+
+bool fd_bluetooth_is_asleep(void) {
+    return fd_bluetooth_idle;
+}
+
+void fd_bluetooth_sleep(void) {
+    fd_bluetooth_system_steps = fd_nrf8001_sleep_step;
+}
+
+void fd_bluetooth_wake(void) {
+    fd_bluetooth_idle = false;
+    fd_bluetooth_system_steps = fd_nrf8001_wakeup_step;
 }
 
 void fd_bluetooth_step_queue(uint32_t step) {
@@ -187,6 +204,15 @@ void fd_bluetooth_data_step_complete(uint32_t step) {
 
 void fd_bluetooth_system_step(void) {
     while ((fd_bluetooth_system_steps != 0) && fd_nrf8001_has_system_credits()) {
+        if (fd_bluetooth_system_steps & fd_nrf8001_sleep_step) {
+            fd_nrf8001_sleep();
+            fd_bluetooth_step_complete(fd_nrf8001_sleep_step);
+            fd_bluetooth_idle = true;
+        } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_wakeup_step) {
+            fd_nrf8001_wakeup();
+            fd_bluetooth_step_complete(fd_nrf8001_wakeup_step);
+        } else
         if (fd_bluetooth_system_steps & fd_nrf8001_setup_continue_step) {
             fd_nrf8001_setup_continue();
         } else
@@ -248,6 +274,10 @@ void fd_bluetooth_transfer(void) {
 }
 
 void fd_bluetooth_step(void) {
+    if (fd_bluetooth_idle) {
+        return;
+    }
+
     fd_bluetooth_system_step();
     fd_bluetooth_data_step();
     fd_bluetooth_transfer();

@@ -9,6 +9,7 @@
 
 static volatile uint32_t rtc_time_seconds;
 static volatile uint32_t rtc_time_microseconds;
+static volatile uint32_t rtc_time_tick;
 
 void fd_rtc_initialize(void) {
     rtc_time_seconds = 0;
@@ -16,22 +17,34 @@ void fd_rtc_initialize(void) {
 
     CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
     CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
+    CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFXO);
     CMU_ClockEnable(cmuClock_RTC, true);
     CMU_ClockEnable(cmuClock_CORELE, true);
 
-    RTC_CompareSet(0, 1024);
-    RTC_CounterReset();
+    fd_rtc_wake();
+
     RTC_IntEnable(RTC_IFC_COMP0);
     NVIC_EnableIRQ(RTC_IRQn);
     RTC_Init_TypeDef init = RTC_INIT_DEFAULT;
     RTC_Init(&init);
 }
 
-uint32_t rtc_get_seconds(void) {
+void fd_rtc_sleep(void) {
+    rtc_time_tick = 1000000;
+    RTC_CompareSet(0, 65536);
+}
+
+void fd_rtc_wake(void) {
+    rtc_time_tick = 31250;
+    RTC_CompareSet(0, 1024);
+    RTC_CounterReset();
+}
+
+uint32_t fd_rtc_get_seconds(void) {
     return rtc_time_seconds;
 }
 
-fd_time_t rtc_get_time(void) {
+fd_time_t fd_rtc_get_time(void) {
     fd_time_t time;
     fd_interrupts_disable();
     time.microseconds = rtc_time_microseconds;
@@ -40,7 +53,7 @@ fd_time_t rtc_get_time(void) {
     return time;
 }
 
-fd_time_t rtc_get_accurate_time(void) {
+fd_time_t fd_rtc_get_accurate_time(void) {
     fd_time_t time;
     uint32_t counter;
     while (true) {
@@ -59,10 +72,14 @@ fd_time_t rtc_get_accurate_time(void) {
 void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
-    uint32_t microseconds = rtc_time_microseconds + 31250;
-    if (microseconds >= 1000000) {
-        microseconds -= 1000000;
-        ++rtc_time_seconds;
+    if (RTC->COMP0 == 65536) {
+        uint32_t microseconds = rtc_time_microseconds + 31250;
+        if (microseconds >= 1000000) {
+            microseconds -= 1000000;
+            ++rtc_time_seconds;
+        }
+        rtc_time_microseconds = microseconds;
+    } else {
+        rtc_time_seconds += 2;
     }
-    rtc_time_microseconds = microseconds;
 }

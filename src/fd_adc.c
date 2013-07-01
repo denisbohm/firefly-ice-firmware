@@ -26,9 +26,16 @@ void fd_adc_initialize(void) {
     singleInit.input = BAT_VDIV2_ADC_CHANNEL;
     ADC_InitSingle(ADC0, &singleInit);
 
-    ADC0->IEN = ADC_IEN_SINGLE;
+    ADC_IntEnable(ADC0, ADC_IF_SINGLE);
+    NVIC_EnableIRQ(ADC0_IRQn);
 
     CMU_ClockEnable(cmuClock_ADC0, false);
+}
+
+void fd_adc_sleep(void) {
+}
+
+void fd_adc_wake(void) {
 }
 
 void ADC0_IRQHandler(void) {

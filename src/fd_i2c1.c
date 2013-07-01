@@ -20,6 +20,18 @@ void fd_i2c1_initialize(void) {
     I2C_Enable(I2C1, true);
 }
 
+void fd_i2c1_sleep(void) {
+    I2C1->ROUTE = 0;
+    I2C_Enable(I2C1, false);
+    CMU_ClockEnable(cmuClock_I2C1, false);
+}
+
+void fd_i2c1_wake(void) {
+    CMU_ClockEnable(cmuClock_I2C1, true);
+    I2C1->ROUTE = I2C_ROUTE_SDAPEN | I2C_ROUTE_SCLPEN | I2C1_LOCATION;
+    I2C_Enable(I2C1, true);
+}
+
 void fd_i2c1_power_on(void) {
     GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModeWiredAnd, 1);
     GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModeWiredAnd, 1);
@@ -29,6 +41,15 @@ void fd_i2c1_power_on(void) {
 
     NVIC_ClearPendingIRQ(I2C1_IRQn);
     NVIC_EnableIRQ(I2C1_IRQn);
+}
+
+void fd_i2c1_power_off(void) {
+    GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModePushPull, 0);
+
+    CMU_ClockEnable(cmuClock_I2C1, false);
+
+    GPIO_PinOutClear(AUX_PWR_PORT_PIN);
 }
 
 void I2C1_IRQHandler(void) {

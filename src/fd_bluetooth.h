@@ -5,6 +5,11 @@
 
 void fd_bluetooth_initialize(void);
 
+void fd_bluetooth_sleep(void);
+void fd_bluetooth_wake(void);
+
+bool fd_bluetooth_is_asleep(void);
+
 void fd_bluetooth_step(void);
 
 extern bool fd_nrf8001_did_setup;

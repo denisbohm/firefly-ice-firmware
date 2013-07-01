@@ -42,6 +42,16 @@ void fd_spi1_initialize(void) {
     USART_Enable(USART1, usartEnable);
 }
 
+void fd_spi1_sleep(void) {
+    USART_Enable(USART1, usartDisable);
+    CMU_ClockEnable(cmuClock_USART1, false);
+}
+
+void fd_spi1_wake(void) {
+    CMU_ClockEnable(cmuClock_USART1, true);
+    USART_Enable(USART1, usartEnable);
+}
+
 void fd_spi1_power_on(void) {
     // power up radio section
     for (int i = 0; i < 100; ++i) {
@@ -53,6 +63,21 @@ void fd_spi1_power_on(void) {
     // set radio inputs to initial conditions
     GPIO_PinOutSet(NRF_REQN_PORT_PIN);
     GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInputPull, 1);
+}
+
+void fd_spi1_power_off(void) {
+    CMU_ClockEnable(cmuClock_USART1, false);
+
+    USART1->ROUTE = 0;
+
+    GPIO_PinModeSet(US1_CLK_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(US1_MISO_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(US1_MOSI_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(NRF_REQN_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModePushPull, 0);
+
+    GPIO_PinOutClear(NRF_PWR_PORT_PIN);
 }
 
 void fd_spi1_tx_clear(void) {

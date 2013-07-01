@@ -50,14 +50,13 @@ void fd_mag3110_initialize(void) {
          fd_log_assert_fail("");
          return;
     }
-    result = fd_i2c1_register_write(ADDRESS, CTRL_REG1, CTRL_REG1_DR_OS_80_16 | CTRL_REG1_AC);
-    if (!result) {
-         fd_log_assert_fail("");
-         return;
-    }
-    /*
+
+    fd_mag3110_wake();
+}
+
+void fd_mag3110_calibrate_offsets(void) {
     uint8_t bytes[6];
-    result = fd_i2c1_register_read_bytes(ADDRESS, OUT_X_MSB, bytes, sizeof(bytes));
+    bool result = fd_i2c1_register_read_bytes(ADDRESS, OUT_X_MSB, bytes, sizeof(bytes));
     if (!result) {
         return;
     }
@@ -74,7 +73,32 @@ void fd_mag3110_initialize(void) {
     if (!result) {
         return;
     }
-    */
+}
+
+void fd_mag3110_sleep(void) {
+    bool result = fd_i2c1_register_write(ADDRESS, CTRL_REG2, 0);
+    if (!result) {
+         fd_log_assert_fail("");
+         return;
+    }
+    result = fd_i2c1_register_write(ADDRESS, CTRL_REG1, 0);
+    if (!result) {
+         fd_log_assert_fail("");
+         return;
+    }
+}
+
+void fd_mag3110_wake(void) {
+    bool result = fd_i2c1_register_write(ADDRESS, CTRL_REG2, CTRL_REG2_AUTO_MRST_EN);
+    if (!result) {
+         fd_log_assert_fail("");
+         return;
+    }
+    result = fd_i2c1_register_write(ADDRESS, CTRL_REG1, CTRL_REG1_DR_OS_80_16 | CTRL_REG1_AC);
+    if (!result) {
+         fd_log_assert_fail("");
+         return;
+    }
 }
 
 #define SCALE (0.001 / 30000.0f)

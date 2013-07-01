@@ -182,11 +182,18 @@ static fd_detour_source_collection_t fd_usb_detour_source_collection;
 void fd_usb_initialize(void) {
     fd_usb_log_index = 0;
 
-    USBD_Init(&initstruct);
-
     fd_detour_initialize(&fd_usb_detour, fd_usb_detour_data, DETOUR_SIZE);
-
     fd_detour_source_collection_initialize(&fd_usb_detour_source_collection);
+
+    fd_usb_wake();
+}
+
+void fd_usb_wake(void) {
+    USBD_Init(&initstruct);
+}
+
+void fd_usb_sleep(void) {
+    USBD_Stop();
 }
 
 int fd_usb_WriteChar(char c) {

@@ -19,7 +19,7 @@ void fd_log(char *message) {
     uint8_t data[FD_STORAGE_MAX_DATA_LENGTH];
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, FD_STORAGE_MAX_DATA_LENGTH);
-    fd_binary_put_time64(&binary, rtc_get_accurate_time());
+    fd_binary_put_time64(&binary, fd_rtc_get_accurate_time());
     uint32_t length = strlen(message);
     uint32_t remaining_length = fd_binary_remaining_length(&binary);
     if (length > remaining_length) {

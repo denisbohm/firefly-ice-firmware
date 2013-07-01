@@ -3,8 +3,8 @@
 
 void fd_tca6507_initialize(void);
 
-void fd_tca6507_enable(void);
-void fd_tca6507_disable(void);
+void fd_tca6507_wake(void);
+void fd_tca6507_sleep(void);
 
 void fd_tca6507_test(void);
 

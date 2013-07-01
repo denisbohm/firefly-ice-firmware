@@ -21,11 +21,11 @@
 void fd_tca6507_initialize(void) {
 }
 
-void fd_tca6507_enable(void) {
+void fd_tca6507_wake(void) {
     GPIO_PinOutSet(LED_EN_PORT_PIN);
 }
 
-void fd_tca6507_disable(void) {
+void fd_tca6507_sleep(void) {
     GPIO_PinOutClear(LED_EN_PORT_PIN);
 }
 

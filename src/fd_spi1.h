@@ -3,17 +3,32 @@
 
 #include <stdint.h>
 
+#include <em_gpio.h>
+
 void fd_spi1_initialize(void);
+
 void fd_spi1_sleep(void);
 void fd_spi1_wake(void);
-void fd_spi1_power_on(void);
-void fd_spi1_power_off(void);
-void fd_spi1_tx_clear(void);
-void fd_spi1_tx_queue(uint8_t *buffer, uint32_t length);
-void fd_spi1_start_transfer(void (*callback)(void));
+
+typedef enum {fd_spi_op_read = 0x01, fd_spi_op_write = 0x02, fd_spi_op_read_write = 0x03} fd_spi_op;
+
+typedef struct {
+    fd_spi_op op;
+    uint32_t length;
+    uint8_t *tx_buffer;
+    uint8_t *rx_buffer;
+} fd_spi_transfer;
+
+void fd_spi1_io(GPIO_Port_TypeDef csn_port, unsigned int csn_pin, fd_spi_transfer *tranfers, uint32_t count, void (*callback)(void));
+
 void fd_spi1_wait(void);
-void fd_spi1_sync_transfer(void);
-void fd_spi1_get_rx(uint8_t **pbuffer, uint32_t *plength);
-void fd_spi1_rx_clear(void);
+
+// synchronous call that writes the address and reads a 1-byte result using async I/O
+uint8_t fd_spi1_read(GPIO_Port_TypeDef csn_port, unsigned int csn_pin, uint8_t address);
+
+uint8_t fd_spi1_sync_io(uint8_t txdata);
+uint8_t fd_spi1_sync_read(uint8_t address);
+void fd_spi1_sync_write(uint8_t address, uint8_t value);
+void fd_spi1_sync_read_bytes(uint8_t address, uint8_t *bytes, uint32_t length);
 
 #endif

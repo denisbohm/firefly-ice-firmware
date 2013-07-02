@@ -1,40 +1,38 @@
-#include "fd_log.h"
 #include "fd_processor.h"
 #include "fd_spi1.h"
 
 #include <em_cmu.h>
-#include <em_gpio.h>
 #include <em_usart.h>
 
-#include <string.h>
+static GPIO_Port_TypeDef async_csn_port;
+static unsigned int async_csn_pin;
+static fd_spi_transfer *async_transfers;
+static uint32_t async_count;
+static void (*async_callback)(void);
+static uint32_t async_index;
+static uint32_t async_flags;
+#define started_flag 0x01
+#define rx_complete_flag 0x02
+#define tx_complete_flag 0x04
+#define complete_flag 0x08
 
-#define BUFFER_SIZE 32
-
-static void (*transfer_callback)(void);
-static uint32_t transfer_length;
-static uint32_t transfer_flags;
-#define rx_complete_flag 0x01
-#define tx_complete_flag 0x02
-#define complete_flag 0x04
-
-static uint8_t rx_buffer[BUFFER_SIZE];
+static uint8_t *rx_buffer;
 static uint32_t rx_length;
 static uint32_t rx_index;
+static void (*rx_callback)(void);
 
-static uint8_t tx_buffer[BUFFER_SIZE];
+static uint8_t *tx_buffer;
 static uint32_t tx_length;
 static uint32_t tx_index;
+static void (*tx_callback)(void);
 
 void fd_spi1_initialize(void) {
-    tx_length = 0;
-    rx_length = 0;
-
     CMU_ClockEnable(cmuClock_USART1, true);
 
     USART_InitSync_TypeDef spi_setup = USART_INITSYNC_DEFAULT;
-    spi_setup.msbf = false;
-    spi_setup.clockMode = usartClockMode0;
-    spi_setup.baudrate = 3000000;
+    spi_setup.msbf = true;
+    spi_setup.clockMode = usartClockMode3;
+    spi_setup.baudrate = 10000000;
     USART_InitSync(USART1, &spi_setup);
 
     USART1->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US1_LOCATION;
@@ -52,76 +50,17 @@ void fd_spi1_wake(void) {
     USART_Enable(USART1, usartEnable);
 }
 
-void fd_spi1_power_on(void) {
-    // power up radio section
-    for (int i = 0; i < 100; ++i) {
-        GPIO_PinOutClear(NRF_PWR_PORT_PIN);
-        GPIO_PinOutSet(NRF_PWR_PORT_PIN);
-    }
-    fd_delay_ms(100); // wait for power to come up (?ms)
-
-    // set radio inputs to initial conditions
-    GPIO_PinOutSet(NRF_REQN_PORT_PIN);
-    GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInputPull, 1);
-}
-
-void fd_spi1_power_off(void) {
-    CMU_ClockEnable(cmuClock_USART1, false);
-
-    USART1->ROUTE = 0;
-
-    GPIO_PinModeSet(US1_CLK_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(US1_MISO_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(US1_MOSI_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(NRF_REQN_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModePushPull, 0);
-
-    GPIO_PinOutClear(NRF_PWR_PORT_PIN);
-}
-
-void fd_spi1_tx_clear(void) {
-    tx_length = 0;
-}
-
-void fd_spi1_tx_queue(uint8_t *buffer, uint32_t length) {
-    if ((tx_length + length) > BUFFER_SIZE) {
-        fd_log_assert_fail("");
-        return;
-    }
-
-    memcpy(&tx_buffer[tx_length], buffer, length);
-    tx_length += length;
-}
-
-static
-void complete(uint32_t flag) {
-    transfer_flags |= flag;
-    if (transfer_flags == (rx_complete_flag | tx_complete_flag)) {
-        transfer_flags = complete_flag;
-        if (transfer_callback != 0) {
-            (*transfer_callback)();
-        }
-    }
-}
-
 void USART1_RX_IRQHandler(void) {
     if (USART1->STATUS & USART_STATUS_RXDATAV) {
         uint8_t rxdata = USART1->RXDATA;
         if (rx_index < rx_length) {
-            // 2nd byte is the number of rx bytes to follow
-            if (rx_index == 1) {
-                rx_length = rxdata + 2 /* dummy byte and length byte */;
-                if (rx_length > transfer_length) {
-                    transfer_length = rx_length;
-                }
-            }
             rx_buffer[rx_index++] = rxdata;
-        }
-        if (rx_index >= rx_length) {
+        } else {
             NVIC_DisableIRQ(USART1_RX_IRQn);
             USART1->IEN &= ~USART_IEN_RXDATAV;
-            complete(rx_complete_flag);
+            if (rx_callback != 0) {
+                (*rx_callback)();
+            }
         }
     }
 }
@@ -130,46 +69,132 @@ void USART1_TX_IRQHandler(void) {
     if (USART1->STATUS & USART_STATUS_TXBL) {
         if (tx_index < tx_length) {
             USART1->TXDATA = tx_buffer[tx_index++];
-        } else
-        if (tx_index < transfer_length) {
-            USART1->TXDATA = 0;
-            tx_index++;
         } else {
             NVIC_DisableIRQ(USART1_TX_IRQn);
             USART1->IEN &= ~USART_IEN_TXBL;
-            complete(tx_complete_flag);
+            if (tx_callback != 0) {
+                (*tx_callback)();
+            }
         }
     }
 }
 
-void fd_spi1_start_transfer(void (*callback)(void)) {
-    transfer_callback = callback;
-
-    transfer_length = tx_length;
-    rx_length = 2; // don't know how much to receive until 2nd byte with the length is read
-    if (rx_length > transfer_length) {
-        transfer_length = rx_length;
-    }
-
+static
+void start_async_rx(uint8_t *buffer, uint32_t length, void (*callback)(void)) {
+    rx_buffer = buffer;
+    rx_length = length;
     rx_index = 0;
+    rx_callback = callback;
+
     USART1->CMD = USART_CMD_CLEARRX;
+
     NVIC_ClearPendingIRQ(USART1_RX_IRQn);
     NVIC_EnableIRQ(USART1_RX_IRQn);
     USART1->IEN |= USART_IEN_RXDATAV;
+}
 
+static
+void start_async_tx(uint8_t *buffer, uint32_t length, void (*callback)(void)) {
+    tx_buffer = buffer;
+    tx_length = length;
     tx_index = 0;
-    if (tx_length > 0) {
-        USART1->CMD = USART_CMD_CLEARTX;
-        NVIC_ClearPendingIRQ(USART1_TX_IRQn);
-        NVIC_EnableIRQ(USART1_TX_IRQn);
-        USART1->IEN |= USART_IEN_TXBL;
-    } else {
-        transfer_flags |= tx_complete_flag;
+    tx_callback = callback;
+
+    USART1->CMD = USART_CMD_CLEARTX;
+
+    NVIC_ClearPendingIRQ(USART1_TX_IRQn);
+    NVIC_EnableIRQ(USART1_TX_IRQn);
+    USART1->IEN |= USART_IEN_TXBL;
+}
+
+static
+void start_async_transfer(void);
+
+static
+void complete(uint32_t flag) {
+    async_flags |= flag;
+    if (async_flags == (started_flag | rx_complete_flag | tx_complete_flag)) {
+        if (++async_index < async_count) {
+            start_async_transfer();
+        } else {
+            GPIO_PinOutSet(async_csn_port, async_csn_pin);
+            async_flags |= complete_flag;
+            if (async_callback != 0) {
+                (*async_callback)();
+            }
+        }
     }
 }
 
+static
+void rx_complete(void) {
+    complete(rx_complete_flag);
+}
+
+static
+void tx_complete(void) {
+    complete(tx_complete_flag);
+}
+
+static
+void start_async_transfer(void) {
+    async_flags = started_flag;
+
+    GPIO_PinOutClear(async_csn_port, async_csn_pin);
+
+    fd_spi_transfer *transfer = &async_transfers[async_index];
+    if (transfer->op & fd_spi_op_read) {
+        start_async_rx(transfer->rx_buffer, transfer->length, rx_complete);
+    } else {
+        async_flags |= rx_complete_flag;
+    }
+    if (transfer->op & fd_spi_op_write) {
+        start_async_tx(transfer->tx_buffer, transfer->length, tx_complete);
+    } else {
+        async_flags |= tx_complete_flag;
+    }
+}
+
+void fd_spi1_io(GPIO_Port_TypeDef csn_port, unsigned int csn_pin, fd_spi_transfer *transfers, uint32_t count, void (*callback)(void)) {
+    async_csn_port = csn_port;
+    async_csn_pin = csn_pin;
+    async_transfers = transfers;
+    async_count = count;
+    async_callback = callback;
+    async_index = 0;
+
+    start_async_transfer();
+}
+
 void fd_spi1_wait(void) {
-    while (transfer_flags != complete_flag);
+    if (async_flags & started_flag) {
+        while (!(async_flags & complete_flag));
+    }
+}
+
+#define SPI_READ 0x80
+#define SPI_ADDRESS_INCREMENT 0x40
+
+uint8_t fd_spi1_read(GPIO_Port_TypeDef csn_port, unsigned int csn_pin, uint8_t address) {
+    uint8_t addr = SPI_READ | address;
+    uint8_t result;
+    fd_spi_transfer transfers[2] = {
+        {
+            .op = fd_spi_op_write,
+            .length = 1,
+            .tx_buffer = &addr,
+            .rx_buffer = 0
+        },
+        {
+            .op = fd_spi_op_read,
+            .length = 1,
+            .tx_buffer = 0,
+            .rx_buffer = &result
+        }
+    };
+    fd_spi1_io(csn_port, csn_pin, transfers, 2, 0);
+    fd_spi1_wait();
+    return result;
 }
 
 uint8_t fd_spi1_sync_io(uint8_t txdata) {
@@ -179,40 +204,19 @@ uint8_t fd_spi1_sync_io(uint8_t txdata) {
     return rxdata;
 }
 
-void fd_spi1_sync_transfer(void) {
-    transfer_length = tx_length;
-    rx_length = 2; // don't know how much to receive until 2nd byte with the length is read
-    if (rx_length > transfer_length) {
-        transfer_length = rx_length;
-    }
+uint8_t fd_spi1_sync_read(uint8_t address) {
+    fd_spi1_sync_io(SPI_READ | address);
+    return fd_spi1_sync_io(0);
+}
 
-    rx_index = 0;
-    tx_index = 0;
-
-    uint8_t index = 0;
-    while (index++ < transfer_length) {
-        uint8_t txdata = 0;
-        if (tx_index < tx_length) {
-            txdata = tx_buffer[tx_index++];
-        }
-        uint8_t rxdata = fd_spi1_sync_io(txdata);
-        if (rx_index < rx_length) {
-            rx_buffer[rx_index++] = rxdata;
-        }
-        if (rx_index == 2) {
-            rx_length = rxdata + 2;
-            if (rx_length > transfer_length) {
-                transfer_length = rx_length;
-            }
-        }
+void fd_spi1_sync_read_bytes(uint8_t address, uint8_t *bytes, uint32_t length) {
+    fd_spi1_sync_io(SPI_READ | SPI_ADDRESS_INCREMENT | address);
+    for (uint32_t i = 0; i < length; ++i) {
+        bytes[i] = fd_spi1_sync_io(0);
     }
 }
 
-void fd_spi1_get_rx(uint8_t **pbuffer, uint32_t *plength) {
-    *pbuffer = rx_buffer;
-    *plength = rx_length;
-}
-
-void fd_spi1_rx_clear(void) {
-    rx_length = 0;
+void fd_spi1_sync_write(uint8_t address, uint8_t value) {
+    fd_spi1_sync_io(address);
+    fd_spi1_sync_io(value);
 }

@@ -13,22 +13,14 @@
       <file file_name="src/fd_adc.h"/>
       <file file_name="src/fd_i2c1.c"/>
       <file file_name="src/fd_i2c1.h"/>
-      <file file_name="src/fd_spi0.h"/>
-      <file file_name="src/fd_spi0.c"/>
-      <file file_name="src/fd_spi1.c"/>
-      <file file_name="src/fd_spi1.h"/>
       <file file_name="src/fd_lis3dh.c"/>
       <file file_name="src/fd_lis3dh.h"/>
       <file file_name="src/fd_nrf8001.c"/>
       <file file_name="src/fd_nrf8001.h"/>
-      <file file_name="src/fd_tca6507.c"/>
-      <file file_name="src/fd_tca6507.h"/>
       <file file_name="src/fd_mag3110.c"/>
       <file file_name="src/fd_mag3110.h"/>
       <file file_name="src/fd_rtc.c"/>
       <file file_name="src/fd_rtc.h"/>
-      <file file_name="src/fd_at24c512c.c"/>
-      <file file_name="src/fd_at24c512c.h"/>
       <file file_name="src/fd_usb.c"/>
       <file file_name="src/usbconfig.h"/>
       <file file_name="src/fd_usb.h"/>
@@ -70,6 +62,12 @@
       <file file_name="src/fd_ui.h"/>
       <file file_name="src/fd_storage_buffer.h"/>
       <file file_name="src/fd_storage_buffer.c"/>
+      <file file_name="src/fd_w25q16dw.c"/>
+      <file file_name="src/fd_w25q16dw.h"/>
+      <file file_name="src/fd_lp55231.c"/>
+      <file file_name="src/fd_lp55231.h"/>
+      <file file_name="src/fd_spi.c"/>
+      <file file_name="src/fd_spi.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

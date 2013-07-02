@@ -8,7 +8,7 @@
     4. 4-byte type.  The type of data stored in the page.
  */
 
-#include "fd_at24c512c.h"
+#include "fd_w25q16dw.h"
 #include "fd_binary.h"
 #include "fd_crc.h"
 #include "fd_storage.h"
@@ -30,16 +30,29 @@ uint32_t fd_storage_used_page_count(void) {
     return first_page - free_page;
 }
 
-#define increment_page(page) if (++page >= FD_AT24C512C_PAGES) page = 0
+#define increment_page(page) if (++page >= FD_W25Q16DW_PAGES) page = 0
 
 void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
-    uint8_t buffer[128] = {0x00, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
+    uint32_t address = free_page * FD_W25Q16DW_PAGE_SIZE;
+
+    if ((free_page % FD_W25Q16DW_PAGES_PER_SECTOR) == 0) {
+        // sector erase takes 50 ms typical, so only erase if there is data present -denis
+        uint8_t marker;
+        fd_w25q16dw_read(address, &marker, 1);
+        if (marker != 0xff) {
+            fd_w25q16dw_enable_write();
+            fd_w25q16dw_erase_sector(address);
+        }
+        // !!! need to ensure first page is outside this sector
+    }
+
+    uint8_t buffer[FD_W25Q16DW_PAGE_SIZE] = {0x00, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
     memcpy(&buffer[8], data, length);
     uint16_t hash = fd_crc_16(0xffff, &buffer[4], 4 + length);
     buffer[2] = hash;
     buffer[3] = hash >> 8;
-    uint32_t address = free_page * FD_AT24C512C_PAGE_SIZE;
-    fd_at24c512c_write_page(address, buffer, 8 + length);
+    fd_w25q16dw_enable_write();
+    fd_w25q16dw_write_page(address, buffer, 8 + length);
     increment_page(free_page);
     if (free_page == first_page) {
         increment_page(first_page);
@@ -51,9 +64,10 @@ bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, 
         return false;
     }
     metadata->page = first_page;
-    uint32_t address = first_page * FD_AT24C512C_PAGE_SIZE;
-    uint8_t buffer[128];
-    fd_at24c512c_read_page(address, buffer, 128);
+    uint32_t address = first_page * FD_W25Q16DW_PAGE_SIZE;
+    uint8_t buffer[FD_W25Q16DW_PAGE_SIZE];
+    // !!! might be better to read length and then content -denis
+    fd_w25q16dw_read(address, buffer, FD_W25Q16DW_PAGE_SIZE);
     metadata->length = buffer[1];
     metadata->hash = fd_binary_unpack_uint16(&buffer[2]);
     metadata->type = fd_binary_unpack_uint32(&buffer[4]);
@@ -71,7 +85,13 @@ void fd_storage_erase_page(fd_storage_metadata_t *metadata) {
         return;
     }
 
-    uint32_t address = first_page * FD_AT24C512C_PAGE_SIZE;
-    fd_at24c512c_erase_page(address);
+    // !!! need to write an erase marker to the page,
+    // which will let us recover the first_page and free_page on initialization -denis
+    /*
+    uint32_t address = first_page * FD_W25Q16DW_PAGE_SIZE;
+    fd_w25q16dw_enable_write();
+    fd_w25q16dw_erase_sector(address);
+    */
+
     increment_page(first_page);
 }

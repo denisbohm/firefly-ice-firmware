@@ -36,7 +36,7 @@ void fd_i2c1_power_on(void) {
     GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModeWiredAnd, 1);
     GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModeWiredAnd, 1);
 
-    GPIO_PinOutSet(AUX_PWR_PORT_PIN);
+    GPIO_PinOutSet(I2C1_PWR_PORT_PIN);
     fd_delay_ms(100); // wait for power to come up (?ms)
 
     NVIC_ClearPendingIRQ(I2C1_IRQn);
@@ -49,7 +49,7 @@ void fd_i2c1_power_off(void) {
 
     CMU_ClockEnable(cmuClock_I2C1, false);
 
-    GPIO_PinOutClear(AUX_PWR_PORT_PIN);
+    GPIO_PinOutClear(I2C1_PWR_PORT_PIN);
 }
 
 void I2C1_IRQHandler(void) {

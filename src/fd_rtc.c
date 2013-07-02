@@ -20,6 +20,9 @@ void fd_rtc_initialize(void) {
     CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFXO);
     CMU_ClockEnable(cmuClock_RTC, true);
     CMU_ClockEnable(cmuClock_CORELE, true);
+    // output 32kHz clock (for nRF8001)
+    CMU->CTRL = (CMU->CTRL & ~_CMU_CTRL_CLKOUTSEL1_MASK) | CMU_CTRL_CLKOUTSEL1_LFXO;
+    CMU->ROUTE = CMU_ROUTE_LOCATION_LOC0 | CMU_ROUTE_CLKOUT1PEN;
 
     fd_rtc_wake();
 

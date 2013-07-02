@@ -2,7 +2,7 @@
 #include "fd_lis3dh.h"
 #include "fd_log.h"
 #include "fd_processor.h"
-#include "fd_spi0.h"
+#include "fd_spi.h"
 
 #include <em_gpio.h>
 
@@ -80,16 +80,6 @@
 
 #define FIFO_THRESHOLD 5
 
-static
-void lis3dh_chip_select(void) {
-    GPIO_PinOutClear(ACC_CSN_PORT_PIN);
-}
-
-static
-void lis3dh_chip_deselect(void) {
-    GPIO_PinOutSet(ACC_CSN_PORT_PIN);
-}
-
 typedef union {
     uint8_t bytes[6];
     struct {
@@ -98,6 +88,8 @@ typedef union {
         int16_t z;
     };
 } fd_lis3dh_out_t;
+
+/*
 
 static
 fd_lis3dh_out_t transfer_out;
@@ -144,7 +136,7 @@ void fd_lis3dh_transfer_complete(void) {
 
     if (fd_lis3dh_transfer_count > 0) {
         --fd_lis3dh_transfer_count;
-        fd_spi0_io(ACC_CSN_PORT_PIN, transfers, sizeof(transfers) / sizeof(fd_spi_transfer), fd_lis3dh_transfer_complete);
+        fd_spi1_io(ACC_CSN_PORT_PIN, transfers, sizeof(transfers) / sizeof(fd_spi_transfer), fd_lis3dh_transfer_complete);
     }
 
     if (fd_lish3dh_sample_callback) {
@@ -155,76 +147,71 @@ void fd_lis3dh_transfer_complete(void) {
 static
 void fd_lis3dh_interrupt(void) {
     fd_lis3dh_transfer_count = FIFO_THRESHOLD;
-    fd_spi0_io(ACC_CSN_PORT_PIN, transfers, sizeof(transfers) / sizeof(fd_spi_transfer), fd_lis3dh_transfer_complete);
+    fd_spi1_io(ACC_CSN_PORT_PIN, transfers, sizeof(transfers) / sizeof(fd_spi_transfer), fd_lis3dh_transfer_complete);
 }
 
+*/
+
+#define SPI_READ 0x80
+#define SPI_ADDRESS_INCREMENT 0x40
+
 void fd_lis3dh_initialize(void) {
-    lis3dh_chip_select();
-    uint8_t who_am_i = fd_spi0_sync_read(LIS3DH_WHO_AM_I);
-    lis3dh_chip_deselect();
+    uint8_t who_am_i = fd_spi_sync_tx1_rx1(FD_SPI_BUS_1_SLAVE_LIS3DH, SPI_READ | LIS3DH_WHO_AM_I);
     if (who_am_i != 0x33) {
         fd_log_assert_fail("");
         return;
     }
 
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG4,
         LIS3DH_CTRL_REG4_BDU |
         LIS3DH_CTRL_REG4_FS_2G |
         LIS3DH_CTRL_REG4_HR
     );
-    lis3dh_chip_deselect();
 
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_FIFO_CTRL_REG,
         LIS3DH_FIFO_CTRL_REG_FM_BYPASS // clear FIFO
     );
-    lis3dh_chip_deselect();
 
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_FIFO_CTRL_REG,
         LIS3DH_FIFO_CTRL_REG_FM_STREAM |
         FIFO_THRESHOLD
     );
-    lis3dh_chip_deselect();
 
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG3,
         LIS3DH_CTRL_REG3_I1_WTM |
         LIS3DH_CTRL_REG3_I1_OVERRUN
     );
-    lis3dh_chip_deselect();
 
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG5,
         LIS3DH_CTRL_REG5_FIFO_EN
     );
-    lis3dh_chip_deselect();
 
     fd_lis3dh_wake();
 
-    fd_event_set_callback(FD_EVENT_ACC_INT, fd_lis3dh_interrupt);
+//    fd_event_set_callback(FD_EVENT_ACC_INT, fd_lis3dh_interrupt);
 }
 
 void fd_lis3dh_sleep(void) {
-    fd_spi0_wait();
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,
         LIS3DH_CTRL_REG1_ODR_POWER_DOWN
     );
-    lis3dh_chip_deselect();
 }
 
 void fd_lis3dh_wake(void) {
-    fd_spi0_wait();
-    lis3dh_chip_select();
-    fd_spi0_sync_write(
+    fd_spi_sync_tx2(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,
         LIS3DH_CTRL_REG1_ODR_25HZ |
         LIS3DH_CTRL_REG1_LPEN |
@@ -232,15 +219,16 @@ void fd_lis3dh_wake(void) {
         LIS3DH_CTRL_REG1_YEN |
         LIS3DH_CTRL_REG1_XEN
     );
-    lis3dh_chip_deselect();
 }
 
 void fd_lis3dh_read(float *x, float *y, float *z) {
-    fd_spi0_wait();
-    lis3dh_chip_select();
+    uint8_t tx_bytes[] = {SPI_READ | SPI_ADDRESS_INCREMENT | LIS3DH_OUT_X_L};
     fd_lis3dh_out_t out;
-    fd_spi0_sync_read_bytes(LIS3DH_OUT_X_L, out.bytes, sizeof(out));
-    lis3dh_chip_deselect();
+    fd_spi_sync_txn_rxn(
+        FD_SPI_BUS_1_SLAVE_LIS3DH,
+        tx_bytes, sizeof(tx_bytes),
+        out.bytes, sizeof(out.bytes)
+    );
     *x = out.x / 16384.0f;
     *y = out.y / 16384.0f;
     *z = out.z / 16384.0f;

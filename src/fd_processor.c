@@ -137,12 +137,12 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(USB_DM_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(USB_DP_PORT_PIN, gpioModeInput, 0);
 
-    GPIO_PinModeSet(US1_MISO_PORT_PIN, gpioModeInputPull, 0);
-    GPIO_PinModeSet(US1_MOSI_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(US1_CLK_PORT_PIN, gpioModePushPull, 0);
+    GPIO_PinModeSet(US1_MISO_PORT_PIN, gpioModeInputPull, 1);
+    GPIO_PinModeSet(US1_MOSI_PORT_PIN, gpioModePushPull, 1);
+    GPIO_PinModeSet(US1_CLK_PORT_PIN, gpioModePushPull, 1);
 
     GPIO_PinModeSet(CLK32_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 1);
+    GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(NRF_REQN_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInputPull, 1);
 //    GPIO_IntConfig(NRF_RDYN_PORT_PIN, true /* rising */, true /* falling */, true);

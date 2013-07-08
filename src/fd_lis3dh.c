@@ -4,7 +4,9 @@
 #include "fd_processor.h"
 #include "fd_spi.h"
 
+#include <em_cmu.h>
 #include <em_gpio.h>
+#include <em_usart.h>
 
 #include <stdint.h>
 
@@ -154,6 +156,58 @@ void fd_lis3dh_interrupt(void) {
 
 #define SPI_READ 0x80
 #define SPI_ADDRESS_INCREMENT 0x40
+
+/*
+static
+void fd_spi1_init(void) {
+    CMU_ClockEnable(cmuClock_USART1, true);
+
+    USART_InitSync_TypeDef init_sync = USART_INITSYNC_DEFAULT;
+    init_sync.msbf = true;
+    init_sync.clockMode = usartClockMode3;
+    init_sync.baudrate = 10000000;
+    USART_InitSync(USART1, &init_sync);
+
+    USART1->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US1_LOCATION;
+
+    USART_Enable(USART1, usartEnable);
+}
+
+static
+void fd_spi1_enable(void) {
+    GPIO_PinOutClear(gpioPortD, 8);
+}
+
+static
+void fd_spi1_disable(void) {
+    GPIO_PinOutSet(gpioPortD, 8);
+}
+
+static
+uint8_t fd_spi1_io(uint8_t txdata) {
+    USART1->TXDATA = txdata;
+    while ((USART1->STATUS & USART_STATUS_TXC) == 0);
+    uint8_t rxdata = USART1->RXDATA;
+    return rxdata;
+}
+
+static
+uint8_t fd_spi1_read(uint8_t address) {
+    fd_spi1_enable();
+    fd_spi1_io(SPI_READ | address);
+    uint8_t rxdata = fd_spi1_io(0);
+    fd_spi1_disable();
+    return rxdata;
+}
+
+static
+void fd_spi1_write(uint8_t address, uint8_t value) {
+    fd_spi1_enable();
+    fd_spi1_io(address);
+    fd_spi1_io(value);
+    fd_spi1_disable();
+}
+*/
 
 void fd_lis3dh_initialize(void) {
     uint8_t who_am_i = fd_spi_sync_tx1_rx1(FD_SPI_BUS_1_SLAVE_LIS3DH, SPI_READ | LIS3DH_WHO_AM_I);

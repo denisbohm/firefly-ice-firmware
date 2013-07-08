@@ -1,9 +1,9 @@
 #ifndef FD_SYNC_H
 #define FD_SYNC_H
 
-#define FD_SYNC_START 1
-#define FD_SYNC_DATA 2
-#define FD_SYNC_ACK 3
+#include "fd_detour.h"
+
+#include <stdint.h>
 
 void fd_sync_initialize(void);
 

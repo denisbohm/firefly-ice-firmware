@@ -11,6 +11,7 @@ uint32_t fd_binary_unpack_uint32(uint8_t *buffer);
 uint64_t fd_binary_unpack_uint64(uint8_t *buffer);
 float fd_binary_unpack_float32(uint8_t *buffer);
 fd_time_t fd_binary_unpack_time64(uint8_t *buffer);
+void fd_binary_unpack_utf8(uint8_t *buffer, uint8_t **data, uint16_t *length);
 
 void fd_binary_pack_uint8(uint8_t *buffer, uint8_t value);
 void fd_binary_pack_uint16(uint8_t *buffer, uint16_t value);
@@ -18,6 +19,7 @@ void fd_binary_pack_uint32(uint8_t *buffer, uint32_t value);
 void fd_binary_pack_uint64(uint8_t *buffer, uint64_t value);
 void fd_binary_pack_float32(uint8_t *buffer, float value);
 void fd_binary_pack_time64(uint8_t *buffer, fd_time_t value);
+void fd_binary_pack_utf8(uint8_t *buffer, uint8_t *data, uint16_t length);
 
 typedef struct {
     uint8_t *buffer;

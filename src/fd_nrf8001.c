@@ -86,7 +86,8 @@ void fd_nrf8001_use_data_credits(uint32_t credits) {
 }
 
 void fd_nrf8001_reset(void) {
-    // release reset
+    GPIO_PinOutClear(NRF_RESETN_PORT_PIN);
+    fd_delay_ms(100);
     GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
     fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
 }
@@ -147,6 +148,7 @@ void fd_nrf8001_transfer(void) {
 
 static
 void blocking_send(void) {
+    fd_spi_set_device(FD_SPI_BUS_1_SLAVE_NRF8001);
     GPIO_PinOutClear(NRF_REQN_PORT_PIN);
     while (GPIO_PinInGet(NRF_RDYN_PORT_PIN));
     fd_nrf8001_transfer();
@@ -155,7 +157,6 @@ void blocking_send(void) {
 void fd_nrf8001_send(uint8_t *message, uint32_t length) {
     fd_nrf8001_spi_tx_clear();
     fd_nrf8001_spi_tx_queue(message, length);
-    fd_nrf8001_transfer();
     blocking_send();
 }
 

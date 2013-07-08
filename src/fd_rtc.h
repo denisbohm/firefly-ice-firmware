@@ -10,6 +10,8 @@ void fd_rtc_initialize(void);
 void fd_rtc_sleep(void);
 void fd_rtc_wake(void);
 
+void fd_rtc_set_time(fd_time_t time);
+
 uint32_t fd_rtc_get_seconds(void);
 
 fd_time_t fd_rtc_get_time(void);

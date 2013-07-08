@@ -55,6 +55,7 @@ void fd_spi_io(fd_spi_device_t device, fd_spi_io_t *io);
 void fd_spi_wait(fd_spi_bus_t bus);
 
 // for use with FD_SPI_OPTION_NO_CSN option
+void fd_spi_set_device(fd_spi_device_t device);
 void fd_spi_chip_select(fd_spi_device_t device, bool select);
 
 // synchronous convenience functions

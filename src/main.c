@@ -53,44 +53,51 @@ int main(void) {
     WDOG_Init(&wdog_init);
 #endif
 
+    fd_rtc_initialize();
+
     GPIO_PinOutClear(LED0_PORT_PIN);
     GPIO_PinOutClear(LED4_PORT_PIN);
-    GPIO_PinOutClear(LED5_PORT_PIN);
+//    GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
-
-    // bring up powered buses
-    fd_spi_initialize();
-    fd_spi_on(FD_SPI_BUS_0);
-    fd_spi_on(FD_SPI_BUS_1);
-    //
-    fd_i2c1_initialize();
-    fd_i2c1_power_on();
 
     fd_event_initialize();
     fd_log_initialize();
-    fd_rtc_initialize();
     fd_usb_initialize();
     fd_adc_initialize();
 
-    // initialize devices on spi0 powered bus
-    fd_w25q16dw_initialize();
-    fd_w25q16dw_test();
+    fd_i2c1_initialize();
 
     // initialize devices on i2c1 powered bus
+    fd_i2c1_power_on();
+    //
     fd_lp55231_initialize();
     fd_lp55231_wake();
+    /*
     for (int i = 0; i < 9; ++i) {
         fd_lp55231_set_led_pwm(i, 127);
     }
+    */
     //
     fd_mag3110_initialize();
 
+    fd_spi_initialize();
+
     // initialize devices on spi1 bus
+    fd_spi_on(FD_SPI_BUS_1);
+    fd_spi_wake(FD_SPI_BUS_1);
+    //
     fd_lis3dh_initialize();
     //
     fd_nrf8001_initialize();
     fd_nrf8001_reset();
     fd_bluetooth_initialize();
+
+    // initialize devices on spi0 powered bus
+    fd_spi_on(FD_SPI_BUS_0);
+    fd_spi_wake(FD_SPI_BUS_0);
+    //
+    fd_w25q16dw_initialize();
+    fd_w25q16dw_test();
 
     fd_storage_buffer_collection_initialize();
 
@@ -109,11 +116,11 @@ int main(void) {
     // low power testing
     fd_usb_sleep();
     fd_adc_sleep();
-    fd_rtc_sleep();
+//    fd_rtc_sleep();
     fd_lis3dh_sleep();
     fd_lp55231_sleep();
     fd_mag3110_sleep();
-    fd_w25q16dw_sleep();
+//    fd_w25q16dw_sleep();
 
 //    fd_lis3dh_set_sample_callback(acc_sample);
     bool led_state = 0;

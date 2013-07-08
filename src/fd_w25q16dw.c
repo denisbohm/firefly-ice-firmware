@@ -8,31 +8,16 @@
 #define WRITE_ENABLE 0x06
 #define FAST_READ 0x0b
 #define SECTOR_ERASE 0x20
+#define READ_MANUFACTURER_DEVICE_ID 0x90
 #define POWER_DOWN 0xb9
 #define RELEASE_POWER_DOWN 0xab
 
 #define WEL 0x02
 #define BUSY 0x01
 
-void fd_w25q16dw_initialize(void) {
-}
-
-void fd_w25q16dw_wait_while_busy(void) {
-    uint8_t status;
-    do {
-        status = fd_spi_sync_tx1_rx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, READ_STATUS);
-    } while (status & BUSY);
-}
-
-void fd_w25q16dw_sleep(void) {
-    fd_w25q16dw_wait_while_busy();
-
-    fd_spi_sync_tx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, POWER_DOWN);
-}
+#define WINBOND_MANUFACTURER_ID 0xef
 
 void fd_w25q16dw_wake(void) {
-    fd_w25q16dw_wait_while_busy();
-
     uint8_t tx_bytes[] = {RELEASE_POWER_DOWN, 0, 0, 0 /* 3 dummy bytes */};
     uint8_t device_id;
     fd_spi_transfer_t transfers[] = {
@@ -70,6 +55,32 @@ void fd_w25q16dw_wake(void) {
     fd_spi_wait(FD_SPI_BUS_0);
     fd_delay_us(30); // tRES2
     fd_spi_chip_select(FD_SPI_BUS_0_SLAVE_W25Q16DW, false);
+}
+
+void fd_w25q16dw_initialize(void) {
+    fd_w25q16dw_wake();
+
+    uint8_t txdata[] = {READ_MANUFACTURER_DEVICE_ID, 0x00, 0x00, 0x00};
+    uint8_t rxdata[2];
+    fd_spi_sync_txn_rxn(FD_SPI_BUS_0_SLAVE_W25Q16DW, txdata, sizeof(txdata), rxdata, sizeof(rxdata));
+    uint8_t manufacturer_id = rxdata[0];
+    uint8_t device_id = rxdata[1];
+    if (manufacturer_id != WINBOND_MANUFACTURER_ID) {
+        fd_log_ram_assert_fail("");
+    }
+}
+
+void fd_w25q16dw_wait_while_busy(void) {
+    uint8_t status;
+    do {
+        status = fd_spi_sync_tx1_rx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, READ_STATUS);
+    } while (status & BUSY);
+}
+
+void fd_w25q16dw_sleep(void) {
+    fd_w25q16dw_wait_while_busy();
+
+    fd_spi_sync_tx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, POWER_DOWN);
 }
 
 void fd_w25q16dw_enable_write(void) {
@@ -131,6 +142,7 @@ void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {
 }
 
 void fd_w25q16dw_test(void) {
+    fd_w25q16dw_wake();
     uint32_t address = 0;
     fd_w25q16dw_enable_write();
     fd_w25q16dw_erase_sector(address);

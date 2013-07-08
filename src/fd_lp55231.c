@@ -1,11 +1,14 @@
 #include "fd_i2c1.h"
+#include "fd_log.h"
 #include "fd_lp55231.h"
 #include "fd_processor.h"
 
 #include <em_gpio.h>
 
-#define WRITE_ADDRESS 0x64
-#define READ_ADDRESS 0x65
+#define ADDRESS 0x64
+
+#define ENGINE_CNTRL1 0x00
+#define ENGINE_CNTRL1_CHIP_EN 0x40
 
 #define D1_PWM 0x16
 #define D2_PWM 0x17
@@ -17,11 +20,32 @@
 #define D8_PWM 0x1d
 #define D9_PWM 0x1e
 
+#define D1_CURRENT_CONTROL 0x26
+
+#define MISC 0x36
+#define MISC_INT_CLK_EN 0x01
+#define MISC_CP_MODE_AUTOMATIC 0x18
+
 void fd_lp55231_initialize(void) {
 }
 
 void fd_lp55231_wake(void) {
     GPIO_PinOutSet(LED_EN_PORT_PIN);
+    fd_delay_us(500);
+    bool result = fd_i2c1_register_write(ADDRESS, ENGINE_CNTRL1, ENGINE_CNTRL1_CHIP_EN);
+    if (!result) {
+        fd_log_ram_assert_fail("");
+    }
+    result = fd_i2c1_register_write(ADDRESS, MISC, MISC_INT_CLK_EN | MISC_CP_MODE_AUTOMATIC);
+    if (!result) {
+        fd_log_ram_assert_fail("");
+    }
+
+    uint8_t value;
+    result = fd_i2c1_register_read(ADDRESS, D1_CURRENT_CONTROL, &value);
+    if (!result) {
+        fd_log_ram_assert_fail("");
+    }
 }
 
 void fd_lp55231_sleep(void) {
@@ -29,5 +53,8 @@ void fd_lp55231_sleep(void) {
 }
 
 void fd_lp55231_set_led_pwm(uint8_t led, uint8_t pwm) {
-    fd_i2c1_register_write(WRITE_ADDRESS, D1_PWM + led, pwm);
+    bool result = fd_i2c1_register_write(ADDRESS, D1_PWM + led, pwm);
+    if (!result) {
+        fd_log_ram_assert_fail("");
+    }
 }

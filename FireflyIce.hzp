@@ -73,6 +73,16 @@
       <file file_name="src/fd_map.c"/>
       <file file_name="src/fd_power.h"/>
       <file file_name="src/fd_power.c"/>
+      <file file_name="src/fd_indicator.h"/>
+      <file file_name="src/fd_indicator.c"/>
+      <file file_name="src/fd_update.c"/>
+      <file file_name="src/fd_update.h"/>
+      <file file_name="src/sha.h"/>
+      <file file_name="src/sha1.c"/>
+      <file file_name="src/fd_sha.h"/>
+      <file file_name="src/fd_sha.c"/>
+      <file file_name="src/fd_aes.c"/>
+      <file file_name="src/fd_aes.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

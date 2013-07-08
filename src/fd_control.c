@@ -1,6 +1,7 @@
 #include "fd_binary.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
+#include "fd_indicator.h"
 #include "fd_map.h"
 #include "fd_power.h"
 #include "fd_processor.h"
@@ -234,6 +235,29 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
     }
 }
 
+static
+void get_rgb(fd_binary_t *binary, fd_indicator_rgb_t *rgb) {
+    rgb->r = fd_binary_get_uint8(binary);
+    rgb->g = fd_binary_get_uint8(binary);
+    rgb->b = fd_binary_get_uint8(binary);
+}
+
+void fd_control_indicator_override(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    fd_indicator_state_t state;
+    state.usb.o = fd_binary_get_uint8(&binary);
+    state.usb.g = fd_binary_get_uint8(&binary);
+    state.d0.r = fd_binary_get_uint8(&binary);
+    get_rgb(&binary, &state.d1);
+    get_rgb(&binary, &state.d2);
+    get_rgb(&binary, &state.d3);
+    state.d4.r = fd_binary_get_uint8(&binary);
+    fd_time_t duration = fd_binary_get_time64(&binary);
+
+    fd_indicator_override(&state, duration);
+}
+
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis
 
 void fd_control_process(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -262,6 +286,10 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
             break;
         case FD_CONTROL_SYNC_ACK:
             command = fd_sync_ack;
+            break;
+
+        case FD_CONTROL_INDICATOR_OVERRIDE:
+            command = fd_control_indicator_override;
             break;
     }
     if (command) {

@@ -13,6 +13,9 @@ static volatile uint32_t adc_bat_vdiv2_value;
 static volatile bool adc_complete;
 
 void fd_adc_initialize(void) {
+    adc_bat_vdiv2_value = 0;
+    adc_complete = true;
+
     CMU_ClockEnable(cmuClock_ADC0, true);
 
     ADC_Init_TypeDef init = ADC_INIT_DEFAULT;
@@ -22,8 +25,8 @@ void fd_adc_initialize(void) {
 
     ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
     singleInit.reference = adcRefVDD;
-    singleInit.acqTime = adcAcqTime1;
-    singleInit.input = BAT_VDIV2_ADC_CHANNEL;
+    singleInit.acqTime = adcAcqTime256;
+    singleInit.input = adcSingleInpCh7;
     ADC_InitSingle(ADC0, &singleInit);
 
     ADC_IntEnable(ADC0, ADC_IF_SINGLE);
@@ -36,6 +39,10 @@ void fd_adc_sleep(void) {
 }
 
 void fd_adc_wake(void) {
+}
+
+bool fd_adc_in_progress(void) {
+    return !adc_complete;
 }
 
 void ADC0_IRQHandler(void) {

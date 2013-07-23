@@ -1,6 +1,7 @@
+#include "fd_event.h"
+#include "fd_processor.h"
 #include "fd_rtc.h"
 
-#include "fd_processor.h"
 
 #include <em_cmu.h>
 #include <em_rtc.h>
@@ -11,9 +12,13 @@ static volatile uint32_t rtc_time_seconds;
 static volatile uint32_t rtc_time_microseconds;
 static volatile uint32_t rtc_time_tick;
 
+static volatile uint32_t rtc_countdown;
+
 void fd_rtc_initialize(void) {
     rtc_time_seconds = 0;
     rtc_time_microseconds = 0;
+
+    rtc_countdown = 0;
 
 /*
 *((volatile uint32_t*) 0x400c80C0) = (*((volatile uint32_t*) 0x400c80C0) & ~(1<<6)) | (1<<4);
@@ -104,16 +109,32 @@ fd_time_t fd_rtc_get_accurate_time(void) {
     return time;
 }
 
+void fd_rtc_set_countdown(uint32_t countdown) {
+    fd_interrupts_disable();
+    rtc_countdown = countdown;
+    fd_interrupts_enable();
+}
+
+uint32_t fd_rtc_get_countdown(void) {
+    return rtc_countdown;
+}
+
 void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
-    if (RTC->COMP0 == 65536) {
+    if (RTC->COMP0 == 1024) {
         uint32_t microseconds = rtc_time_microseconds + 31250;
         if (microseconds >= 1000000) {
             microseconds -= 1000000;
             ++rtc_time_seconds;
         }
         rtc_time_microseconds = microseconds;
+
+        if (rtc_countdown) {
+            if (--rtc_countdown == 0) {
+                fd_event_set(FD_EVENT_RTC_COUNTDOWN);
+            }
+        }
     } else {
         rtc_time_seconds += 2;
     }

@@ -40,15 +40,17 @@ void fd_lp55231_wake(void) {
     if (!result) {
         fd_log_ram_assert_fail("");
     }
-
-    uint8_t value;
-    result = fd_i2c1_register_read(ADDRESS, D1_CURRENT_CONTROL, &value);
-    if (!result) {
-        fd_log_ram_assert_fail("");
-    }
 }
 
 void fd_lp55231_sleep(void) {
+    bool result = fd_i2c1_register_write(ADDRESS, MISC, 0x00);
+    if (!result) {
+        fd_log_ram_assert_fail("");
+    }
+    result = fd_i2c1_register_write(ADDRESS, ENGINE_CNTRL1, 0x00);
+    if (!result) {
+        fd_log_ram_assert_fail("");
+    }
     GPIO_PinOutClear(LED_EN_PORT_PIN);
 }
 

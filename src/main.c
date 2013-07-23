@@ -58,7 +58,7 @@ int main(void) {
     GPIO_PinOutClear(LED0_PORT_PIN);
     GPIO_PinOutClear(LED4_PORT_PIN);
 //    GPIO_PinOutClear(LED5_PORT_PIN);
-    GPIO_PinOutClear(LED6_PORT_PIN);
+//    GPIO_PinOutClear(LED6_PORT_PIN);
 
     fd_event_initialize();
     fd_log_initialize();
@@ -92,6 +92,7 @@ int main(void) {
     fd_nrf8001_reset();
     fd_bluetooth_initialize();
 
+/*
     // initialize devices on spi0 powered bus
     fd_spi_on(FD_SPI_BUS_0);
     fd_spi_wake(FD_SPI_BUS_0);
@@ -112,11 +113,13 @@ int main(void) {
     fd_storage_buffer_t activity_storage_buffer;
     fd_storage_buffer_initialize(&activity_storage_buffer, FD_STORAGE_TYPE('F', 'D', 'V', 'M'));
     fd_storage_buffer_collection_push(&activity_storage_buffer);
+*/
 
+#if 1
     // low power testing
     fd_usb_sleep();
     fd_adc_sleep();
-//    fd_rtc_sleep();
+    fd_rtc_sleep();
     fd_lis3dh_sleep();
     fd_lp55231_sleep();
     fd_mag3110_sleep();
@@ -147,7 +150,10 @@ int main(void) {
                 led_state = !led_state;
 #endif
 //                fd_processor_sleep();
-                EMU_EnterEM2(false);
+                uint32_t time = fd_rtc_get_seconds();
+                while (fd_rtc_get_seconds() == time) {
+                    EMU_EnterEM2(false);
+                }
 //                fd_processor_wake();
             }
         } else {
@@ -159,19 +165,33 @@ int main(void) {
             fd_nrf8001_transfer();
         }
     }
+#endif
 
 #if 0
-    fd_time_t time = rtc_get_time();
-    double now = time.seconds + time.microseconds * 1e-6;
-    double last_sensing_time = now;
-    double last_activity_time = now;
+//    fd_time_t time = fd_rtc_get_time();
+//    double now = time.seconds + time.microseconds * 1e-6;
+//    double last_sensing_time = now;
+//    double last_activity_time = now;
+
+    GPIO_PinOutSet(BAT_VDIV2EN_PORT_PIN);
     while (true) {
         WDOG_Feed();
         fd_bluetooth_step();
         fd_nrf8001_transfer();
         fd_usb_transfer();
 
-        time = rtc_get_time();
+        if (fd_nrf8001_did_connect) {
+            fd_lp55231_set_led_pwm(0, 0xff);
+        } else {
+            fd_lp55231_set_led_pwm(0, 0x00);
+        }
+
+        if (!fd_adc_in_progress()) {
+            fd_adc_start();
+        }
+
+/*
+        time = fd_rtc_get_time();
         double now = time.seconds + time.microseconds * 1e-6;
         if ((now - last_sensing_time) < 0.020) {
             continue;
@@ -193,6 +213,7 @@ int main(void) {
         fd_activity_accumulate(ax, ay, az);
 
         fd_ui_update(ax);
+*/
     }
 #endif
 

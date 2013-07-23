@@ -132,7 +132,7 @@ void fd_processor_initialize(void) {
 
     GPIO_PinModeSet(PWR_SEL_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0); // !!! Don't change this pin. Voltage regulation will be lost. -denis
+    GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
 
     GPIO_PinModeSet(USB_DM_PORT_PIN, gpioModeInput, 0);
     GPIO_PinModeSet(USB_DP_PORT_PIN, gpioModeInput, 0);

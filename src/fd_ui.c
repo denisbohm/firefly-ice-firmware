@@ -59,6 +59,6 @@ void fd_ui_update(float ax) {
     if (fd_nrf8001_did_connect) {
         fd_lp55231_set_led_pwm(0, 0xff);
     } else {
-        fd_lp55231_set_led_pwm(0, 0xff);
+        fd_lp55231_set_led_pwm(0, 0x00);
     }
 }

@@ -7,6 +7,8 @@
 #define FD_EVENT_CHG_STAT 1
 #define FD_EVENT_ACC_INT 2
 #define FD_EVENT_MAG_INT 3
+#define FD_EVENT_RTC_COUNTDOWN 4
+#define FD_EVENT_TIMER_SCHEDULE 5
 
 typedef void (*fd_event_callback_t)(void);
 

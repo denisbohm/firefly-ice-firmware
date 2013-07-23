@@ -129,6 +129,9 @@ static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTE
 #define fd_nrf8001_open_remote_pipe_step BIT(3)
 #define fd_nrf8001_sleep_step BIT(4)
 #define fd_nrf8001_wakeup_step BIT(5)
+#define fd_nrf8001_test_enable_step BIT(6)
+#define fd_nrf8001_test_command_step BIT(7)
+#define fd_nrf8001_test_exit_step BIT(8)
 
 #define fd_nrf8001_detour_send_data_ack_step BIT(0)
 
@@ -139,6 +142,8 @@ static uint32_t fd_bluetooth_setup_index;
 static uint64_t fd_bluetooth_pipes_open;
 static uint64_t fd_bluetooth_pipes_closed;
 static bool fd_bluetooth_idle;
+static uint16_t fd_nrf8001_dtm_request;
+static uint16_t fd_nrf8001_dtm_data;
 
 #define DETOUR_SIZE 256
 
@@ -242,6 +247,15 @@ void fd_bluetooth_system_step(void) {
             if (fd_bluetooth_pipes_closed == 0) {
                 fd_bluetooth_step_complete(fd_nrf8001_open_remote_pipe_step);
             }
+        } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_test_enable_step) {
+            fd_nrf8001_test(TestFeatureEnableDTMOverACI);
+        } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_test_command_step) {
+            fd_nrf8001_dtm_command(fd_nrf8001_dtm_request);
+        } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_test_exit_step) {
+            fd_nrf8001_test(TestFeatureExitTestMode);
         }
     }
 }
@@ -375,6 +389,10 @@ void fd_nrf8001_pipe_status_event(uint64_t pipes_open, uint64_t pipes_closed) {
     } else {
         fd_nrf8001_did_open_pipes = true;
     }
+}
+
+void fd_nrf8001_dtm_command_success(uint16_t data) {
+    fd_nrf8001_dtm_data = data;
 }
 
 void fd_nrf8001_detour_data_received(

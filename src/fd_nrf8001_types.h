@@ -105,4 +105,13 @@
 #define OperatingModeSetup 0x02
 #define OperatingModeStandby 0x03
 
+#define TestFeatureEnableDTMOverUART 0x01
+#define TestFeatureEnableDTMOverACI 0x02
+#define TestFeatureExitTestMode 0xff
+
+#define DTM_CMD_LE_RESET (0x00 << 14)
+#define DTM_CMD_LE_RECEIVER_TEST (0x01 << 14)
+#define DTM_CMD_LE_TRANSMITTER_TEST (0x02 << 14)
+#define DTM_CMD_LE_TEST_END (0x03 << 14)
+
 #endif

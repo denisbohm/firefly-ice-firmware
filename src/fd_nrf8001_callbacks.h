@@ -9,7 +9,7 @@ void fd_nrf8001_test_error(uint8_t status);
 
 void fd_nrf8001_dtm_command_error(uint8_t status);
 
-void fd_nrf8001_dtm_command_success(uint16_t dtm_command);
+void fd_nrf8001_dtm_command_success(uint16_t data);
 
 void fd_nrf8001_wakeup_error(uint8_t status);
 

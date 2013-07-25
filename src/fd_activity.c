@@ -10,6 +10,9 @@ static float fd_activity_total;
 static uint32_t fd_activity_count;
 
 void fd_activity_initialize(void) {
+    fd_activity_vm = 1.0f;
+    fd_activity_total = 0.0f;
+    fd_activity_count = 0;
 }
 
 void fd_activity_prime(float x, float y, float z) {

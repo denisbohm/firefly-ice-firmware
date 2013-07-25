@@ -149,9 +149,10 @@ void fd_control_get_property_version(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_site(fd_binary_t *binary) {
+    uint8_t *address = (uint8_t*)USER_DATA_ADDRESS;
     uint8_t *site;
     uint16_t site_length;
-    fd_map_get("site", FD_MAP_TYPE_UTF8, &site, &site_length);
+    fd_map_get(address, "site", FD_MAP_TYPE_UTF8, &site, &site_length);
 
     fd_binary_put_uint16(binary, site_length);
     fd_binary_put_bytes(binary, site, site_length);

@@ -29,16 +29,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-/*
-static
-void acc_sample(int16_t ix, int16_t iy, int16_t iz) {
-    float x = ix / 16384.0f;
-    float y = iy / 16384.0f;
-    float z = iz / 16384.0f;
-    fd_activity_accumulate(x, y, z);
-}
-*/
-
 int main(void) {
     fd_processor_initialize();
 
@@ -49,7 +39,7 @@ int main(void) {
     WDOG_Init_TypeDef wdog_init = WDOG_INIT_DEFAULT;
     wdog_init.perSel = wdogPeriod_8k;
     wdog_init.swoscBlock = true;
-    wdog_init.lock = true;
+//    wdog_init.lock = true;
     WDOG_Init(&wdog_init);
 #endif
 
@@ -103,16 +93,8 @@ int main(void) {
     fd_storage_buffer_collection_initialize();
 
     fd_ui_initialize();
-    fd_sensing_initialize();
     fd_activity_initialize();
-    {
-        float ax, ay, az;
-        fd_lis3dh_read(&ax, &ay, &az);
-        fd_activity_prime(ax, ay, az);
-    }
-    fd_storage_buffer_t activity_storage_buffer;
-    fd_storage_buffer_initialize(&activity_storage_buffer, FD_STORAGE_TYPE('F', 'D', 'V', 'M'));
-    fd_storage_buffer_collection_push(&activity_storage_buffer);
+    fd_sensing_initialize();
 */
 
 #if 1
@@ -168,52 +150,8 @@ int main(void) {
 #endif
 
 #if 0
-//    fd_time_t time = fd_rtc_get_time();
-//    double now = time.seconds + time.microseconds * 1e-6;
-//    double last_sensing_time = now;
-//    double last_activity_time = now;
-
-    GPIO_PinOutSet(BAT_VDIV2EN_PORT_PIN);
     while (true) {
-        WDOG_Feed();
-        fd_bluetooth_step();
-        fd_nrf8001_transfer();
-        fd_usb_transfer();
-
-        if (fd_nrf8001_did_connect) {
-            fd_lp55231_set_led_pwm(0, 0xff);
-        } else {
-            fd_lp55231_set_led_pwm(0, 0x00);
-        }
-
-        if (!fd_adc_in_progress()) {
-            fd_adc_start();
-        }
-
-/*
-        time = fd_rtc_get_time();
-        double now = time.seconds + time.microseconds * 1e-6;
-        if ((now - last_sensing_time) < 0.020) {
-            continue;
-        }
-        last_sensing_time = now;
-
-        float ax, ay, az;
-        fd_lis3dh_read(&ax, &ay, &az);
-        float mx, my, mz;
-        fd_mag3110_read(&mx, &my, &mz);
-        fd_sensing_push(&fd_bluetooth_detour_source_collection, ax, ay, az, mx, my, mz);
-
-        if ((now - last_activity_time) >= 10.0) {
-            float activity = fd_activity_value(10.0);
-            fd_storage_buffer_add_time_series(&activity_storage_buffer, time.seconds, 10, activity);
-            fd_activity_start();
-            last_activity_time = now;
-        }
-        fd_activity_accumulate(ax, ay, az);
-
-        fd_ui_update(ax);
-*/
+        fd_event_process();
     }
 #endif
 

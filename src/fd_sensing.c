@@ -1,41 +1,57 @@
+#include "fd_activity.h"
 #include "fd_binary.h"
+#include "fd_lis3dh.h"
+#include "fd_rtc.h"
 #include "fd_sensing.h"
+#include "fd_storage_buffer.h"
+#include "fd_timer.h"
 
-#include <string.h>
-
-#define SENSING_SIZE 25
-
-static fd_detour_source_t fd_sensing_detour_source;
-static uint8_t fd_sensing_buffer[SENSING_SIZE];
+static fd_storage_buffer_t fd_sensing_storage_buffer;
+static uint32_t fd_sensing_interval;
+static fd_timer_t fd_sensing_timer;
+static fd_time_t fd_sensing_time;
+static uint32_t fd_sensing_samples;
 
 static
-void fd_sensing_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
-    memcpy(data, &fd_sensing_buffer[offset], length);
+void fd_sensing_sample_callback(int16_t x, int16_t y, int16_t z) {
+    float ax = x / 16384.0f;
+    float ay = y / 16384.0f;
+    float az = z / 16384.0f;
+    fd_activity_accumulate(ax, ay, az);
+    ++fd_sensing_samples;
+}
+
+static
+void fd_sensing_timer_callback(void) {
+    fd_lis3dh_read_fifo();
+    if (fd_sensing_samples > 0) {
+        float activity = fd_activity_value(fd_sensing_interval);
+        fd_storage_buffer_add_time_series(&fd_sensing_storage_buffer, fd_sensing_time.seconds, fd_sensing_interval, activity);
+    }
+
+    fd_sensing_wake();
 }
 
 void fd_sensing_initialize(void) {
-    fd_detour_source_initialize(&fd_sensing_detour_source);
+    fd_storage_buffer_initialize(&fd_sensing_storage_buffer, FD_STORAGE_TYPE('F', 'D', 'V', 'M'));
+    fd_storage_buffer_collection_push(&fd_sensing_storage_buffer);
+
+    fd_lis3dh_set_sample_callback(fd_sensing_sample_callback);
+
+    fd_sensing_interval = 10;
+    fd_timer_add(&fd_sensing_timer, fd_sensing_timer_callback);
 }
 
-void fd_sensing_push(
-    fd_detour_source_collection_t *detour_source_collection,
-    float ax, float ay, float az,
-    float mx, float my, float mz
-) {
-    if (fd_detour_source_is_transferring(&fd_sensing_detour_source)) {
-        return;
-    }
+void fd_sensing_wake(void) {
+    fd_sensing_samples = 0;
+    fd_activity_start();
 
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, fd_sensing_buffer, SENSING_SIZE);
-    fd_binary_put_uint8(&binary, 0xff);
-    fd_binary_put_float32(&binary, ax);
-    fd_binary_put_float32(&binary, ay);
-    fd_binary_put_float32(&binary, az);
-    fd_binary_put_float32(&binary, mx);
-    fd_binary_put_float32(&binary, my);
-    fd_binary_put_float32(&binary, mz);
+    fd_sensing_time = fd_rtc_get_time();
+    fd_sensing_time.microseconds = 0;
+    fd_sensing_time.seconds = (fd_sensing_time.seconds / fd_sensing_interval) * fd_sensing_interval + fd_sensing_interval;
+    fd_timer_start(&fd_sensing_timer, fd_sensing_time);
+}
 
-    fd_detour_source_set(&fd_sensing_detour_source, fd_sensing_detour_supplier, SENSING_SIZE);
-    fd_detour_source_collection_push(detour_source_collection, &fd_sensing_detour_source);
+void fd_sensing_sleep(void) {
+    fd_timer_stop(&fd_sensing_timer);
 }

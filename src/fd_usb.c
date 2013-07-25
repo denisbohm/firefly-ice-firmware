@@ -1,5 +1,6 @@
 #include "fd_control.h"
 #include "fd_detour.h"
+#include "fd_event.h"
 #include "fd_log.h"
 #include "fd_usb.h"
 
@@ -185,7 +186,17 @@ void fd_usb_initialize(void) {
     fd_detour_initialize(&fd_usb_detour, fd_usb_detour_data, DETOUR_SIZE);
     fd_detour_source_collection_initialize(&fd_usb_detour_source_collection);
 
+    fd_event_add_callback(FD_EVENT_USB_TRANSFER, fd_usb_transfer);
+
     fd_usb_wake();
+}
+
+bool fd_usb_is_powered(void) {
+    return USBD_GetUsbState() != USBD_STATE_NONE;
+}
+
+bool fd_usb_is_connected(void) {
+    return USBD_GetUsbState() == USBD_STATE_CONFIGURED;
 }
 
 void fd_usb_wake(void) {
@@ -317,11 +328,17 @@ int fd_usb_setup(const USB_Setup_TypeDef *setup) {
   return retVal;
 }
 
+bool fd_usb_is_safe_to_enter_em2(void) {
+    return USBD_SafeToEnterEM2();
+}
+
 static
-void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), USBD_State_TypeDef newState __attribute__((unused))) {
+void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), USBD_State_TypeDef newState) {
     if (newState == USBD_STATE_CONFIGURED) {
         fd_detour_clear(&fd_usb_detour);
     }
+
+    fd_event_set(FD_EVENT_USB_STATE);
 }
 
 static
@@ -346,12 +363,18 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
             fd_detour_clear(&fd_usb_detour);
         break;
     }
+
+    fd_event_set(FD_EVENT_USB_TRANSFER);
+
     return USB_STATUS_OK;
 }
 
 static
 int fd_usb_write_complete(USB_Status_TypeDef status __attribute__((unused)), uint32_t xferred __attribute__((unused)), uint32_t remaining __attribute__((unused))) {
     fd_detour_source_collection_pop(&fd_usb_detour_source_collection);
+
+    fd_event_set(FD_EVENT_USB_TRANSFER);
+
     return USB_STATUS_OK;
 }
 

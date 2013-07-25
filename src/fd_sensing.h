@@ -5,10 +5,7 @@
 
 void fd_sensing_initialize(void);
 
-void fd_sensing_push(
-    fd_detour_source_collection_t *detour_source_collection,
-    float ax, float ay, float az,
-    float mx, float my, float mz
-);
+void fd_sensing_wake(void);
+void fd_sensing_sleep(void);
 
 #endif

@@ -36,4 +36,11 @@ void fd_indicator_sleep(void);
 
 void fd_indicator_override(fd_indicator_state_t *state, fd_time_t duration);
 
+void fd_indicator_set_usb(uint8_t orange, uint8_t green);
+void fd_indicator_set_d0(uint8_t value);
+void fd_indicator_set_d1(uint8_t red, uint8_t green, uint8_t blue);
+void fd_indicator_set_d2(uint8_t red, uint8_t green, uint8_t blue);
+void fd_indicator_set_d3(uint8_t red, uint8_t green, uint8_t blue);
+void fd_indicator_set_d4(uint8_t value);
+
 #endif

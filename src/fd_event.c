@@ -1,26 +1,50 @@
 #include "fd_event.h"
 #include "fd_processor.h"
+#include "fd_usb.h"
 
+#include <em_emu.h>
 #include <em_gpio.h>
+#include <em_wdog.h>
 
 #include <string.h>
 
-fd_event_callback_t fd_event_callbacks[32];
+typedef struct {
+    uint32_t events;
+    fd_event_callback_t callback;
+} fd_event_item_t;
+
+#define ITEM_LIMIT 32
+
+static
+fd_event_item_t fd_event_items[ITEM_LIMIT];
+static
+uint32_t fd_event_item_count;
+
 volatile uint32_t fd_event_pending;
 
 void fd_event_initialize(void) {
-    for (int i = 0; i < 32; ++i) {
-        fd_event_callbacks[i] = 0;
-    }
+    fd_event_item_count = 0;
     fd_event_pending = 0;
+
+    NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
+    NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+    NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
+    NVIC_EnableIRQ(GPIO_ODD_IRQn);
 }
 
-void fd_event_set_callback(uint32_t id, fd_event_callback_t callback) {
-    fd_event_callbacks[id] = callback;
+void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
+    if (fd_event_item_count >= ITEM_LIMIT) {
+        // !!! log something
+        return;
+    }
+
+    fd_event_item_t *item = &fd_event_items[fd_event_item_count++];
+    item->events = events;
+    item->callback = callback;
 }
 
-void fd_event_set(uint32_t id) {
-    fd_event_pending |= 1 << id;
+void fd_event_set(uint32_t events) {
+    fd_event_pending |= events;
 }
 
 void GPIO_EVEN_IRQHandler(void) {
@@ -54,17 +78,21 @@ void GPIO_ODD_IRQHandler(void) {
 void fd_event_process(void) {
     fd_interrupts_disable();
     uint32_t pending = fd_event_pending;
+    fd_event_pending = 0;
     fd_interrupts_enable();
 
-    uint32_t id = 0;
-    while (pending) {
-        uint32_t mask = 1 << id;
-        if (pending & mask) {
-            pending &= ~mask;
-            fd_event_callback_t callback = fd_event_callbacks[id];
-            if (callback) {
-                (*callback)();
+    WDOG_Feed();
+
+    if (pending) {
+        for (uint32_t i = 0; i < fd_event_item_count; ++i) {
+            fd_event_item_t *item = &fd_event_items[i];
+            if (item->events & pending) {
+                (*item->callback)();
             }
+        }
+    } else {
+        if (fd_usb_is_safe_to_enter_em2()) {
+            EMU_EnterEM2(true);
         }
     }
 }

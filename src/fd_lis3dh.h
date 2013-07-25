@@ -10,6 +10,8 @@ void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback);
 void fd_lis3dh_sleep(void);
 void fd_lis3dh_wake(void);
 
-void fd_lis3dh_read(float *x, float *y, float *z);
+void fd_lis3dh_read_fifo(void);
+
+// void fd_lis3dh_read(float *x, float *y, float *z);
 
 #endif

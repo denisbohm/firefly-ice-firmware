@@ -1,12 +1,7 @@
 #include "fd_event.h"
 #include "fd_lis3dh.h"
 #include "fd_log.h"
-#include "fd_processor.h"
 #include "fd_spi.h"
-
-#include <em_cmu.h>
-#include <em_gpio.h>
-#include <em_usart.h>
 
 #include <stdint.h>
 
@@ -73,6 +68,12 @@
 #define LIS3DH_FIFO_CTRL_REG_FM_TRIGGER 0xc0
 #define LIS3DH_FIFO_CTRL_REG_TR_INT2 0x20
 
+#define LIS3DH_FIFO_SRC_REG 0x2f
+#define LIS3DH_FIFO_SRC_REG_FSS 0x1f
+#define LIS3DH_FIFO_SRC_REG_WTM 0x20
+#define LIS3DH_FIFO_SRC_REG_OVRN_FIFO 0x40
+#define LIS3DH_FIFO_SRC_REG_EMPTY 0x80
+
 #define LIS3DH_OUT_X_L 0x28
 #define LIS3DH_OUT_X_H 0x29
 #define LIS3DH_OUT_Y_L 0x2a
@@ -80,7 +81,7 @@
 #define LIS3DH_OUT_Z_L 0x2c
 #define LIS3DH_OUT_Z_H 0x2d
 
-#define FIFO_THRESHOLD 5
+#define FIFO_THRESHOLD 16
 
 typedef union {
     uint8_t bytes[6];
@@ -91,125 +92,32 @@ typedef union {
     };
 } fd_lis3dh_out_t;
 
-/*
-
-static
-fd_lis3dh_out_t transfer_out;
-
 #define SPI_READ 0x80
 #define SPI_ADDRESS_INCREMENT 0x40
 
 static
-uint8_t transfer_in = SPI_READ | SPI_ADDRESS_INCREMENT | LIS3DH_OUT_X_L;
+fd_lish3dh_sample_callback_t sample_callback;
 
-static
-fd_spi_transfer transfers[] = {
-    {
-        .op = fd_spi_op_write,
-        .length = 1,
-        .tx_buffer = &transfer_in,
-        .rx_buffer = 0
-    },
-    {
-        .op = fd_spi_op_read,
-        .length = sizeof(transfer_out),
-        .tx_buffer = 0,
-        .rx_buffer = (uint8_t *)&transfer_out
-    }
-};
-
-static
-uint32_t fd_lis3dh_transfer_count;
-
-static
-fd_lish3dh_sample_callback_t fd_lish3dh_sample_callback;
-
-void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
-    fd_lish3dh_sample_callback = callback;
-}
-
-static
-void fd_lis3dh_transfer_complete(void) {
-    lis3dh_chip_deselect();
-
-    int16_t x = transfer_out.x;
-    int16_t y = transfer_out.y;
-    int16_t z = transfer_out.z;
-
-    if (fd_lis3dh_transfer_count > 0) {
-        --fd_lis3dh_transfer_count;
-        fd_spi1_io(ACC_CSN_PORT_PIN, transfers, sizeof(transfers) / sizeof(fd_spi_transfer), fd_lis3dh_transfer_complete);
-    }
-
-    if (fd_lish3dh_sample_callback) {
-        (*fd_lish3dh_sample_callback)(x, y, z);
+void fd_lis3dh_read_fifo(void) {
+    uint8_t src = fd_spi_sync_tx1_rx1(FD_SPI_BUS_1_SLAVE_LIS3DH, SPI_READ | LIS3DH_FIFO_SRC_REG);
+    uint8_t count = src & LIS3DH_FIFO_SRC_REG_FSS;
+    while (count--) {
+        uint8_t tx_bytes[] = {SPI_READ | SPI_ADDRESS_INCREMENT | LIS3DH_OUT_X_L};
+        fd_lis3dh_out_t out;
+        fd_spi_sync_txn_rxn(
+            FD_SPI_BUS_1_SLAVE_LIS3DH,
+            tx_bytes, sizeof(tx_bytes),
+            out.bytes, sizeof(out.bytes)
+        );
+        if (sample_callback) {
+            (*sample_callback)(out.x, out.y, out.z);
+        }
     }
 }
-
-static
-void fd_lis3dh_interrupt(void) {
-    fd_lis3dh_transfer_count = FIFO_THRESHOLD;
-    fd_spi1_io(ACC_CSN_PORT_PIN, transfers, sizeof(transfers) / sizeof(fd_spi_transfer), fd_lis3dh_transfer_complete);
-}
-
-*/
-
-#define SPI_READ 0x80
-#define SPI_ADDRESS_INCREMENT 0x40
-
-/*
-static
-void fd_spi1_init(void) {
-    CMU_ClockEnable(cmuClock_USART1, true);
-
-    USART_InitSync_TypeDef init_sync = USART_INITSYNC_DEFAULT;
-    init_sync.msbf = true;
-    init_sync.clockMode = usartClockMode3;
-    init_sync.baudrate = 10000000;
-    USART_InitSync(USART1, &init_sync);
-
-    USART1->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | US1_LOCATION;
-
-    USART_Enable(USART1, usartEnable);
-}
-
-static
-void fd_spi1_enable(void) {
-    GPIO_PinOutClear(gpioPortD, 8);
-}
-
-static
-void fd_spi1_disable(void) {
-    GPIO_PinOutSet(gpioPortD, 8);
-}
-
-static
-uint8_t fd_spi1_io(uint8_t txdata) {
-    USART1->TXDATA = txdata;
-    while ((USART1->STATUS & USART_STATUS_TXC) == 0);
-    uint8_t rxdata = USART1->RXDATA;
-    return rxdata;
-}
-
-static
-uint8_t fd_spi1_read(uint8_t address) {
-    fd_spi1_enable();
-    fd_spi1_io(SPI_READ | address);
-    uint8_t rxdata = fd_spi1_io(0);
-    fd_spi1_disable();
-    return rxdata;
-}
-
-static
-void fd_spi1_write(uint8_t address, uint8_t value) {
-    fd_spi1_enable();
-    fd_spi1_io(address);
-    fd_spi1_io(value);
-    fd_spi1_disable();
-}
-*/
 
 void fd_lis3dh_initialize(void) {
+    sample_callback = 0;
+
     uint8_t who_am_i = fd_spi_sync_tx1_rx1(FD_SPI_BUS_1_SLAVE_LIS3DH, SPI_READ | LIS3DH_WHO_AM_I);
     if (who_am_i != 0x33) {
         fd_log_assert_fail("");
@@ -250,9 +158,11 @@ void fd_lis3dh_initialize(void) {
         LIS3DH_CTRL_REG5_FIFO_EN
     );
 
-    fd_lis3dh_wake();
+    fd_event_add_callback(FD_EVENT_ACC_INT, fd_lis3dh_read_fifo);
+}
 
-//    fd_event_set_callback(FD_EVENT_ACC_INT, fd_lis3dh_interrupt);
+void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
+    sample_callback = callback;
 }
 
 void fd_lis3dh_sleep(void) {
@@ -275,6 +185,7 @@ void fd_lis3dh_wake(void) {
     );
 }
 
+/*
 void fd_lis3dh_read(float *x, float *y, float *z) {
     uint8_t tx_bytes[] = {SPI_READ | SPI_ADDRESS_INCREMENT | LIS3DH_OUT_X_L};
     fd_lis3dh_out_t out;
@@ -287,3 +198,4 @@ void fd_lis3dh_read(float *x, float *y, float *z) {
     *y = out.y / 16384.0f;
     *z = out.z / 16384.0f;
 }
+*/

@@ -1,6 +1,7 @@
 #include "fd_bluetooth.h"
 #include "fd_control.h"
 #include "fd_detour.h"
+#include "fd_event.h"
 #include "fd_log.h"
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_callbacks.h"
@@ -176,6 +177,8 @@ void fd_bluetooth_initialize(void) {
     fd_nrf8001_did_connect = false;
     fd_nrf8001_did_open_pipes = false;
     fd_nrf8001_did_receive_data = false;
+
+    fd_event_add_callback(FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS, fd_bluetooth_step);
 }
 
 bool fd_bluetooth_is_asleep(void) {
@@ -353,6 +356,7 @@ void fd_nrf8001_connected_event(
     uint8_t masterClockAccuracy __attribute__((unused))
 ) {
     fd_nrf8001_did_connect = true;
+    fd_event_set(FD_EVENT_BLE_STATE);
 
     fd_nrf8001_set_data_credits(fd_bluetooth_initial_data_credits);
     fd_detour_clear(&fd_bluetooth_detour);
@@ -371,6 +375,7 @@ void fd_nrf8001_disconnected_event(
     fd_nrf8001_did_connect = false;
     fd_nrf8001_did_open_pipes = false;
     fd_nrf8001_did_receive_data = false;
+    fd_event_set(FD_EVENT_BLE_STATE);
 
     fd_nrf8001_set_data_credits(0);
 

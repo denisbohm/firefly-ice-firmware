@@ -17,8 +17,8 @@ void fd_timer_initialize(void) {
     timer_count = 0;
     scheduled_countdown = 0;
 
-    fd_event_set_callback(FD_EVENT_RTC_COUNTDOWN, fd_timer_update);
-    fd_event_set_callback(FD_EVENT_TIMER_SCHEDULE, fd_timer_update);
+    fd_event_add_callback(FD_EVENT_RTC_COUNTDOWN, fd_timer_update);
+    fd_event_add_callback(FD_EVENT_TIMER_SCHEDULE, fd_timer_update);
 }
 
 void fd_timer_add(fd_timer_t *timer, fd_timer_callback_t callback) {

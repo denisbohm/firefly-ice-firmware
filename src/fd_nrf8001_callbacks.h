@@ -82,9 +82,9 @@ void fd_nrf8001_change_timing_request_error(uint8_t status);
 
 void fd_nrf8001_change_timing_request_success(void);
 
-void fd_nrf8001_open_remove_pipe_error(uint8_t status);
+void fd_nrf8001_open_remote_pipe_error(uint8_t status);
 
-void fd_nrf8001_open_remove_pipe_success(void);
+void fd_nrf8001_open_remote_pipe_success(void);
 
 void fd_nrf8001_set_application_latency_error(uint8_t status);
 

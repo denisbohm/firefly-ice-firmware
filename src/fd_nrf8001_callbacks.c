@@ -166,12 +166,12 @@ void fd_nrf8001_change_timing_request_success(void) {
 }
 
 WEAK
-void fd_nrf8001_open_remove_pipe_error(uint8_t status __attribute__((unused))) {
+void fd_nrf8001_open_remote_pipe_error(uint8_t status __attribute__((unused))) {
     fd_nrf8001_error();
 }
 
 WEAK
-void fd_nrf8001_open_remove_pipe_success(void) {
+void fd_nrf8001_open_remote_pipe_success(void) {
 }
 
 WEAK

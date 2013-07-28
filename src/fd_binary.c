@@ -34,7 +34,7 @@ float fd_binary_unpack_float32(uint8_t *buffer) {
 fd_time_t fd_binary_unpack_time64(uint8_t *buffer) {
     fd_time_t time;
     time.seconds = fd_binary_unpack_uint32(buffer);
-    time.microseconds = fd_binary_unpack_uint32(buffer);
+    time.microseconds = fd_binary_unpack_uint32(&buffer[4]);
     return time;
 }
 

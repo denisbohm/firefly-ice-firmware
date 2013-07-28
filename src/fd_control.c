@@ -7,6 +7,7 @@
 #include "fd_processor.h"
 #include "fd_rtc.h"
 #include "fd_sync.h"
+#include "fd_system.h"
 #include "fd_update.h"
 
 #include <em_msc.h>
@@ -148,6 +149,10 @@ void fd_control_get_property_version(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, git_commit, sizeof(git_commit));
 }
 
+void fd_control_get_property_hardware_id(fd_binary_t *binary) {
+    fd_get_hardware_id(binary);
+}
+
 void fd_control_get_property_site(fd_binary_t *binary) {
     uint8_t *address = (uint8_t*)USER_DATA_ADDRESS;
     uint8_t *site;
@@ -205,6 +210,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
             switch (property) {
                 case FD_CONTROL_PROPERTY_VERSION: {
                     fd_control_get_property_version(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_HARDWARE_ID: {
+                    fd_control_get_property_hardware_id(&binary);
                 } break;
                 case FD_CONTROL_PROPERTY_DEBUG_LOCK: {
                     fd_control_get_property_debug_lock(&binary);

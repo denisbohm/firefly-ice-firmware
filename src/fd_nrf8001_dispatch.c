@@ -238,16 +238,16 @@ void fd_nrf8001_dispatch_change_timing_request_response(
     fd_nrf8001_change_timing_request_success();
 }
 
-void fd_nrf8001_dispatch_open_remove_pipe_response(
+void fd_nrf8001_dispatch_open_remote_pipe_response(
     uint8_t status,
     uint8_t *response_data __attribute__((unused)),
     uint32_t response_data_length __attribute__((unused))
 ) {
     if (status != ACI_STATUS_SUCCESS) {
-        fd_nrf8001_open_remove_pipe_error(status);
+        fd_nrf8001_open_remote_pipe_error(status);
         return;
     }
-    fd_nrf8001_open_remove_pipe_success();
+    fd_nrf8001_open_remote_pipe_success();
 }
 
 void fd_nrf8001_dispatch_set_application_latency_response(
@@ -404,7 +404,7 @@ void fd_nrf8001_command_response_event(
             fd_nrf8001_dispatch_change_timing_request_response(status, response_data, response_data_length);
         break;
         case OpenRemotePipe:
-            fd_nrf8001_dispatch_open_remove_pipe_response(status, response_data, response_data_length);
+            fd_nrf8001_dispatch_open_remote_pipe_response(status, response_data, response_data_length);
         break;
         case SetApplicationLatency:
             fd_nrf8001_dispatch_set_application_latency_response(status, response_data, response_data_length);

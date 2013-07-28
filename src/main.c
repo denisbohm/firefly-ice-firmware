@@ -160,8 +160,11 @@ int main(void) {
 #endif
 
     while (true) {
+        fd_bluetooth_step();
+        fd_nrf8001_transfer();
+
         fd_usb_transfer();
-        fd_usb_is_powered();
+
         fd_event_process();
     }
 

@@ -12,6 +12,8 @@ typedef struct {
     float temperature;
 } fd_power_t;
 
+void fd_power_initialize(void);
+
 void fd_power_get(fd_power_t *power);
 void fd_power_set(float battery_level);
 

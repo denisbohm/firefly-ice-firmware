@@ -60,7 +60,7 @@ bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
     i2c1_status = I2C_TransferInit(I2C1, seq);
     while (i2c1_status == i2cTransferInProgress);
     if (i2c1_status != i2cTransferDone) {
-        fd_log_ram_assert_fail("");
+        fd_log_assert_fail("");
         return false;
     }
     return true;

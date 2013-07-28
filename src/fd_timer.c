@@ -29,7 +29,7 @@ void fd_timer_add(fd_timer_t *timer, fd_timer_callback_t callback) {
     timer->countdown = 0;
 
     if (timer_count >= TIMERS_LIMIT) {
-        fd_log_ram_assert_fail("timer limit");
+        fd_log_assert_fail("timer limit");
         return;
     }
 
@@ -95,6 +95,13 @@ void fd_timer_start(fd_timer_t *timer, fd_time_t interval) {
     timer->triggered = false;
 
     fd_event_set(FD_EVENT_TIMER_SCHEDULE);
+}
+
+void fd_timer_start_next(fd_timer_t *timer, uint32_t interval) {
+    fd_time_t time = fd_rtc_get_time();
+    time.microseconds = 0;
+    time.seconds = (time.seconds / interval) * interval + interval;
+    fd_timer_start(timer, time);
 }
 
 void fd_timer_stop(fd_timer_t *timer) {

@@ -83,8 +83,6 @@
       <file file_name="src/fd_sha.c"/>
       <file file_name="src/fd_aes.c"/>
       <file file_name="src/fd_aes.h"/>
-      <file file_name="src/fd_battery.c"/>
-      <file file_name="src/fd_battery.h"/>
       <file file_name="src/fd_timer.h"/>
       <file file_name="src/fd_timer.c"/>
     </folder>

@@ -2,19 +2,24 @@
 #include "fd_adc.h"
 #include "fd_binary.h"
 #include "fd_bluetooth.h"
+#include "fd_control.h"
 #include "fd_detour.h"
 #include "fd_event.h"
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
+#include "fd_indicator.h"
 #include "fd_log.h"
 #include "fd_lp55231.h"
 #include "fd_mag3110.h"
 #include "fd_nrf8001.h"
+#include "fd_power.h"
 #include "fd_processor.h"
 #include "fd_rtc.h"
 #include "fd_sensing.h"
 #include "fd_spi.h"
 #include "fd_storage_buffer.h"
+#include "fd_sync.h"
+#include "fd_timer.h"
 #include "fd_ui.h"
 #include "fd_usb.h"
 #include "fd_w25q16dw.h"
@@ -43,30 +48,26 @@ int main(void) {
     WDOG_Init(&wdog_init);
 #endif
 
-    fd_rtc_initialize();
+    fd_log_initialize();
+    fd_event_initialize();
+    fd_timer_initialize();
+    fd_control_initialize();
 
-    GPIO_PinOutClear(LED0_PORT_PIN);
-    GPIO_PinOutClear(LED4_PORT_PIN);
+//    GPIO_PinOutClear(LED0_PORT_PIN);
+//    GPIO_PinOutClear(LED4_PORT_PIN);
 //    GPIO_PinOutClear(LED5_PORT_PIN);
 //    GPIO_PinOutClear(LED6_PORT_PIN);
 
-    fd_event_initialize();
-    fd_log_initialize();
-    fd_usb_initialize();
+    fd_rtc_initialize();
     fd_adc_initialize();
+    fd_usb_initialize();
 
     fd_i2c1_initialize();
-
     // initialize devices on i2c1 powered bus
     fd_i2c1_power_on();
     //
     fd_lp55231_initialize();
     fd_lp55231_wake();
-    /*
-    for (int i = 0; i < 9; ++i) {
-        fd_lp55231_set_led_pwm(i, 127);
-    }
-    */
     //
     fd_mag3110_initialize();
 
@@ -77,27 +78,36 @@ int main(void) {
     fd_spi_wake(FD_SPI_BUS_1);
     //
     fd_lis3dh_initialize();
+    fd_lis3dh_wake();
     //
     fd_nrf8001_initialize();
     fd_nrf8001_reset();
     fd_bluetooth_initialize();
 
-/*
     // initialize devices on spi0 powered bus
     fd_spi_on(FD_SPI_BUS_0);
     fd_spi_wake(FD_SPI_BUS_0);
     //
     fd_w25q16dw_initialize();
-    fd_w25q16dw_test();
 
+    fd_storage_initialize();
     fd_storage_buffer_collection_initialize();
+    fd_log_enable_storage(true);
+
+    fd_power_initialize();
+
+    fd_indicator_initialize();
+    fd_indicator_wake();
 
     fd_ui_initialize();
+    fd_sync_initialize();
     fd_activity_initialize();
     fd_sensing_initialize();
-*/
+    fd_sensing_wake();
 
-#if 1
+    fd_usb_wake();
+
+#if 0
     // low power testing
     fd_usb_sleep();
     fd_adc_sleep();
@@ -149,11 +159,11 @@ int main(void) {
     }
 #endif
 
-#if 0
     while (true) {
+        fd_usb_transfer();
+        fd_usb_is_powered();
         fd_event_process();
     }
-#endif
 
     return 0;
 }

@@ -34,22 +34,22 @@ void fd_lp55231_wake(void) {
     fd_delay_us(500);
     bool result = fd_i2c1_register_write(ADDRESS, ENGINE_CNTRL1, ENGINE_CNTRL1_CHIP_EN);
     if (!result) {
-        fd_log_ram_assert_fail("");
+        fd_log_assert_fail("");
     }
     result = fd_i2c1_register_write(ADDRESS, MISC, MISC_INT_CLK_EN | MISC_CP_MODE_AUTOMATIC);
     if (!result) {
-        fd_log_ram_assert_fail("");
+        fd_log_assert_fail("");
     }
 }
 
 void fd_lp55231_sleep(void) {
     bool result = fd_i2c1_register_write(ADDRESS, MISC, 0x00);
     if (!result) {
-        fd_log_ram_assert_fail("");
+        fd_log_assert_fail("");
     }
     result = fd_i2c1_register_write(ADDRESS, ENGINE_CNTRL1, 0x00);
     if (!result) {
-        fd_log_ram_assert_fail("");
+        fd_log_assert_fail("");
     }
     GPIO_PinOutClear(LED_EN_PORT_PIN);
 }
@@ -57,6 +57,6 @@ void fd_lp55231_sleep(void) {
 void fd_lp55231_set_led_pwm(uint8_t led, uint8_t pwm) {
     bool result = fd_i2c1_register_write(ADDRESS, D1_PWM + led, pwm);
     if (!result) {
-        fd_log_ram_assert_fail("");
+        fd_log_assert_fail("");
     }
 }

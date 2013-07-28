@@ -12,18 +12,12 @@ void fd_ui_charge_status_callback(void) {
     bool is_charging = GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered) {
         if (is_charging) {
-//            fd_indicator_set_usb(0xff, 0x00);
-            GPIO_PinOutClear(LED5_PORT_PIN); // orange on
-            GPIO_PinOutSet(LED6_PORT_PIN); // green off
+            fd_indicator_set_usb(0xff, 0x00);
         } else {
-//            fd_indicator_set_usb(0x00, 0xff);
-            GPIO_PinOutSet(LED5_PORT_PIN); // orange off
-            GPIO_PinOutClear(LED6_PORT_PIN); // green on
+            fd_indicator_set_usb(0x00, 0xff);
         }
     } else {
-//        fd_indicator_set_usb(0x00, 0x00);
-        GPIO_PinOutSet(LED5_PORT_PIN); // orange off
-        GPIO_PinOutSet(LED6_PORT_PIN); // green off
+        fd_indicator_set_usb(0x00, 0x00);
     }
 }
 

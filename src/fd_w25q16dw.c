@@ -17,8 +17,14 @@
 
 #define WINBOND_MANUFACTURER_ID 0xef
 
+#include <string.h>
+
+static
+uint8_t simulation_buffer[2 * FD_W25Q16DW_PAGES * FD_W25Q16DW_PAGE_SIZE];
+
 void fd_w25q16dw_wake(void) {
-    uint8_t tx_bytes[] = {RELEASE_POWER_DOWN, 0, 0, 0 /* 3 dummy bytes */};
+/*
+    uint8_t tx_bytes[] = {RELEASE_POWER_DOWN, 0, 0, 0};
     uint8_t device_id;
     fd_spi_transfer_t transfers[] = {
         {
@@ -55,9 +61,13 @@ void fd_w25q16dw_wake(void) {
     fd_spi_wait(FD_SPI_BUS_0);
     fd_delay_us(30); // tRES2
     fd_spi_chip_select(FD_SPI_BUS_0_SLAVE_W25Q16DW, false);
+*/
 }
 
 void fd_w25q16dw_initialize(void) {
+    memset(simulation_buffer, 0xff, sizeof(simulation_buffer));
+
+/*
     fd_w25q16dw_wake();
 
     uint8_t txdata[] = {READ_MANUFACTURER_DEVICE_ID, 0x00, 0x00, 0x00};
@@ -68,35 +78,48 @@ void fd_w25q16dw_initialize(void) {
     if (manufacturer_id != WINBOND_MANUFACTURER_ID) {
         fd_log_ram_assert_fail("");
     }
+*/
 }
 
+/*
+static
 void fd_w25q16dw_wait_while_busy(void) {
     uint8_t status;
     do {
         status = fd_spi_sync_tx1_rx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, READ_STATUS);
     } while (status & BUSY);
 }
+*/
 
 void fd_w25q16dw_sleep(void) {
+/*
     fd_w25q16dw_wait_while_busy();
 
     fd_spi_sync_tx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, POWER_DOWN);
+*/
 }
 
 void fd_w25q16dw_enable_write(void) {
+/*
     fd_w25q16dw_wait_while_busy();
 
     fd_spi_sync_tx1(FD_SPI_BUS_0_SLAVE_W25Q16DW, WRITE_ENABLE);
+*/
 }
 
 // erase a 4K-byte sector
 void fd_w25q16dw_erase_sector(uint32_t address) {
+    memset(&simulation_buffer[address], 0xff, FD_W25Q16DW_PAGE_SIZE * FD_W25Q16DW_PAGES_PER_SECTOR);
+/*
     uint8_t buffer[] = {SECTOR_ERASE, address >> 16, address >> 8, address};
     fd_spi_sync_txn(FD_SPI_BUS_0_SLAVE_W25Q16DW, buffer, sizeof(buffer));
+*/
 }
 
 // write up to 256-bytes to a page
 void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
+    memcpy(&simulation_buffer[address], data, length);
+/*
     fd_w25q16dw_wait_while_busy();
 
     uint8_t tx_bytes[] = {PAGE_PROGRAM, address >> 16, address >> 8, address};
@@ -132,15 +155,20 @@ void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
     };
     fd_spi_io(FD_SPI_BUS_0_SLAVE_W25Q16DW, &io);
     fd_spi_wait(FD_SPI_BUS_0);
+*/
 }
 
 void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {
+    memcpy(data, &simulation_buffer[address], length);
+/*
     fd_w25q16dw_wait_while_busy();
 
-    uint8_t tx_bytes[] = {FAST_READ, address >> 16, address >> 8, address, 0 /* dummy clocks */};
+    uint8_t tx_bytes[] = {FAST_READ, address >> 16, address >> 8, address, 0};
     fd_spi_sync_txn_rxn(FD_SPI_BUS_0_SLAVE_W25Q16DW, tx_bytes, sizeof(tx_bytes), data, length);
+*/
 }
 
+/*
 void fd_w25q16dw_test(void) {
     fd_w25q16dw_wake();
     uint32_t address = 0;
@@ -157,3 +185,4 @@ void fd_w25q16dw_test(void) {
         return;
     }
 }
+*/

@@ -5,6 +5,8 @@
 #include "fd_usb.h"
 
 #include <em_usb.h>
+#include <em_usbtypes.h>
+#include <em_usbhal.h>
 
 #define DEFAULT_POLL_TIMEOUT 1
 #define INTR_IN_EP_ADDR 0x81
@@ -187,8 +189,6 @@ void fd_usb_initialize(void) {
     fd_detour_source_collection_initialize(&fd_usb_detour_source_collection);
 
     fd_event_add_callback(FD_EVENT_USB_TRANSFER, fd_usb_transfer);
-
-    fd_usb_wake();
 }
 
 bool fd_usb_is_powered(void) {

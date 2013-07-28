@@ -1,4 +1,5 @@
 #include "fd_adc.h"
+#include "fd_event.h"
 #include "fd_processor.h"
 
 #include <em_adc.h>
@@ -13,11 +14,12 @@ static volatile uint32_t adc_charge_current_value;
 
 static volatile bool adc_complete;
 static volatile fd_adc_channel_t adc_channel;
+static volatile uint32_t adc_event;
 
 void fd_adc_initialize(void) {
-    fd_adc_start(fd_adc_channel_temperature, true);
-    fd_adc_start(fd_adc_channel_battery_voltage, true);
-    fd_adc_start(fd_adc_channel_charge_current, true);
+    fd_adc_start(fd_adc_channel_temperature, false);
+    fd_adc_start(fd_adc_channel_battery_voltage, false);
+    fd_adc_start(fd_adc_channel_charge_current, false);
 }
 
 #define CAL_TEMP_0 ((uint8_t *)0x0FE081B2)
@@ -49,7 +51,7 @@ bool fd_adc_in_progress(void) {
     return !adc_complete;
 }
 
-void ADC0_IRQHandler(void) {
+void fd_adc_ready(void) {
     uint32_t value = ADC_DataSingleGet(ADC0);
     switch (adc_channel) {
         case fd_adc_channel_temperature:
@@ -69,6 +71,11 @@ void ADC0_IRQHandler(void) {
     CMU_ClockEnable(cmuClock_ADC0, false);
 }
 
+void ADC0_IRQHandler(void) {
+    fd_adc_ready();
+    fd_event_set(adc_event);
+}
+
 void fd_adc_start(fd_adc_channel_t channel, bool asynchronous) {
     CMU_ClockEnable(cmuClock_ADC0, true);
 
@@ -84,13 +91,16 @@ void fd_adc_start(fd_adc_channel_t channel, bool asynchronous) {
         case fd_adc_channel_temperature:
             singleInit.reference = adcRef1V25;
             singleInit.input = adcSingleInpTemp;
+            adc_event = FD_EVENT_ADC_TEMPERATURE;
         break;
         case fd_adc_channel_battery_voltage:
             GPIO_PinOutSet(BAT_VDIV2EN_PORT_PIN);
             singleInit.input = adcSingleInpCh6;
+            adc_event = FD_EVENT_ADC_BATTERY_VOLTAGE;
         break;
         case fd_adc_channel_charge_current:
             singleInit.input = adcSingleInpCh7;
+            adc_event = FD_EVENT_ADC_CHARGE_CURRENT;
         break;
     }
 
@@ -108,6 +118,6 @@ void fd_adc_start(fd_adc_channel_t channel, bool asynchronous) {
 
     if (!asynchronous) {
         while ((ADC_IntGet(ADC0) & ADC_IF_SINGLE) == 0);
-        ADC0_IRQHandler();
+        fd_adc_ready();
     }
 }

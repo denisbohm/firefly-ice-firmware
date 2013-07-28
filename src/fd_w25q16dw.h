@@ -4,12 +4,12 @@
 #include <stdint.h>
 
 #define FD_W25Q16DW_PAGE_SIZE 256
-#define FD_W25Q16DW_PAGES 8192
+//#define FD_W25Q16DW_PAGES 8192
+// !!! just for testing using a RAM simulation -denis
+#define FD_W25Q16DW_PAGES 32
 #define FD_W25Q16DW_PAGES_PER_SECTOR 16
 
 void fd_w25q16dw_initialize(void);
-
-void fd_w25q16dw_test(void);
 
 void fd_w25q16dw_sleep(void);
 void fd_w25q16dw_wake(void);

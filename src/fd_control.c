@@ -308,15 +308,15 @@ void fd_control_update_commit(fd_detour_source_collection_t *detour_source_colle
 void fd_control_radio_direct_test_mode_enter(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint16_t command = fd_binary_get_uint16(&binary);
+    uint16_t command __attribute__((unused)) = fd_binary_get_uint16(&binary);
 //    fd_bluetooth_?(command);
 }
 
-void fd_control_radio_direct_test_mode_exit(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_radio_direct_test_mode_exit(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
 //    fd_bluetooth_?
 }
 
-void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
     uint16_t report = 0; // !!! get last test result
 
     fd_binary_t binary;
@@ -330,7 +330,7 @@ void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *det
 void fd_control_disconnect(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t flags = fd_binary_get_uint8(&binary);
+    uint8_t flags __attribute__((unused)) = fd_binary_get_uint8(&binary);
     // fd_bluetooth_?
     // fd_usb_?
 }

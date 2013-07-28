@@ -16,13 +16,12 @@ static
 fd_timer_t override_timer;
 
 void fd_indicator_set_usb(uint8_t orange, uint8_t green) {
-    TIMER_CompareSet(TIMER3, /* channel */ 1, orange);
-    TIMER_CompareSet(TIMER3, /* channel */ 2, green);
+    TIMER_CompareSet(TIMER3, /* channel */ 1, (~orange) << 8);
+    TIMER_CompareSet(TIMER3, /* channel */ 2, (~green) << 8);
 }
 
 void fd_indicator_set_d0(uint8_t value) {
-    TIMER_CompareSet(
-    , /* channel */ 2, value);
+    TIMER_CompareSet(TIMER0, /* channel */ 2, (~value) << 8);
 }
 
 void fd_indicator_set_d1(uint8_t red, uint8_t green, uint8_t blue) {
@@ -44,7 +43,7 @@ void fd_indicator_set_d3(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void fd_indicator_set_d4(uint8_t value) {
-    TIMER_CompareSet(TIMER0, /* channel */ 1, value);
+    TIMER_CompareSet(TIMER0, /* channel */ 1, (~value) << 8);
 }
 
 static
@@ -64,7 +63,7 @@ void fd_indicator_initialize(void) {
     fd_timer_add(&override_timer, override_callback);
 }
 
-#define TOP 255
+#define TOP 0xff00
 
 void fd_indicator_wake(void) {
     CMU_ClockEnable(cmuClock_TIMER0, true);
@@ -81,8 +80,12 @@ void fd_indicator_wake(void) {
     TIMER_CompareSet(TIMER0, /* channel */ 1, TOP);
     TIMER_CompareSet(TIMER0, /* channel */ 2, TOP);
 
+    TIMER_Init_TypeDef timer_init = TIMER_INIT_DEFAULT;
+    TIMER_Init(TIMER0, &timer_init);
+
     CMU_ClockEnable(cmuClock_TIMER3, true);
 
+    TIMER_InitCC(TIMER3, /* channel */ 1, &timer_initcc);
     TIMER_InitCC(TIMER3, /* channel */ 2, &timer_initcc);
 
     TIMER3->ROUTE = TIMER_ROUTE_CC2PEN | TIMER_ROUTE_LOCATION_LOC0;
@@ -94,6 +97,8 @@ void fd_indicator_wake(void) {
     TIMER_IntEnable(TIMER3, TIMER_IF_CC1 | TIMER_IF_OF);
 
     NVIC_EnableIRQ(TIMER3_IRQn);
+
+    TIMER_Init(TIMER3, &timer_init);
 }
 
 void fd_indicator_sleep(void) {
@@ -111,9 +116,9 @@ void TIMER3_IRQHandler(void) {
     TIMER_IntClear(TIMER3, TIMER_IF_CC1 | TIMER_IF_OF);
 
     if (timer_if & TIMER_IF_CC1) {
-        GPIO_PinOutClear(LED5_PORT_PIN);
-    } else {
         GPIO_PinOutSet(LED5_PORT_PIN);
+    } else {
+        GPIO_PinOutClear(LED5_PORT_PIN);
     }
 }
 

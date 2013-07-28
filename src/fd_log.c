@@ -8,12 +8,27 @@
 #define FD_LOG_STORAGE_TYPE FD_STORAGE_TYPE('F', 'D', 'L', 'O')
 
 bool fd_log_did_log;
+bool fd_log_use_storage;
 
 void fd_log_initialize(void) {
     fd_log_did_log = false;
+    fd_log_use_storage = false;
+}
+
+void fd_log_enable_storage(bool enable) {
+    fd_log_use_storage = enable;
+}
+
+void fd_log_ram(char *message __attribute__((unused))) {
+    fd_log_did_log = true;
 }
 
 void fd_log(char *message) {
+    if (fd_log_use_storage) {
+        fd_log_ram(message);
+        return;
+    }
+
     fd_log_did_log = true;
 
     uint8_t data[FD_STORAGE_MAX_DATA_LENGTH];
@@ -27,8 +42,4 @@ void fd_log(char *message) {
     }
     fd_binary_put_bytes(&binary, (uint8_t *)message, length);
     fd_storage_append_page(FD_LOG_STORAGE_TYPE, data, binary.put_index);
-}
-
-void fd_log_ram(char *message __attribute__((unused))) {
-    fd_log_did_log = true;
 }

@@ -48,7 +48,7 @@ void fd_event_set(uint32_t events) {
 }
 
 void GPIO_EVEN_IRQHandler(void) {
-    uint32_t interrupts = GPIO_IntGet() & 0xaaaaaaaa;
+    uint32_t interrupts = GPIO_IntGet() & 0x55555555;
     GPIO_IntClear(interrupts);
     if (interrupts & (1 << MAG_INT_PIN)) { // A.10
         fd_event_set(FD_EVENT_MAG_INT);
@@ -59,16 +59,13 @@ void GPIO_EVEN_IRQHandler(void) {
     if (interrupts & (1 << ACC_INT_PIN)) { // A.4
         fd_event_set(FD_EVENT_ACC_INT);
     }
-    if (interrupts & (1 << CHG_STAT_PIN)) { // F.2
-        fd_event_set(FD_EVENT_CHG_STAT);
-    }
     if (interrupts & (1 << I2C0_INT_PIN)) { // C.8
-        fd_event_set(FD_EVENT_CHG_STAT);
+        fd_event_set(FD_EVENT_I2C0_INT);
     }
 }
 
 void GPIO_ODD_IRQHandler(void) {
-    uint32_t interrupts = GPIO_IntGet() & 0x55555555;
+    uint32_t interrupts = GPIO_IntGet() & 0xaaaaaaaa;
     GPIO_IntClear(interrupts);
     if (interrupts & (1 << CHG_STAT_PIN)) { // C.9
         fd_event_set(FD_EVENT_CHG_STAT);

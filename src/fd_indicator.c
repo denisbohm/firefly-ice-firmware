@@ -25,20 +25,20 @@ void fd_indicator_set_d0(uint8_t value) {
 }
 
 void fd_indicator_set_d1(uint8_t red, uint8_t green, uint8_t blue) {
-    fd_lp55231_set_led_pwm(8, red);
-    fd_lp55231_set_led_pwm(4, green);
+    fd_lp55231_set_led_pwm(9, red);
+    fd_lp55231_set_led_pwm(6, green);
     fd_lp55231_set_led_pwm(5, blue);
 }
 
 void fd_indicator_set_d2(uint8_t red, uint8_t green, uint8_t blue) {
-    fd_lp55231_set_led_pwm(7, red);
-    fd_lp55231_set_led_pwm(2, green);
+    fd_lp55231_set_led_pwm(8, red);
+    fd_lp55231_set_led_pwm(4, green);
     fd_lp55231_set_led_pwm(3, blue);
 }
 
 void fd_indicator_set_d3(uint8_t red, uint8_t green, uint8_t blue) {
-    fd_lp55231_set_led_pwm(6, red);
-    fd_lp55231_set_led_pwm(0, green);
+    fd_lp55231_set_led_pwm(7, red);
+    fd_lp55231_set_led_pwm(2, green);
     fd_lp55231_set_led_pwm(1, blue);
 }
 

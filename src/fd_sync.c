@@ -29,7 +29,11 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     if (!has_page) {
         has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
         if (!has_page) {
-            return;
+            // send indication that there is nothing to sync -denis
+            metadata.page = 0xfffffffe;
+            metadata.length = 0;
+            metadata.hash = 0;
+            metadata.type = 0;
         }
     }
 
@@ -59,6 +63,9 @@ void fd_sync_ack(fd_detour_source_collection_t *detour_source_collection __attri
     metadata.length = fd_binary_get_uint16(&binary);
     metadata.hash = fd_binary_get_uint16(&binary);
     metadata.type = fd_binary_get_uint32(&binary);
+    if (metadata.page == 0xfffffffe) {
+        // !!! shouldn't get ack for empty sync... -denis
+    } else
     if (metadata.page == 0xffffffff) {
         fd_storage_buffer_clear_page(&metadata);
     } else {

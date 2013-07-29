@@ -85,6 +85,7 @@
       <file file_name="src/fd_aes.h"/>
       <file file_name="src/fd_timer.h"/>
       <file file_name="src/fd_timer.c"/>
+      <file file_name="src/fd_time.c"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

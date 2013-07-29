@@ -78,7 +78,7 @@ int main(void) {
     fd_spi_wake(FD_SPI_BUS_1);
     //
     fd_lis3dh_initialize();
-//    fd_lis3dh_wake();
+    fd_lis3dh_wake();
     //
     fd_nrf8001_initialize();
     fd_nrf8001_reset();

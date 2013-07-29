@@ -46,7 +46,14 @@ void fd_sensing_wake(void) {
     fd_sensing_samples = 0;
     fd_activity_start();
 
-    fd_timer_start_next(&fd_sensing_timer, fd_sensing_interval);
+    fd_time_t now = fd_rtc_get_time();
+    fd_sensing_time.microseconds = 0;
+    fd_sensing_time.seconds = (now.seconds / fd_sensing_interval) * fd_sensing_interval;
+    fd_time_t at;
+    at.microseconds = 0;
+    at.seconds = fd_sensing_time.seconds + fd_sensing_interval;
+    fd_time_t duration = fd_time_subtract(at, now);
+    fd_timer_start(&fd_sensing_timer, duration);
 }
 
 void fd_sensing_sleep(void) {

@@ -87,8 +87,8 @@ void fd_timer_update(void) {
     fd_timer_callback_triggered();
 }
 
-void fd_timer_start(fd_timer_t *timer, fd_time_t interval) {
-    uint32_t countdown = interval.seconds * 32 + (interval.microseconds + 31250 - 1) / 31250;
+void fd_timer_start(fd_timer_t *timer, fd_time_t duration) {
+    uint32_t countdown = duration.seconds * 32 + (duration.microseconds + 31250 - 1) / 31250;
     timer->countdown = countdown;
     timer->active = true;
     timer->scheduled = false;
@@ -98,10 +98,12 @@ void fd_timer_start(fd_timer_t *timer, fd_time_t interval) {
 }
 
 void fd_timer_start_next(fd_timer_t *timer, uint32_t interval) {
-    fd_time_t time = fd_rtc_get_time();
-    time.microseconds = 0;
-    time.seconds = (time.seconds / interval) * interval + interval;
-    fd_timer_start(timer, time);
+    fd_time_t now = fd_rtc_get_time();
+    fd_time_t at;
+    at.microseconds = 0;
+    at.seconds = (now.seconds / interval) * interval + interval;
+    fd_time_t duration = fd_time_subtract(at, now);
+    fd_timer_start(timer, duration);
 }
 
 void fd_timer_stop(fd_timer_t *timer) {

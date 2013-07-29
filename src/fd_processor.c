@@ -110,7 +110,7 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(I2C0_INT_PORT_PIN, gpioModeInputPull, 0);
 
     GPIO_PinModeSet(MAG_INT_PORT_PIN, gpioModeInputPull, 0);
-//    GPIO_IntConfig(MAG_INT_PORT_PIN, true /* rising */, false /* falling */, true);
+    GPIO_IntConfig(MAG_INT_PORT_PIN, true /* rising */, true /* falling */, true);
 
     GPIO_PinModeSet(ACC_CSN_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(ACC_INT_PORT_PIN, gpioModeInput, 0);
@@ -127,7 +127,7 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(SWD_IO_PORT_PIN, gpioModeDisabled, 0);
 
     GPIO_PinModeSet(CHG_STAT_PORT_PIN, gpioModeInput, 0);
-//    GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
+    GPIO_IntConfig(CHG_STAT_PORT_PIN, true /* rising */, true /* falling */, true);
     GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeDisabled, 0); // analog input
 
     GPIO_PinModeSet(PWR_SEL_PORT_PIN, gpioModePushPull, 0);
@@ -145,7 +145,7 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(NRF_RESETN_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(NRF_REQN_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(NRF_RDYN_PORT_PIN, gpioModeInputPull, 1);
-//    GPIO_IntConfig(NRF_RDYN_PORT_PIN, true /* rising */, true /* falling */, true);
+    GPIO_IntConfig(NRF_RDYN_PORT_PIN, true /* rising */, true /* falling */, true);
 
     GPIO_PinModeSet(I2C1_PWR_PORT_PIN, gpioModePushPull, 0);
     GPIO_PinModeSet(I2C1_SDA_PORT_PIN, gpioModePushPull, 0);

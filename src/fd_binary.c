@@ -123,7 +123,7 @@ fd_time_t fd_binary_get_time64(fd_binary_t *binary) {
 }
 
 void fd_binary_put_bytes(fd_binary_t *binary, uint8_t *data, uint32_t length) {
-    memcpy(data, &binary->buffer[binary->put_index], length);
+    memcpy(&binary->buffer[binary->put_index], data, length);
     binary->put_index += length;
 }
 

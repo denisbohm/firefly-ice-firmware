@@ -22,8 +22,6 @@ void fd_nrf8001_initialize(void) {
     data_credits = 0;
 
     fd_nrf8001_spi_tx_length = 0;
-
-    fd_event_add_callback(FD_EVENT_NRF_RDYN, fd_nrf8001_transfer);
 }
 
 void fd_nrf8001_error(void) {
@@ -35,18 +33,12 @@ bool fd_nrf8001_has_system_credits(void) {
 }
 
 void fd_nrf8001_set_system_credits(uint32_t credits) {
-    bool event = (system_credits == 0) && (credits > 0);
-
     system_credits = credits;
 
-    if (event) {
-        fd_event_set(FD_EVENT_BLE_SYSTEM_CREDITS);
-    }
+    fd_event_set(FD_EVENT_BLE_SYSTEM_CREDITS);
 }
 
 void fd_nrf8001_add_system_credits(uint32_t credits) {
-    bool event = (system_credits == 0) && (credits > 0);
-
     system_credits += credits;
 
     if (system_credits > 1) {
@@ -55,9 +47,7 @@ void fd_nrf8001_add_system_credits(uint32_t credits) {
         system_credits = 1;
     }
 
-    if (event) {
-        fd_event_set(FD_EVENT_BLE_SYSTEM_CREDITS);
-    }
+    fd_event_set(FD_EVENT_BLE_SYSTEM_CREDITS);
 }
 
 void fd_nrf8001_use_system_credits(uint32_t credits) {
@@ -69,6 +59,8 @@ void fd_nrf8001_use_system_credits(uint32_t credits) {
     }
 
     system_credits -= credits;
+
+    fd_event_set(FD_EVENT_BLE_SYSTEM_CREDITS);
 }
 
 bool fd_nrf8001_has_data_credits(void) {
@@ -76,18 +68,12 @@ bool fd_nrf8001_has_data_credits(void) {
 }
 
 void fd_nrf8001_set_data_credits(uint32_t credits) {
-    bool event = (data_credits == 0) && (credits > 0);
-
     data_credits = credits;
 
-    if (event) {
-        fd_event_set(FD_EVENT_BLE_DATA_CREDITS);
-    }
+    fd_event_set(FD_EVENT_BLE_DATA_CREDITS);
 }
 
 void fd_nrf8001_add_data_credits(uint32_t credits) {
-    bool event = (data_credits == 0) && (credits > 0);
-
     data_credits += credits;
 
     if (data_credits > 2) {
@@ -96,9 +82,7 @@ void fd_nrf8001_add_data_credits(uint32_t credits) {
         data_credits = 2;
     }
 
-    if (event) {
-        fd_event_set(FD_EVENT_BLE_DATA_CREDITS);
-    }
+    fd_event_set(FD_EVENT_BLE_DATA_CREDITS);
 }
 
 void fd_nrf8001_use_data_credits(uint32_t credits) {
@@ -110,6 +94,8 @@ void fd_nrf8001_use_data_credits(uint32_t credits) {
     }
 
     data_credits -= credits;
+
+    fd_event_set(FD_EVENT_BLE_DATA_CREDITS);
 }
 
 void fd_nrf8001_reset(void) {

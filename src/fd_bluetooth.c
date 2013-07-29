@@ -160,6 +160,11 @@ bool fd_nrf8001_did_connect;
 bool fd_nrf8001_did_open_pipes;
 bool fd_nrf8001_did_receive_data;
 
+void fd_bluetooth_ready(void) {
+    fd_nrf8001_transfer();
+    fd_bluetooth_step();
+}
+
 void fd_bluetooth_initialize(void) {
     fd_bluetooth_system_steps = 0;
     fd_bluetooth_data_steps = 0;
@@ -178,7 +183,7 @@ void fd_bluetooth_initialize(void) {
     fd_nrf8001_did_open_pipes = false;
     fd_nrf8001_did_receive_data = false;
 
-    fd_event_add_callback(FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS, fd_bluetooth_step);
+    fd_event_add_callback(FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS | FD_EVENT_NRF_RDYN, fd_bluetooth_ready);
 }
 
 bool fd_bluetooth_is_asleep(void) {

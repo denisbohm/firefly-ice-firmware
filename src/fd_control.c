@@ -95,10 +95,11 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
     uint8_t *provision_data = &binary.buffer[binary.get_index];
 
     uint32_t *address = (uint32_t*)USER_DATA_ADDRESS;
+    uint32_t n = (provision_data_length + 3) & ~0x3; // round up to multiple of 4 bytes
     MSC_Init();
     __disable_irq();
     MSC_ErasePage(address);
-    MSC_WriteWord(address, provision_data, provision_data_length);
+    MSC_WriteWord(address, provision_data, n);
     __enable_irq();
     MSC_Deinit();
 
@@ -202,35 +203,36 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
     fd_binary_initialize(&binary, data, length);
     uint32_t properties = fd_binary_get_uint32(&binary);
 
-    fd_binary_initialize(&binary, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&binary, FD_CONTROL_GET_PROPERTIES);
-    fd_binary_put_uint32(&binary, properties);
+    fd_binary_t binary_out;
+    fd_binary_initialize(&binary_out, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
+    fd_binary_put_uint8(&binary_out, FD_CONTROL_GET_PROPERTIES);
+    fd_binary_put_uint32(&binary_out, properties);
     for (uint32_t property = 1; property != 0; property <<= 1) {
         if (property & properties) {
             switch (property) {
                 case FD_CONTROL_PROPERTY_VERSION: {
-                    fd_control_get_property_version(&binary);
+                    fd_control_get_property_version(&binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_HARDWARE_ID: {
-                    fd_control_get_property_hardware_id(&binary);
+                    fd_control_get_property_hardware_id(&binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_DEBUG_LOCK: {
-                    fd_control_get_property_debug_lock(&binary);
+                    fd_control_get_property_debug_lock(&binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_RTC: {
-                    fd_control_get_property_rtc(&binary);
+                    fd_control_get_property_rtc(&binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_POWER: {
-                    fd_control_get_property_power(&binary);
+                    fd_control_get_property_power(&binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_SITE: {
-                    fd_control_get_property_site(&binary);
+                    fd_control_get_property_site(&binary_out);
                 } break;
             }
         }
     }
 
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary.put_index);
+    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary_out.put_index);
     fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
 }
 

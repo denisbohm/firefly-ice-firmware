@@ -338,7 +338,7 @@ void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), US
         fd_detour_clear(&fd_usb_detour);
     }
 
-    fd_event_set(FD_EVENT_USB_STATE);
+    fd_event_set(FD_EVENT_USB_STATE | FD_EVENT_USB_TRANSFER);
 }
 
 static
@@ -371,7 +371,12 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
 
 static
 int fd_usb_write_complete(USB_Status_TypeDef status __attribute__((unused)), uint32_t xferred __attribute__((unused)), uint32_t remaining __attribute__((unused))) {
-    fd_detour_source_collection_pop(&fd_usb_detour_source_collection);
+    fd_detour_source_t *source = fd_usb_detour_source_collection.first;
+    if (source) {
+        if (!fd_detour_source_is_transferring(source)) {
+            fd_detour_source_collection_pop(&fd_usb_detour_source_collection);
+        }
+    }
 
     fd_event_set(FD_EVENT_USB_TRANSFER);
 

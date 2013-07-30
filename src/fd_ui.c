@@ -9,7 +9,7 @@
 
 void fd_ui_charge_status_callback(void) {
     bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered) {
         if (is_charging) {
             fd_indicator_set_usb(0xff, 0x00);

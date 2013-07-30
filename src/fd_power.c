@@ -24,7 +24,7 @@ static fd_timer_t fd_power_update_timer;
 void fd_power_charge_status_callback(void) {
     float battery_voltage = fd_adc_get_battery_voltage();
     bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered && !is_charging && (battery_voltage > 4.0f)) {
         // The battery appears to be fully charged.
         if (fd_power_battery_level < 1.0) {
@@ -48,9 +48,8 @@ void fd_power_battery_voltage_callback(void) {
 void fd_power_charge_current_callback(void) {
     fd_power_t power;
     fd_power_get(&power);
-
     bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered && is_charging) {
         fd_power_battery_level -= CHARGE_LEVEL_CHANGE_PER_INTERVAL;
         if (fd_power_battery_level > 1.0) {
@@ -77,7 +76,7 @@ void fd_power_charge_current_callback(void) {
 double fd_power_estimate_battery_level(void) {
     float battery_voltage = fd_adc_get_battery_voltage();
     bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered && !is_charging && (battery_voltage > 4.0f)) {
         // The battery appears to be fully charged.
         return 1.0;
@@ -120,7 +119,7 @@ void fd_power_get(fd_power_t *power) {
     power->battery_level = fd_power_battery_level;
     power->battery_voltage = fd_adc_get_battery_voltage();
     power->is_usb_powered = fd_usb_is_powered();
-    power->is_charging = power->is_usb_powered && GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    power->is_charging = power->is_usb_powered && !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     power->charge_current = fd_adc_get_charge_current();
     power->temperature = fd_adc_get_temperature();
 }

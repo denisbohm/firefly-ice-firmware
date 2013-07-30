@@ -29,8 +29,8 @@ void fd_adc_initialize(void) {
 
 float fd_adc_get_temperature(void) {
     uint8_t cal_temp_0 = *CAL_TEMP_0;
-    uint16_t temp_0_read = (*ADC0_TEMP_0_READ_1V25) >> 4;
-    return cal_temp_0 + (temp_0_read - adc_temperature_value) * (1.0f / TGRAD_ADCTH);
+    int32_t temp_0_read = (*ADC0_TEMP_0_READ_1V25) >> 4;
+    return cal_temp_0 - (temp_0_read - (int32_t)adc_temperature_value) * (1.0f / TGRAD_ADCTH);
 }
 
 float fd_adc_get_battery_voltage(void) {

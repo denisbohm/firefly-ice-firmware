@@ -37,6 +37,7 @@ void fd_interrupts_enable() {
     }
 }
 
+/*
 void CMU_IRQHandler(void) {
     uint32_t interrupts = CMU_IntGet();
     CMU_IntClear(CMU_IF_HFXORDY | CMU_IF_HFRCORDY);
@@ -50,6 +51,7 @@ void CMU_IRQHandler(void) {
 //        CMU_OscillatorEnable(cmuOsc_HFXO, false, false);
     }
 }
+*/
 
 void fd_processor_sleep(void) {
     CMU_ClockEnable(cmuClock_HFPER, false);

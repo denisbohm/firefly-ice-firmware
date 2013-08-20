@@ -5,6 +5,8 @@
 
 void fd_bluetooth_initialize(void);
 
+void fd_bluetooth_reset(void);
+
 void fd_bluetooth_sleep(void);
 void fd_bluetooth_wake(void);
 

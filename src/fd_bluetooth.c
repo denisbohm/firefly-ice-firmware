@@ -6,7 +6,12 @@
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_callbacks.h"
 #include "fd_nrf8001_commands.h"
+#include "fd_nrf8001_dispatch.h"
 #include "fd_nrf8001_types.h"
+#include "fd_processor.h"
+#include "fd_spi.h"
+
+#include <em_gpio.h>
 
 #define PIPE_FIREFLY_ICE_DETOUR_TX 1
 #define PIPE_FIREFLY_ICE_DETOUR_RX_ACK 2
@@ -160,8 +165,10 @@ bool fd_nrf8001_did_connect;
 bool fd_nrf8001_did_open_pipes;
 bool fd_nrf8001_did_receive_data;
 
+void fd_bluetooth_spi_transfer(void);
+
 void fd_bluetooth_ready(void) {
-    fd_nrf8001_transfer();
+    fd_bluetooth_spi_transfer();
     fd_bluetooth_step();
 }
 
@@ -184,6 +191,69 @@ void fd_bluetooth_initialize(void) {
     fd_nrf8001_did_receive_data = false;
 
     fd_event_add_callback(FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS | FD_EVENT_NRF_RDYN, fd_bluetooth_ready);
+}
+
+void fd_nrf8001_error(void) {
+    fd_log_assert_fail("");
+}
+
+void fd_nrf8001_system_credit_change(void) {
+    fd_event_set(FD_EVENT_BLE_SYSTEM_CREDITS);
+}
+
+void fd_nrf8001_data_credit_change(void) {
+    fd_event_set(FD_EVENT_BLE_DATA_CREDITS);
+}
+
+void fd_bluetooth_reset(void) {
+    GPIO_PinOutClear(NRF_RESETN_PORT_PIN);
+    fd_delay_ms(100);
+    GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
+    fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
+}
+
+void fd_bluetooth_spi_transfer(void) {
+    if (GPIO_PinInGet(NRF_RDYN_PORT_PIN)) {
+        return;
+    }
+
+    uint8_t rx_buffer[FD_NRF8001_SPI_RX_BUFFER_SIZE];
+    fd_spi_transfer_t transfers[] = {
+        {
+            .op = fd_nrf8001_spi_tx_length ? fd_spi_op_read_write : fd_spi_op_read,
+
+            .tx_buffer = fd_nrf8001_spi_tx_buffer,
+            .tx_size = FD_NRF8001_SPI_TX_BUFFER_SIZE,
+            .tx_length = fd_nrf8001_spi_tx_length,
+
+            .rx_buffer = rx_buffer,
+            .rx_size = FD_NRF8001_SPI_RX_BUFFER_SIZE,
+            .rx_length = 2,
+        },
+    };
+    fd_spi_io_t io = {
+        .options = FD_SPI_OPTION_VARLEN,
+        .transfers = transfers,
+        .transfers_count = sizeof(transfers) / sizeof(fd_spi_transfer_t),
+        .completion_callback = 0,
+    };
+    fd_spi_io(FD_SPI_BUS_1_SLAVE_NRF8001, &io);
+    fd_spi_wait(FD_SPI_BUS_1);
+
+    fd_nrf8001_spi_tx_clear();
+
+    uint32_t length = rx_buffer[1];
+    if (length > 0) {
+        fd_nrf8001_dispatch(&rx_buffer[2], length);
+    }
+}
+
+void fd_nrf8001_spi_transfer(void) {
+    fd_spi_set_device(FD_SPI_BUS_1_SLAVE_NRF8001);
+    GPIO_PinOutClear(NRF_REQN_PORT_PIN);
+    while (GPIO_PinInGet(NRF_RDYN_PORT_PIN));
+
+    fd_bluetooth_spi_transfer();
 }
 
 bool fd_bluetooth_is_asleep(void) {

@@ -73,9 +73,9 @@ void fd_spi_initialize(void) {
 
     // W25Q16DW
     init_sync = init_sync_default;
-    init_sync.msbf = false;
+    init_sync.msbf = true;
     init_sync.clockMode = usartClockMode3;
-    init_sync.baudrate = 1000000;
+    init_sync.baudrate = 10000;
     spi0_slaves[0].init_sync = init_sync;
     spi0_slaves[0].csn_port = gpioPortA;
     spi0_slaves[0].csn_pin = 2;

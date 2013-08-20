@@ -10,7 +10,6 @@
 
 static volatile uint32_t rtc_time_seconds;
 static volatile uint32_t rtc_time_microseconds;
-static volatile uint32_t rtc_time_tick;
 
 static volatile uint32_t rtc_countdown;
 
@@ -63,20 +62,18 @@ void fd_rtc_initialize(void) {
 }
 
 void fd_rtc_sleep(void) {
-    rtc_time_tick = 1000000;
-    RTC_CompareSet(0, 65536);
+    RTC_CompareSet(0, 65536); // 2 s
 }
 
 void fd_rtc_wake(void) {
-    rtc_time_tick = 31250;
-    RTC_CompareSet(0, 1024);
+    RTC_CompareSet(0, 1024); // 31250 us
     RTC_CounterReset();
 }
 
 void fd_rtc_set_time(fd_time_t time) {
     fd_interrupts_disable();
     rtc_time_seconds = time.seconds;
-    rtc_time_microseconds = time.microseconds;
+    rtc_time_microseconds = (time.microseconds / 31250) * 31250;
     fd_interrupts_enable();
 }
 

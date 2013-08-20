@@ -53,10 +53,10 @@ int main(void) {
     fd_timer_initialize();
     fd_control_initialize();
 
-//    GPIO_PinOutClear(LED0_PORT_PIN);
-//    GPIO_PinOutClear(LED4_PORT_PIN);
-//    GPIO_PinOutClear(LED5_PORT_PIN);
-//    GPIO_PinOutClear(LED6_PORT_PIN);
+    GPIO_PinOutClear(LED0_PORT_PIN);
+    GPIO_PinOutClear(LED4_PORT_PIN);
+    GPIO_PinOutClear(LED5_PORT_PIN);
+    GPIO_PinOutClear(LED6_PORT_PIN);
 
     fd_rtc_initialize();
     fd_adc_initialize();
@@ -81,7 +81,7 @@ int main(void) {
     fd_lis3dh_wake();
     //
     fd_nrf8001_initialize();
-    fd_nrf8001_reset();
+    fd_bluetooth_reset();
     fd_bluetooth_initialize();
 
     // initialize devices on spi0 powered bus

@@ -7,6 +7,10 @@
 
 #include <stdbool.h>
 
+// Just for swapped MISO/MOSI workaround -denis
+#define FD_SPI_BUS_0 0
+#define FD_SPI_BUS_0_SLAVE_W25Q16DW ((FD_SPI_BUS_0 << 16) | 0)
+
 typedef struct {
     USART_InitSync_TypeDef init_sync;
 

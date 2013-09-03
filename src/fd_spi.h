@@ -4,10 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define FD_SPI_BUS_0 0
+//#define FD_SPI_BUS_0 0
 #define FD_SPI_BUS_1 1
 
-#define FD_SPI_BUS_0_SLAVE_W25Q16DW ((FD_SPI_BUS_0 << 16) | 0)
+//#define FD_SPI_BUS_0_SLAVE_W25Q16DW ((FD_SPI_BUS_0 << 16) | 0)
 #define FD_SPI_BUS_1_SLAVE_LIS3DH ((FD_SPI_BUS_1 << 16) | 0)
 #define FD_SPI_BUS_1_SLAVE_NRF8001 ((FD_SPI_BUS_1 << 16) | 1)
 

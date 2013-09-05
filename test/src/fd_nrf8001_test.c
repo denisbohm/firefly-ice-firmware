@@ -151,6 +151,13 @@ uint8_t *fd_bluetooth_result;
 uint32_t fd_bluetooth_result_length;
 bool fd_bluetooth_done;
 
+typedef struct {
+    uint8_t bytes[20];
+} fd_test_packet_t;
+
+static fd_test_packet_t fd_send_packets[10];
+static uint32_t fd_send_packet_index;
+
 void fd_bluetooth_spi_transfer(void);
 void fd_bluetooth_step(void);
 
@@ -176,6 +183,14 @@ void fd_bluetooth_initialize(void) {
     fd_bluetooth_result = 0;
     fd_bluetooth_result_length = 0;
     fd_bluetooth_done = false;
+
+    fd_send_packet_index = 0;
+    for (int i = 0; i < 10; ++i) {
+        fd_test_packet_t *packet = &fd_send_packets[i];
+        for (int j = 0; j < 20; ++j) {
+            packet->bytes[j] = i + 1;
+        }
+    }
 
     error_code = 0;
     error_status = 0;
@@ -279,11 +294,9 @@ void fd_bluetooth_system_step(void) {
     }
 }
 
-static uint8_t fd_send_data[20];
-
 void fd_bluetooth_data_step(void) {
-    while ((fd_bluetooth_data_acks > 0) && fd_nrf8001_has_data_credits()) {
-        fd_nrf8001_send_data(PIPE_DEVICE_INFORMATION_MODEL_NUMBER_STRING_TX, fd_send_data, 20);
+    while ((fd_bluetooth_data_acks > 0) && fd_nrf8001_has_data_credits() && (fd_send_packet_index < 10)) {
+        fd_nrf8001_send_data(PIPE_DEVICE_INFORMATION_MODEL_NUMBER_STRING_TX, fd_send_packets[fd_send_packet_index++].bytes, 20);
         --fd_bluetooth_data_acks;
     }
 }
@@ -425,12 +438,12 @@ void fd_nrf8001_data_received_event(
             uint8_t byte = data[2];
             if (index < fd_bluetooth_result_length) {
                 fd_bluetooth_result[index] = byte;
+                ++fd_bluetooth_data_acks;
             }
         } break;
         case FD_NRF8001_COMMAND_DONE: {
         } break;
     }
-    ++fd_bluetooth_data_acks;
 }
 
 uint32_t fd_nrf8001_test_broadcast(uint8_t *result, uint32_t result_length) {

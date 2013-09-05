@@ -58,7 +58,7 @@ int main(void) {
     GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
 
-    fd_rtc_initialize();
+//    fd_rtc_initialize();
     fd_adc_initialize();
     fd_usb_initialize();
 
@@ -85,8 +85,8 @@ int main(void) {
     fd_bluetooth_initialize();
 
     // initialize devices on spi0 powered bus
-    fd_spi_on(FD_SPI_BUS_0);
-    fd_spi_wake(FD_SPI_BUS_0);
+//    fd_spi_on(FD_SPI_BUS_0);
+//    fd_spi_wake(FD_SPI_BUS_0);
     //
     fd_w25q16dw_initialize();
 

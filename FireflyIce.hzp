@@ -62,7 +62,9 @@
       <file file_name="src/fd_ui.h"/>
       <file file_name="src/fd_storage_buffer.h"/>
       <file file_name="src/fd_storage_buffer.c"/>
-      <file file_name="src/fd_w25q16dw.c"/>
+      <file file_name="src/fd_w25q16dw.c">
+        <configuration Name="THUMB Flash Debug" build_exclude_from_build="Yes"/>
+      </file>
       <file file_name="src/fd_w25q16dw.h"/>
       <file file_name="src/fd_lp55231.c"/>
       <file file_name="src/fd_lp55231.h"/>
@@ -86,6 +88,7 @@
       <file file_name="src/fd_timer.h"/>
       <file file_name="src/fd_timer.c"/>
       <file file_name="src/fd_time.c"/>
+      <file file_name="src/fd_w25q16dw_bitbang.c"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

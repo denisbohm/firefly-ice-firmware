@@ -10,6 +10,7 @@
 #include "fd_system.h"
 #include "fd_update.h"
 
+#include <em_int.h>
 #include <em_msc.h>
 
 #include <string.h>
@@ -60,10 +61,10 @@ bool fd_get_debug_lock(void) {
 void fd_set_debug_lock(void) {
     if (!fd_get_debug_lock()) {
         uint32_t word = 0xfffffff0;
-         MSC_Init();
-        __disable_irq();
+        MSC_Init();
+        INT_Disable();
         MSC_WriteWord((uint32_t*)DEBUG_LOCK_WORD_ADDRESS, &word, 4);
-        __enable_irq();
+        INT_Enable();
         MSC_Deinit();
     }
 }

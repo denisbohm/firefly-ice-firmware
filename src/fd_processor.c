@@ -2,6 +2,7 @@
 
 #include <em_cmu.h>
 #include <em_i2c.h>
+#include <em_int.h>
 #include <em_gpio.h>
 #include <em_usart.h>
 
@@ -17,24 +18,12 @@ void *memset(void *s, int c, size_t n) {
 }
 */
 
-volatile int32_t fd_interrupts_disable_level;
-
 void fd_interrupts_disable() {
-    __disable_irq();
-    ++fd_interrupts_disable_level;
+    INT_Disable();
 }
 
 void fd_interrupts_enable() {
-    --fd_interrupts_disable_level;
-
-    // paranoia: check for unmatched enable call and try to recover
-    if (fd_interrupts_disable_level < 0) {
-        fd_interrupts_disable_level = 0;
-    }
-
-    if (fd_interrupts_disable_level == 0) {
-        __enable_irq();
-    }
+    INT_Enable();
 }
 
 /*
@@ -66,9 +55,6 @@ void fd_processor_wake(void) {
 }
 
 void fd_processor_initialize(void) {
-    fd_interrupts_disable_level = 0;
-
-
 //    CMU_HFRCOBandSet(cmuHFRCOBand_14MHz);
 
 //    CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);

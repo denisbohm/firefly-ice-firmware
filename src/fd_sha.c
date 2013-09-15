@@ -15,6 +15,7 @@ void fd_sha1(fd_sha1_source_t source, uint32_t address, uint32_t length, uint8_t
         (*source)(address, data, n);
         SHA1_Update(&context, data, n);
         remaining -= n;
+        address += n;
     }
     SHA1_Final(hash, &context);
 }

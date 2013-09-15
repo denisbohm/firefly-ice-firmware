@@ -8,7 +8,9 @@
 
 #define LED0_PORT_PIN gpioPortC, 1
 #define LED4_PORT_PIN gpioPortC, 0
+// USB orange
 #define LED5_PORT_PIN gpioPortE, 9
+// USB green
 #define LED6_PORT_PIN gpioPortA, 15
 
 #define LED_EN_PORT_PIN gpioPortA, 8

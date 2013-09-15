@@ -37,6 +37,7 @@
 int main(void) {
     fd_processor_initialize();
 
+/*
 #ifdef DEBUG
 #warning debug is defined - watchdog is not enabled
 #else
@@ -47,6 +48,7 @@ int main(void) {
 //    wdog_init.lock = true;
     WDOG_Init(&wdog_init);
 #endif
+*/
 
     fd_log_initialize();
     fd_event_initialize();
@@ -58,7 +60,7 @@ int main(void) {
     GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
 
-//    fd_rtc_initialize();
+    fd_rtc_initialize();
     fd_adc_initialize();
     fd_usb_initialize();
 
@@ -68,6 +70,7 @@ int main(void) {
     //
     fd_lp55231_initialize();
     fd_lp55231_wake();
+
     //
     fd_mag3110_initialize();
 
@@ -95,6 +98,15 @@ int main(void) {
     fd_log_enable_storage(true);
 
     fd_power_initialize();
+
+    fd_indicator_set_usb(0xff, 0x00);
+//    GPIO_PinOutSet(LED5_PORT_PIN);
+//    GPIO_PinOutClear(LED6_PORT_PIN);
+    fd_indicator_set_d0(0xff);
+    fd_indicator_set_d1(0x00, 0x00, 0x00);
+    fd_indicator_set_d2(0x80, 0x00, 0x00);
+    fd_indicator_set_d3(0x00, 0x00, 0x00);
+    fd_indicator_set_d4(0xff);
 
     fd_indicator_initialize();
     fd_indicator_wake();

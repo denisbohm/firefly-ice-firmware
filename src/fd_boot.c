@@ -29,7 +29,7 @@ bool is_internal_firmware_valid(void) {
     fd_update_metadata_t metadata;
     fd_update_read_metadata(&metadata);
 
-    uint8_t internal_hash[20];
+    uint8_t internal_hash[FD_SHA_HASH_SIZE];
     fd_sha1(internal_read, FD_UPDATE_FIRMWARE_ADDRESS, metadata.length, internal_hash);
 
     return fd_sha1_is_equal(metadata.crypt_hash, internal_hash);
@@ -39,7 +39,7 @@ bool is_external_firmware_valid(void) {
     fd_update_metadata_t metadata;
     fd_update_read_metadata(&metadata);
 
-    uint8_t external_hash[20];
+    uint8_t external_hash[FD_SHA_HASH_SIZE];
     fd_sha1(fd_w25q16dw_read, FD_UPDATE_DATA_BASE_ADDRESS, metadata.length, external_hash);
 
     return fd_sha1_is_equal(metadata.hash, external_hash);
@@ -52,15 +52,13 @@ void copy_firmware(void) {
     fd_update_read_metadata(&metadata);
 
     uint32_t external_address = FD_UPDATE_DATA_BASE_ADDRESS;
-    uint32_t *internal_address = (uint32_t *)FD_UPDATE_FIRMWARE_ADDRESS;
+    uint32_t internal_address = FD_UPDATE_FIRMWARE_ADDRESS;
+    uint32_t end = internal_address + metadata.length;
     uint8_t data[INTERNAL_PAGE_SIZE];
-    uint32_t length = 0;
-
-    uint32_t *e = (uint32_t *)(FD_UPDATE_FIRMWARE_ADDRESS + length);
-    while (internal_address < e) {
+    while (internal_address < end) {
         fd_w25q16dw_read(external_address, data, INTERNAL_PAGE_SIZE);
-        MSC_ErasePage(internal_address);
-        MSC_WriteWord(internal_address, data, INTERNAL_PAGE_SIZE);
+        MSC_ErasePage((uint32_t *)internal_address);
+        MSC_WriteWord((uint32_t *)internal_address, data, INTERNAL_PAGE_SIZE);
 
         external_address += INTERNAL_PAGE_SIZE;
         internal_address += INTERNAL_PAGE_SIZE;
@@ -96,10 +94,13 @@ int main(void) {
             run_firmware();
         } else
         if (is_external_firmware_valid()) {
+            GPIO_PinOutSet(LED0_PORT_PIN);
+            GPIO_PinOutSet(LED4_PORT_PIN);
             copy_firmware();
-            if (is_internal_firmware_valid()) {
+//            if (is_internal_firmware_valid()) {
+                GPIO_PinOutSet(LED5_PORT_PIN);
                 run_firmware();
-            }
+//            }
         }
     }
 

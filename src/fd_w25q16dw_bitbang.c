@@ -17,6 +17,7 @@
 #define BUSY 0x01
 
 #define WINBOND_MANUFACTURER_ID 0xef
+#define W25Q16DW_DEVICE_ID 0x14
 
 void fd_spi_power_on(void) {
     GPIO_PinOutSet(US0_PWR_PORT_PIN);
@@ -34,9 +35,7 @@ void fd_spi_disable(void) {
     GPIO_PinOutSet(US0_MOSI_PORT_PIN);
 }
 
-void fd_spi_delay(void) {
-    fd_delay_us(10);
-}
+#define fd_spi_delay()
 
 uint8_t mem_data[256];
 uint8_t mem_index = 0;
@@ -93,6 +92,7 @@ void fd_w25q16dw_wake(void) {
     fd_delay_us(30); // tRES2
 }
 
+#if 0
 void fd_w25q16dw_test(void) {
     fd_w25q16dw_wake();
     uint32_t address = 0;
@@ -108,6 +108,7 @@ void fd_w25q16dw_test(void) {
         return;
     }
 }
+#endif
 
 void fd_w25q16dw_initialize(void) {
     mem_index = 0;
@@ -127,8 +128,9 @@ void fd_w25q16dw_initialize(void) {
     if (manufacturer_id != WINBOND_MANUFACTURER_ID) {
         fd_log_assert_fail("");
     }
-
-    fd_w25q16dw_test();
+    if (device_id != W25Q16DW_DEVICE_ID) {
+        fd_log_assert_fail("");
+    }
 }
 
 static

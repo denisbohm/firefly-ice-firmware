@@ -1,3 +1,4 @@
+#include "fd_aes.h"
 #include "fd_binary.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
@@ -6,6 +7,7 @@
 #include "fd_power.h"
 #include "fd_processor.h"
 #include "fd_rtc.h"
+#include "fd_sha.h"
 #include "fd_sync.h"
 #include "fd_system.h"
 #include "fd_update.h"
@@ -17,7 +19,7 @@
 
 typedef void (*fd_control_command_t)(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length);
 
-#define DETOUR_BUFFER_SIZE 200
+#define DETOUR_BUFFER_SIZE 300
 
 fd_detour_source_t fd_control_detour_source;
 uint8_t fd_control_detour_buffer[DETOUR_BUFFER_SIZE];
@@ -81,7 +83,7 @@ void fd_set_debug_lock(void) {
 typedef struct {
     uint16_t version;
     uint16_t flags;
-    uint8_t key[16];
+    uint8_t key[FD_AES_KEY_SIZE];
     // map follows...
 } fd_provision_t;
 
@@ -268,11 +270,11 @@ void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_s
     fd_binary_put_uint8(&binary_out, FD_CONTROL_UPDATE_GET_SECTOR_HASHES);
     fd_binary_put_uint8(&binary_out, sector_count);
     for (uint32_t i = 0; i < sector_count; ++i) {
-        uint8_t hash[16];
+        uint8_t hash[FD_SHA_HASH_SIZE];
         uint32_t sector = fd_binary_get_uint16(&binary);
         fd_update_get_sector_hash(sector, hash);
         fd_binary_put_uint16(&binary_out, sector);
-        fd_binary_put_bytes(&binary_out, hash, 16);
+        fd_binary_put_bytes(&binary_out, hash, FD_SHA_HASH_SIZE);
     }
 
     fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary_out.put_index);
@@ -304,8 +306,8 @@ void fd_control_update_commit(fd_detour_source_collection_t *detour_source_colle
     fd_update_metadata_t metadata;
     metadata.flags = fd_binary_get_uint32(&binary);
     metadata.length = fd_binary_get_uint32(&binary);
-    fd_binary_get_bytes(&binary, metadata.hash, 20);
-    fd_binary_get_bytes(&binary, metadata.crypt_hash, 20);
+    fd_binary_get_bytes(&binary, metadata.hash, FD_SHA_HASH_SIZE);
+    fd_binary_get_bytes(&binary, metadata.crypt_hash, FD_SHA_HASH_SIZE);
     fd_binary_get_bytes(&binary, metadata.crypt_iv, 16);
 
     uint8_t result = fd_update_commit(&metadata);

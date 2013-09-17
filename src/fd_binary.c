@@ -1,4 +1,5 @@
 #include "fd_binary.h"
+#include "fd_log.h"
 
 #include <string.h>
 
@@ -122,43 +123,65 @@ fd_time_t fd_binary_get_time64(fd_binary_t *binary) {
     return fd_binary_unpack_time64(buffer);
 }
 
+bool fd_binary_put_check(fd_binary_t *binary, uint32_t length) {
+    if ((binary->put_index + length) <= binary->size) {
+        return true;
+    }
+    fd_log_assert_fail("");
+    return false;
+}
+
 void fd_binary_put_bytes(fd_binary_t *binary, uint8_t *data, uint32_t length) {
-    memcpy(&binary->buffer[binary->put_index], data, length);
-    binary->put_index += length;
+    if (fd_binary_put_check(binary, length)) {
+        memcpy(&binary->buffer[binary->put_index], data, length);
+        binary->put_index += length;
+    }
 }
 
 void fd_binary_put_uint8(fd_binary_t *binary, uint8_t value) {
-    uint8_t *buffer = &binary->buffer[binary->put_index];
-    binary->put_index += 1;
-    fd_binary_pack_uint8(buffer, value);
+    if (fd_binary_put_check(binary, sizeof(value))) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 1;
+        fd_binary_pack_uint8(buffer, value);
+    }
 }
 
 void fd_binary_put_uint16(fd_binary_t *binary, uint16_t value) {
-    uint8_t *buffer = &binary->buffer[binary->put_index];
-    binary->put_index += 2;
-    fd_binary_pack_uint16(buffer, value);
+    if (fd_binary_put_check(binary, sizeof(value))) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 2;
+        fd_binary_pack_uint16(buffer, value);
+    }
 }
 
 void fd_binary_put_uint32(fd_binary_t *binary, uint32_t value) {
-    uint8_t *buffer = &binary->buffer[binary->put_index];
-    binary->put_index += 4;
-    fd_binary_pack_uint32(buffer, value);
+    if (fd_binary_put_check(binary, sizeof(value))) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 4;
+        fd_binary_pack_uint32(buffer, value);
+    }
 }
 
 void fd_binary_put_uint64(fd_binary_t *binary, uint64_t value) {
-    uint8_t *buffer = &binary->buffer[binary->put_index];
-    binary->put_index += 8;
-    fd_binary_pack_uint64(buffer, value);
+    if (fd_binary_put_check(binary, sizeof(value))) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 8;
+        fd_binary_pack_uint64(buffer, value);
+    }
 }
 
 void fd_binary_put_float32(fd_binary_t *binary, float value) {
-    uint8_t *buffer = &binary->buffer[binary->put_index];
-    binary->put_index += 4;
-    fd_binary_pack_float32(buffer, value);
+    if (fd_binary_put_check(binary, 4)) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 4;
+        fd_binary_pack_float32(buffer, value);
+    }
 }
 
 void fd_binary_put_time64(fd_binary_t *binary, fd_time_t value) {
-    uint8_t *buffer = &binary->buffer[binary->put_index];
-    binary->put_index += 8;
-    fd_binary_pack_time64(buffer, value);
+    if (fd_binary_put_check(binary, 8)) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 8;
+        fd_binary_pack_time64(buffer, value);
+    }
 }

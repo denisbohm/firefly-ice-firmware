@@ -1,4 +1,5 @@
 #include "fd_aes.h"
+#include "fd_sha.h"
 
 #include <em_aes.h>
 #include <em_cmu.h>
@@ -95,7 +96,7 @@ void fd_aes_hash_blocks(fd_aes_hash_t *hash, uint8_t *in, uint32_t length) {
         /* Save encrypted data */
         for (int i = 3; i >= 0; i--) {
             hash->out[hash->out_index] = __REV(AES->DATA);
-            if (++hash->out_index >= 20) {
+            if (++hash->out_index >= FD_SHA_HASH_SIZE) {
                 hash->out_index = 0;
             }
         }
@@ -104,9 +105,9 @@ void fd_aes_hash_blocks(fd_aes_hash_t *hash, uint8_t *in, uint32_t length) {
 
 void fd_aes_hash_stop(fd_aes_hash_t *hash, uint8_t *result) {
     /* The last 20 encrypted bytes are the hash */
-    for (uint32_t i = 0; i < 20; ++i) {
+    for (uint32_t i = 0; i < FD_SHA_HASH_SIZE; ++i) {
         result[i] = hash->out[hash->out_index];
-        if (++hash->out_index >= 20) {
+        if (++hash->out_index >= FD_SHA_HASH_SIZE) {
             hash->out_index = 0;
         }
     }
@@ -114,9 +115,9 @@ void fd_aes_hash_stop(fd_aes_hash_t *hash, uint8_t *result) {
     CMU_ClockEnable(cmuClock_AES, false);
 }
 
-static uint8_t defaultHashKeyBytes[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+static uint8_t defaultHashKeyBytes[FD_AES_KEY_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
-static uint8_t defaultHashIVBytes[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13};
+static uint8_t defaultHashIVBytes[FD_AES_IV_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
 void fd_aes_hash_start_default(fd_aes_hash_t *hash) {
     fd_aes_hash_start(hash, defaultHashKeyBytes, defaultHashIVBytes);

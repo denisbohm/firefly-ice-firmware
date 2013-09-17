@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define FD_AES_KEY_SIZE 16
+#define FD_AES_IV_SIZE 16
+
 typedef struct {
     uint32_t prev[4];
 } fd_aes_decrypt_t;

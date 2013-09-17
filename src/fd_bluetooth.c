@@ -151,7 +151,7 @@ static bool fd_bluetooth_idle;
 static uint16_t fd_nrf8001_dtm_request;
 static uint16_t fd_nrf8001_dtm_data;
 
-#define DETOUR_SIZE 256
+#define DETOUR_SIZE 300
 
 static uint8_t fd_bluetooth_detour_data[DETOUR_SIZE];
 static fd_detour_t fd_bluetooth_detour;
@@ -315,9 +315,9 @@ void fd_bluetooth_system_step(void) {
         } else
         if (fd_bluetooth_system_steps & fd_nrf8001_open_remote_pipe_step) {
             for (int i = 1; i < 63; ++i) {
-                uint64_t mask = 1 << i;
+                uint64_t mask = 1ULL << i;
                 if (fd_bluetooth_pipes_closed & mask) {
-                    fd_nrf8001_open_remote_pipe(i);
+//                    fd_nrf8001_open_remote_pipe(i);
                     fd_bluetooth_pipes_closed &= ~mask;
                     break;
                 }

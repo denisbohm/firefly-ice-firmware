@@ -138,7 +138,6 @@ static uint16_t fd_bluetooth_dtm_request;
 static uint16_t fd_bluetooth_dtm_data;
 static uint8_t fd_bluetooth_out_data[MAX_CHARACTERISTIC_SIZE];
 
-
 uint8_t error_code;
 uint8_t error_status;
 

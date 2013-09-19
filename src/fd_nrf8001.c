@@ -13,6 +13,9 @@ void fd_nrf8001_initialize(void) {
     data_credits = 0;
 
     fd_nrf8001_spi_tx_length = 0;
+    for (int i = 0; i < FD_NRF8001_SPI_TX_BUFFER_SIZE; ++i) {
+        fd_nrf8001_spi_tx_buffer[i] = 0;
+    }
 }
 
 #define WEAK __attribute__((weak))

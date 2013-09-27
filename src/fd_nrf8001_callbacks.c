@@ -15,6 +15,11 @@ void fd_nrf8001_dtm_command_error(uint8_t status __attribute__((unused))) {
 }
 
 WEAK
+void fd_nrf8001_dtm_command_event_error(void) {
+    fd_nrf8001_error();
+}
+
+WEAK
 void fd_nrf8001_dtm_command_success(uint16_t dtm_command __attribute__((unused))) {
 }
 

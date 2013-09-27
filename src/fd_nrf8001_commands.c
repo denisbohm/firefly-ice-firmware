@@ -47,7 +47,7 @@ void fd_nrf8001_echo(uint8_t *data, uint32_t length) {
 }
 
 void fd_nrf8001_dtm_command(uint16_t dtm_command) {
-    uint8_t message[] = {3, DtmCommand, dtm_command, dtm_command >> 8};
+    uint8_t message[] = {3, DtmCommand, dtm_command >> 8, dtm_command};
     fd_nrf8001_send_system_command(message, sizeof(message));
 }
 

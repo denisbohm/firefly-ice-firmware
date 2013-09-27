@@ -92,7 +92,6 @@ void fd_w25q16dw_wake(void) {
     fd_delay_us(30); // tRES2
 }
 
-#if 0
 void fd_w25q16dw_test(void) {
     fd_w25q16dw_wake();
     uint32_t address = 0;
@@ -108,7 +107,6 @@ void fd_w25q16dw_test(void) {
         return;
     }
 }
-#endif
 
 void fd_w25q16dw_initialize(void) {
     mem_index = 0;
@@ -131,6 +129,8 @@ void fd_w25q16dw_initialize(void) {
     if (device_id != W25Q16DW_DEVICE_ID) {
         fd_log_assert_fail("");
     }
+
+    fd_w25q16dw_test();
 }
 
 static

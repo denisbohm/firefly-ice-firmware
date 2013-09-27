@@ -34,9 +34,6 @@ typedef struct {
 typedef void (*fd_detour_supplier_t)(uint32_t offset, uint8_t *data, uint32_t length);
 
 typedef struct fd_detour_source {
-    struct fd_detour_source *next;
-    struct fd_detour_source *previous;
-
     fd_detour_supplier_t supplier;
 
     fd_detour_state_t state;
@@ -46,8 +43,10 @@ typedef struct fd_detour_source {
 } fd_detour_source_t;
 
 typedef struct {
-    fd_detour_source_t *first;
-    fd_detour_source_t *last;
+    uint32_t packetSize;
+    uint8_t *buffer;
+    uint32_t bufferSize;
+    uint32_t bufferCount;
 } fd_detour_source_collection_t;
 
 void fd_detour_initialize(fd_detour_t *detour, uint8_t *data, uint32_t size);
@@ -60,18 +59,14 @@ void fd_detour_event(fd_detour_t *detour, uint8_t *data, uint32_t length);
 
 void fd_detour_source_initialize(fd_detour_source_t *source);
 
-bool fd_detour_source_is_transferring(fd_detour_source_t *source);
-
 void fd_detour_source_set(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length);
 
 bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t length);
 
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection);
+void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize);
 
 void fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source);
 
-void fd_detour_source_collection_pop(fd_detour_source_collection_t *collection);
-
-extern fd_detour_source_collection_t fd_bluetooth_detour_source_collection;
+bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, uint8_t *buffer);
 
 #endif

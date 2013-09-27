@@ -14,6 +14,7 @@
 #include "fd_nrf8001.h"
 #include "fd_power.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 #include "fd_rtc.h"
 #include "fd_sensing.h"
 #include "fd_spi.h"
@@ -35,6 +36,7 @@
 #include <string.h>
 
 int main(void) {
+    fd_reset_initialize();
     fd_processor_initialize();
 
 /*
@@ -99,13 +101,13 @@ int main(void) {
 
     fd_power_initialize();
 
-    fd_indicator_set_usb(0xff, 0x00);
+    fd_indicator_set_usb(0xff, 0xff);
 //    GPIO_PinOutSet(LED5_PORT_PIN);
 //    GPIO_PinOutClear(LED6_PORT_PIN);
     fd_indicator_set_d0(0xff);
-    fd_indicator_set_d1(0x00, 0x00, 0x00);
-    fd_indicator_set_d2(0x80, 0x00, 0x00);
-    fd_indicator_set_d3(0x00, 0x00, 0x00);
+    fd_indicator_set_d1(0x00, 0x00, 0xff);
+    fd_indicator_set_d2(0x00, 0x00, 0xff);
+    fd_indicator_set_d3(0x00, 0x00, 0xff);
     fd_indicator_set_d4(0xff);
 
     fd_indicator_initialize();
@@ -127,9 +129,8 @@ int main(void) {
     fd_lis3dh_sleep();
     fd_lp55231_sleep();
     fd_mag3110_sleep();
-//    fd_w25q16dw_sleep();
+    fd_w25q16dw_sleep();
 
-//    fd_lis3dh_set_sample_callback(acc_sample);
     bool led_state = 0;
     bool entering_sleep = false;
     bool entered_sleep = false;

@@ -1,13 +1,16 @@
 #include "fd_aes.h"
 #include "fd_binary.h"
+#include "fd_bluetooth.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_indicator.h"
 #include "fd_map.h"
 #include "fd_power.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 #include "fd_rtc.h"
 #include "fd_sha.h"
+#include "fd_storage.h"
 #include "fd_sync.h"
 #include "fd_system.h"
 #include "fd_update.h"
@@ -23,6 +26,7 @@ typedef void (*fd_control_command_t)(fd_detour_source_collection_t *detour_sourc
 
 fd_detour_source_t fd_control_detour_source;
 uint8_t fd_control_detour_buffer[DETOUR_BUFFER_SIZE];
+fd_binary_t fd_control_detour_binary;
 
 void fd_control_initialize(void) {
     fd_detour_source_initialize(&fd_control_detour_source);
@@ -32,20 +36,27 @@ void fd_control_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length)
     memcpy(data, &fd_control_detour_buffer[offset], length);
 }
 
-void fd_control_ping(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+fd_binary_t *fd_control_send_start(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t type) {
+    fd_binary_initialize(&fd_control_detour_binary, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
+    fd_binary_put_uint8(&fd_control_detour_binary, type);
+    return &fd_control_detour_binary;
+}
+
+void fd_control_send_complete(fd_detour_source_collection_t *detour_source_collection) {
+    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, fd_control_detour_binary.put_index);
+    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+}
+
+void fd_control_ping(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint16_t ping_length = fd_binary_get_uint16(&binary);
     uint8_t *ping_data = &binary.buffer[binary.get_index];
 
-    fd_binary_t binary_out;
-    fd_binary_initialize(&binary_out, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&binary_out, FD_CONTROL_PING);
-    fd_binary_put_uint16(&binary_out, ping_length);
-    fd_binary_put_bytes(&binary_out, ping_data, ping_length);
-
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary_out.put_index);
-    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_PING);
+    fd_binary_put_uint16(binary_out, ping_length);
+    fd_binary_put_bytes(binary_out, ping_data, ping_length);
+    fd_control_send_complete(detour_source_collection);
 }
 
 #define USER_DATA_ADDRESS 0x0fe00000
@@ -119,19 +130,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
     fd_binary_initialize(&binary, data, length);
 
     uint8_t type = fd_binary_get_uint8(&binary);
-    switch (type) {
-        case FD_CONTROL_RESET_SYSTEM_REQUEST: {
-            NVIC_SystemReset();
-        } break;
-        case FD_CONTROL_RESET_WATCHDOG: {
-            fd_delay_ms(10000);
-        } break;
-        case FD_CONTROL_RESET_HARD_FAULT: {
-            void (*null_fn)(void) = 0;
-            (*null_fn)();
-        } break;
-        default: break;
-    }
+    fd_reset_by(type);
 }
 
 #define VERSION_MAJOR 1
@@ -165,6 +164,15 @@ void fd_control_get_property_site(fd_binary_t *binary) {
 
     fd_binary_put_uint16(binary, site_length);
     fd_binary_put_bytes(binary, site, site_length);
+}
+
+void fd_control_get_property_reset(fd_binary_t *binary) {
+    fd_binary_put_uint32(binary, fd_reset_last_cause);
+    fd_binary_put_time64(binary, fd_reset_last_time);
+}
+
+void fd_control_get_property_storage(fd_binary_t *binary) {
+    fd_binary_put_uint32(binary, fd_storage_used_page_count());
 }
 
 void fd_control_get_property_debug_lock(fd_binary_t *binary) {
@@ -201,42 +209,44 @@ void fd_control_set_property_power(fd_binary_t *binary) {
     fd_power_set(battery_level);
 }
 
-void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t properties = fd_binary_get_uint32(&binary);
 
-    fd_binary_t binary_out;
-    fd_binary_initialize(&binary_out, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&binary_out, FD_CONTROL_GET_PROPERTIES);
-    fd_binary_put_uint32(&binary_out, properties);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_GET_PROPERTIES);
+    fd_binary_put_uint32(binary_out, properties);
     for (uint32_t property = 1; property != 0; property <<= 1) {
         if (property & properties) {
             switch (property) {
                 case FD_CONTROL_PROPERTY_VERSION: {
-                    fd_control_get_property_version(&binary_out);
+                    fd_control_get_property_version(binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_HARDWARE_ID: {
-                    fd_control_get_property_hardware_id(&binary_out);
+                    fd_control_get_property_hardware_id(binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_DEBUG_LOCK: {
-                    fd_control_get_property_debug_lock(&binary_out);
+                    fd_control_get_property_debug_lock(binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_RTC: {
-                    fd_control_get_property_rtc(&binary_out);
+                    fd_control_get_property_rtc(binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_POWER: {
-                    fd_control_get_property_power(&binary_out);
+                    fd_control_get_property_power(binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_SITE: {
-                    fd_control_get_property_site(&binary_out);
+                    fd_control_get_property_site(binary_out);
+                } break;
+                case FD_CONTROL_PROPERTY_RESET: {
+                    fd_control_get_property_reset(binary_out);
+                } break;
+                case FD_CONTROL_PROPERTY_STORAGE: {
+                    fd_control_get_property_storage(binary_out);
                 } break;
             }
         }
     }
-
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary_out.put_index);
-    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+    fd_control_send_complete(detour_source_collection);
 }
 
 void fd_control_set_properties(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
@@ -265,20 +275,16 @@ void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_s
     fd_binary_initialize(&binary, data, length);
     uint32_t sector_count = fd_binary_get_uint8(&binary);
 
-    fd_binary_t binary_out;
-    fd_binary_initialize(&binary_out, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&binary_out, FD_CONTROL_UPDATE_GET_SECTOR_HASHES);
-    fd_binary_put_uint8(&binary_out, sector_count);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_GET_SECTOR_HASHES);
+    fd_binary_put_uint8(binary_out, sector_count);
     for (uint32_t i = 0; i < sector_count; ++i) {
         uint8_t hash[FD_SHA_HASH_SIZE];
         uint32_t sector = fd_binary_get_uint16(&binary);
         fd_update_get_sector_hash(sector, hash);
-        fd_binary_put_uint16(&binary_out, sector);
-        fd_binary_put_bytes(&binary_out, hash, FD_SHA_HASH_SIZE);
+        fd_binary_put_uint16(binary_out, sector);
+        fd_binary_put_bytes(binary_out, hash, FD_SHA_HASH_SIZE);
     }
-
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary_out.put_index);
-    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+    fd_control_send_complete(detour_source_collection);
 }
 
 void fd_control_update_erase_sectors(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
@@ -302,7 +308,6 @@ void fd_control_update_write_page(fd_detour_source_collection_t *detour_source_c
 void fd_control_update_commit(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-
     fd_update_metadata_t metadata;
     metadata.flags = fd_binary_get_uint32(&binary);
     metadata.length = fd_binary_get_uint32(&binary);
@@ -311,33 +316,28 @@ void fd_control_update_commit(fd_detour_source_collection_t *detour_source_colle
     fd_binary_get_bytes(&binary, metadata.crypt_iv, 16);
 
     uint8_t result = fd_update_commit(&metadata);
-    fd_binary_initialize(&binary, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&binary, FD_CONTROL_UPDATE_COMMIT);
-    fd_binary_put_uint8(&binary, result);
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary.put_index);
-    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_COMMIT);
+    fd_binary_put_uint8(binary_out, result);
+    fd_control_send_complete(detour_source_collection);
 }
 
 void fd_control_radio_direct_test_mode_enter(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint16_t command __attribute__((unused)) = fd_binary_get_uint16(&binary);
-//    fd_bluetooth_?(command);
+    uint16_t request = fd_binary_get_uint16(&binary);
+    fd_time_t duration = fd_binary_get_time64(&binary);
+    fd_bluetooth_direct_test_mode_enter(request, duration);
 }
 
 void fd_control_radio_direct_test_mode_exit(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
-//    fd_bluetooth_?
+    fd_bluetooth_direct_test_mode_exit();
 }
 
 void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
-    uint16_t report = 0; // !!! get last test result
-
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&binary, FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT);
-    fd_binary_put_uint16(&binary, report);
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, binary.put_index);
-    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT);
+    fd_binary_put_uint16(binary_out, fd_bluetooth_direct_test_mode_report());
+    fd_control_send_complete(detour_source_collection);
 }
 
 void fd_control_disconnect(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {

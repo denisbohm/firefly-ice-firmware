@@ -1,5 +1,6 @@
 #include "fd_binary.h"
 #include "fd_detour.h"
+#include "fd_log.h"
 
 #include <string.h>
 
@@ -81,8 +82,6 @@ void fd_detour_event(fd_detour_t *detour, uint8_t *data, uint32_t length) {
 }
 
 void fd_detour_source_initialize(fd_detour_source_t *source) {
-    source->next = 0;
-    source->previous = 0;
     source->supplier = 0;
     source->state = fd_detour_state_clear;
     source->length = 0;
@@ -126,46 +125,32 @@ bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t le
     return true;
 }
 
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection) {
-    collection->first = 0;
-    collection->last = 0;
+void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize) {
+    collection->packetSize = packetSize;
+    collection->buffer = buffer;
+    collection->bufferSize = bufferSize;
+    collection->bufferCount = 0;
 }
 
 void fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {
-    if (collection->first == 0) {
-        collection->first = source;
-        collection->last = source;
-        return;
+    while (true) {
+        if ((collection->bufferCount + collection->packetSize) > collection->bufferSize) {
+            fd_log_assert_fail("");
+            break;
+        }
+        if (!fd_detour_source_get(source, &collection->buffer[collection->bufferCount], collection->packetSize)) {
+            break;
+        }
+        collection->bufferCount += collection->packetSize;
     }
-
-    // the source is already in the collection - nothing to do
-    if ((collection->first == source) || (source->previous != 0)) {
-        return;
-    }
-
-    fd_detour_source_t *old_last = collection->last;
-    collection->last = source;
-    source->previous = old_last;
-    old_last->next = source;
 }
 
-void fd_detour_source_collection_pop(fd_detour_source_collection_t *collection) {
-    if (collection->first == 0) {
-        return;
+bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, uint8_t *buffer) {
+    if (collection->bufferCount == 0) {
+        return false;
     }
-
-    if (collection->first == collection->last) {
-        fd_detour_source_t *old_first = collection->first;
-        old_first->next = 0;
-        old_first->previous = 0;
-        collection->first = 0;
-        collection->last = 0;
-        return;
-    }
-
-    fd_detour_source_t *old_first = collection->first;
-    fd_detour_source_t *new_first = old_first->next;
-    collection->first = new_first;
-    old_first->next = 0;
-    new_first->previous = 0;
+    memcpy(buffer, collection->buffer, collection->packetSize);
+    collection->bufferCount -= collection->packetSize;
+    memcpy(collection->buffer, &collection->buffer[collection->packetSize], collection->bufferCount);
+    return true;
 }

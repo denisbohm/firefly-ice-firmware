@@ -32,11 +32,11 @@
 
 #define US0_PWR_PORT_PIN gpioPortA, 3
 #define US0_LOCATION USART_ROUTE_LOCATION_LOC0
+#define US0_MOSI_PORT_PIN gpioPortE, 10
+#define US0_MISO_PORT_PIN gpioPortE, 11
 // !!! pins are swapped on 1.2 board -denis
-//#define US0_MOSI_PORT_PIN gpioPortE, 10
-//#define US0_MISO_PORT_PIN gpioPortE, 11
-#define US0_MOSI_PORT_PIN gpioPortE, 11
-#define US0_MISO_PORT_PIN gpioPortE, 10
+//#define US0_MOSI_PORT_PIN gpioPortE, 11
+//#define US0_MISO_PORT_PIN gpioPortE, 10
 #define US0_CLK_PORT_PIN gpioPortE, 12
 
 #define SWD_CLK_PORT_PIN gpioPortF, 0

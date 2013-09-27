@@ -28,7 +28,11 @@ void fd_nrf8001_dispatch_dtm_command_response(
         fd_nrf8001_error();
         return;
     }
-    uint16_t data = fd_binary_unpack_uint16(response_data);
+    uint16_t data = (response_data[0] << 8) | response_data[1];
+    if (((data & 0x8000) == 0) && (data & 0x0001)) {
+        fd_nrf8001_dtm_command_event_error();
+        return;
+    }
     fd_nrf8001_dtm_command_success(data);
 }
 

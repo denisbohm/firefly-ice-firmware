@@ -90,6 +90,8 @@
       <file file_name="src/fd_timer.c"/>
       <file file_name="src/fd_time.c"/>
       <file file_name="src/fd_w25q16dw_bitbang.c"/>
+      <file file_name="src/fd_reset.c"/>
+      <file file_name="src/fd_reset.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+fd_time_t fd_rtc_get_time_retained(void);
+
 void fd_rtc_initialize(void);
 
 void fd_rtc_sleep(void);

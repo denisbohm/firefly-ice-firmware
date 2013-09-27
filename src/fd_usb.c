@@ -173,20 +173,26 @@ static int fd_usb_errors = 0;
 EFM32_ALIGN(4)
 static uint8_t fd_usb_in_data[USB_MAX_EP_SIZE];
 
-#define DETOUR_SIZE 256
-
+#define DETOUR_SIZE 300
 static uint8_t fd_usb_detour_data[DETOUR_SIZE];
 static fd_detour_t fd_usb_detour;
 
 static uint8_t fd_usb_out_data[USB_MAX_EP_SIZE];
 
+#define DETOUR_SOURCE_COLLECTION_SIZE 300
 static fd_detour_source_collection_t fd_usb_detour_source_collection;
+static uint8_t fd_usb_detour_source_collection_data[DETOUR_SOURCE_COLLECTION_SIZE];
 
 void fd_usb_initialize(void) {
     fd_usb_log_index = 0;
 
     fd_detour_initialize(&fd_usb_detour, fd_usb_detour_data, DETOUR_SIZE);
-    fd_detour_source_collection_initialize(&fd_usb_detour_source_collection);
+    fd_detour_source_collection_initialize(
+        &fd_usb_detour_source_collection,
+        USB_MAX_EP_SIZE,
+        fd_usb_detour_source_collection_data,
+        DETOUR_SOURCE_COLLECTION_SIZE
+    );
 
     fd_event_add_callback(FD_EVENT_USB_TRANSFER, fd_usb_transfer);
 }
@@ -371,13 +377,6 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
 
 static
 int fd_usb_write_complete(USB_Status_TypeDef status __attribute__((unused)), uint32_t xferred __attribute__((unused)), uint32_t remaining __attribute__((unused))) {
-    fd_detour_source_t *source = fd_usb_detour_source_collection.first;
-    if (source) {
-        if (!fd_detour_source_is_transferring(source)) {
-            fd_detour_source_collection_pop(&fd_usb_detour_source_collection);
-        }
-    }
-
     fd_event_set(FD_EVENT_USB_TRANSFER);
 
     return USB_STATUS_OK;
@@ -396,11 +395,8 @@ void fd_usb_transfer(void) {
     }
 
     if (!USBD_EpIsBusy(INTR_IN_EP_ADDR)) {
-        fd_detour_source_t *source = fd_usb_detour_source_collection.first;
-        if (source) {
-            if (fd_detour_source_get(source, fd_usb_out_data, USB_MAX_EP_SIZE)) {
-                USBD_Write(INTR_IN_EP_ADDR, fd_usb_out_data, USB_MAX_EP_SIZE, fd_usb_write_complete);
-            }
+        if (fd_detour_source_collection_get(&fd_usb_detour_source_collection, fd_usb_out_data)) {
+            USBD_Write(INTR_IN_EP_ADDR, fd_usb_out_data, USB_MAX_EP_SIZE, fd_usb_write_complete);
         }
     }
 }

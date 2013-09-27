@@ -13,6 +13,13 @@ static volatile uint32_t rtc_time_microseconds;
 
 static volatile uint32_t rtc_countdown;
 
+fd_time_t fd_rtc_get_time_retained(void) {
+    fd_time_t time;
+    time.microseconds = rtc_time_microseconds;
+    time.seconds = rtc_time_seconds;
+    return time;
+}
+
 void fd_rtc_initialize(void) {
     rtc_time_seconds = 0;
     rtc_time_microseconds = 0;

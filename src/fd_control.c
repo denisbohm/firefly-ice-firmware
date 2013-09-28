@@ -4,6 +4,7 @@
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_indicator.h"
+#include "fd_main.h"
 #include "fd_map.h"
 #include "fd_power.h"
 #include "fd_processor.h"
@@ -209,6 +210,15 @@ void fd_control_set_property_power(fd_binary_t *binary) {
     fd_power_set(battery_level);
 }
 
+void fd_control_get_property_mode(fd_binary_t *binary) {
+    fd_binary_put_uint8(binary, fd_main_get_mode());
+}
+
+void fd_control_set_property_mode(fd_binary_t *binary) {
+    uint8_t mode = fd_binary_get_uint8(binary);
+    fd_main_set_mode(mode);
+}
+
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -243,6 +253,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_STORAGE: {
                     fd_control_get_property_storage(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_MODE: {
+                    fd_control_get_property_mode(binary_out);
+                } break;
             }
         }
     }
@@ -264,6 +277,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_POWER: {
                     fd_control_set_property_power(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_MODE: {
+                    fd_control_set_property_mode(&binary);
                 } break;
             }
         }

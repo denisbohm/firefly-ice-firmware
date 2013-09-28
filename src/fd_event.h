@@ -26,6 +26,8 @@ void fd_event_initialize(void);
 void fd_event_add_callback(uint32_t events, fd_event_callback_t callback);
 
 void fd_event_set(uint32_t events);
+void fd_event_mask_set(uint32_t mask);
+void fd_event_mask_clear(uint32_t mask);
 
 void fd_event_process(void);
 

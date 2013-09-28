@@ -164,7 +164,13 @@ static uint8_t fd_bluetooth_out_data[MAX_CHARACTERISTIC_SIZE];
 static fd_detour_source_collection_t fd_bluetooth_detour_source_collection;
 static uint8_t fd_bluetooth_detour_source_collection_data[DETOUR_SOURCE_COLLECTION_SIZE];
 
-bool fd_bluetooth_connect_on_disconnect;
+typedef enum {
+    fd_bluetooth_disconnect_action_connect,
+    fd_bluetooth_disconnect_action_sleep,
+    fd_bluetooth_disconnect_action_test
+} fd_bluetooth_disconnect_action_t;
+
+fd_bluetooth_disconnect_action_t fd_bluetooth_disconnect_action;
 
 fd_timer_t fd_bluetooth_dtm_timer;
 
@@ -201,7 +207,7 @@ void fd_bluetooth_initialize(void) {
         DETOUR_SOURCE_COLLECTION_SIZE
     );
 
-    fd_bluetooth_connect_on_disconnect = true;
+    fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_connect;
 
     fd_nrf8001_did_setup = false;
     fd_nrf8001_did_connect = false;
@@ -276,19 +282,6 @@ void fd_nrf8001_spi_transfer(void) {
     fd_bluetooth_spi_transfer();
 }
 
-bool fd_bluetooth_is_asleep(void) {
-    return fd_bluetooth_idle;
-}
-
-void fd_bluetooth_sleep(void) {
-    fd_bluetooth_system_steps = fd_nrf8001_sleep_step;
-}
-
-void fd_bluetooth_wake(void) {
-    fd_bluetooth_idle = false;
-    fd_bluetooth_system_steps = fd_nrf8001_wakeup_step;
-}
-
 void fd_bluetooth_step_queue(uint32_t step) {
     fd_bluetooth_system_steps |= step;
     fd_event_set(FD_EVENT_BLE_STEP);
@@ -313,6 +306,13 @@ void fd_bluetooth_system_step(void) {
             fd_nrf8001_sleep();
             fd_bluetooth_step_complete(fd_nrf8001_sleep_step);
             fd_bluetooth_idle = true;
+            fd_event_mask_set(
+                FD_EVENT_NRF_RDYN |
+                FD_EVENT_BLE_STATE |
+                FD_EVENT_BLE_DATA_CREDITS |
+                FD_EVENT_BLE_SYSTEM_CREDITS |
+                FD_EVENT_BLE_STEP
+            );
         } else
         if (fd_bluetooth_system_steps & fd_nrf8001_wakeup_step) {
             fd_nrf8001_wakeup();
@@ -405,10 +405,6 @@ void fd_bluetooth_transfer(void) {
 }
 
 void fd_bluetooth_step(void) {
-    if (fd_bluetooth_idle) {
-        return;
-    }
-
     fd_bluetooth_system_step();
     fd_bluetooth_data_step();
     fd_bluetooth_transfer();
@@ -427,7 +423,8 @@ void fd_nrf8001_device_started_event(
             fd_bluetooth_step_queue(fd_nrf8001_test_command_step);
         } break;
         case OperatingModeStandby: {
-            fd_bluetooth_connect_on_disconnect = true;
+            fd_nrf8001_set_system_credits(1);
+            fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_connect;
             fd_bluetooth_step_queue(fd_nrf8001_connect_step);
         } break;
         case OperatingModeSetup: {
@@ -436,7 +433,6 @@ void fd_nrf8001_device_started_event(
             fd_bluetooth_step_queue(fd_nrf8001_setup_continue_step);
         } break;
     }
-    fd_bluetooth_ready();
 }
 
 void fd_nrf8001_pipe_error_event(
@@ -498,10 +494,16 @@ void fd_nrf8001_disconnected_event(
 
     fd_nrf8001_set_data_credits(0);
 
-    if (fd_bluetooth_connect_on_disconnect) {
-        fd_bluetooth_step_queue(fd_nrf8001_connect_step);
-    } else {
-        fd_bluetooth_step_queue(fd_nrf8001_test_enable_step);
+    switch (fd_bluetooth_disconnect_action) {
+        case fd_bluetooth_disconnect_action_connect:
+            fd_bluetooth_step_queue(fd_nrf8001_connect_step);
+            break;
+        case fd_bluetooth_disconnect_action_sleep:
+            fd_bluetooth_step_queue(fd_nrf8001_sleep_step);
+            break;
+        case fd_bluetooth_disconnect_action_test:
+            fd_bluetooth_step_queue(fd_nrf8001_test_enable_step);
+            break;
     }
 }
 
@@ -569,9 +571,36 @@ void fd_bluetooth_direct_test_mode_exit(void) {
 
 void fd_bluetooth_direct_test_mode_enter(uint16_t request, fd_time_t duration) {
     fd_nrf8001_dtm_request = request;
-    fd_bluetooth_connect_on_disconnect = false;
+    fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_test;
     fd_bluetooth_step_queue(fd_nrf8001_disconnect_step);
     if (duration.seconds != 0) {
         fd_timer_start(&fd_bluetooth_dtm_timer, duration);
     }
+}
+
+bool fd_bluetooth_is_asleep(void) {
+    return fd_bluetooth_idle;
+}
+
+void fd_bluetooth_sleep(void) {
+    if (fd_nrf8001_did_connect) {
+        fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_sleep;
+        fd_bluetooth_step_queue(fd_nrf8001_disconnect_step);
+    } else {
+        fd_bluetooth_system_steps = fd_nrf8001_sleep_step;
+    }
+}
+
+void fd_bluetooth_wake(void) {
+    fd_event_mask_clear(
+        FD_EVENT_NRF_RDYN |
+        FD_EVENT_BLE_STATE |
+        FD_EVENT_BLE_DATA_CREDITS |
+        FD_EVENT_BLE_SYSTEM_CREDITS |
+        FD_EVENT_BLE_STEP
+    );
+
+    fd_nrf8001_set_system_credits(1);
+    fd_bluetooth_idle = false;
+    fd_bluetooth_step_queue(fd_nrf8001_wakeup_step);
 }

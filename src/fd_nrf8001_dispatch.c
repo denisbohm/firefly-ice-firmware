@@ -356,7 +356,10 @@ void fd_nrf8001_command_response_event(
     uint8_t *response_data,
     uint32_t response_data_length
 ) {
-    fd_nrf8001_add_system_credits(1);
+    // wakeup already sent a device started event, before sending a wakeup command response -denis
+    if (command_op_code != Wakeup) {
+        fd_nrf8001_add_system_credits(1);
+    }
 
     switch (command_op_code) {
         case Test:

@@ -95,8 +95,7 @@ typedef union {
 #define SPI_READ 0x80
 #define SPI_ADDRESS_INCREMENT 0x40
 
-static
-fd_lish3dh_sample_callback_t sample_callback;
+static fd_lish3dh_sample_callback_t sample_callback;
 
 void fd_lis3dh_read_fifo(void) {
     uint8_t src = fd_spi_sync_tx1_rx1(FD_SPI_BUS_1_SLAVE_LIS3DH, SPI_READ | LIS3DH_FIFO_SRC_REG);
@@ -166,6 +165,7 @@ void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
 }
 
 void fd_lis3dh_sleep(void) {
+    fd_event_mask_set(FD_EVENT_ACC_INT);
     fd_spi_sync_tx2(
         FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,
@@ -174,6 +174,7 @@ void fd_lis3dh_sleep(void) {
 }
 
 void fd_lis3dh_wake(void) {
+    fd_event_mask_clear(FD_EVENT_ACC_INT);
     fd_spi_sync_tx2(
         FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,

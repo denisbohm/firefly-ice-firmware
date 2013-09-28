@@ -16,6 +16,11 @@ static
 fd_timer_t override_timer;
 
 void fd_indicator_set_usb(uint8_t orange, uint8_t green) {
+    // to distinguish overflow and compare interrupts unambiguously -denis
+    if (orange == 0xff) {
+        orange = 0xfe;
+    }
+
     TIMER_CompareSet(TIMER3, /* channel */ 1, (~orange) << 8);
     TIMER_CompareSet(TIMER3, /* channel */ 2, (~green) << 8);
 }
@@ -109,13 +114,18 @@ void fd_indicator_sleep(void) {
     TIMER3->ROUTE = 0;
 
     CMU_ClockEnable(cmuClock_TIMER3, false);
+
+    GPIO_PinOutSet(LED0_PORT_PIN);
+    GPIO_PinOutSet(LED4_PORT_PIN);
+    GPIO_PinOutSet(LED5_PORT_PIN);
+    GPIO_PinOutSet(LED6_PORT_PIN);
 }
 
 void TIMER3_IRQHandler(void) {
-    uint32_t timer_if = TIMER_IntGet(TIMER3);
+    uint32_t timer_if = TIMER_IntGet(TIMER3) & (TIMER_IF_CC1 | TIMER_IF_OF);
     TIMER_IntClear(TIMER3, TIMER_IF_CC1 | TIMER_IF_OF);
 
-    if (timer_if & TIMER_IF_CC1) {
+    if (timer_if & TIMER_IF_OF) {
         GPIO_PinOutSet(LED5_PORT_PIN);
     } else {
         GPIO_PinOutClear(LED5_PORT_PIN);

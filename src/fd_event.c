@@ -21,10 +21,12 @@ static
 uint32_t fd_event_item_count;
 
 volatile uint32_t fd_event_pending;
+volatile uint32_t fd_event_mask;
 
 void fd_event_initialize(void) {
     fd_event_item_count = 0;
     fd_event_pending = 0;
+    fd_event_mask = 0;
 
     NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
     NVIC_EnableIRQ(GPIO_EVEN_IRQn);
@@ -45,6 +47,14 @@ void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
 
 void fd_event_set(uint32_t events) {
     fd_event_pending |= events;
+}
+
+void fd_event_mask_set(uint32_t events) {
+    fd_event_mask |= events;
+}
+
+void fd_event_mask_clear(uint32_t events) {
+    fd_event_mask &= ~events;
 }
 
 void GPIO_EVEN_IRQHandler(void) {
@@ -74,7 +84,7 @@ void GPIO_ODD_IRQHandler(void) {
 
 void fd_event_process(void) {
     fd_interrupts_disable();
-    uint32_t pending = fd_event_pending;
+    uint32_t pending = fd_event_pending & ~fd_event_mask;
     fd_event_pending = 0;
     fd_interrupts_enable();
 

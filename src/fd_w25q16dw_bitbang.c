@@ -24,6 +24,17 @@ void fd_spi_power_on(void) {
     GPIO_PinOutSet(MEM_CSN_PORT_PIN);
     GPIO_PinOutSet(US0_CLK_PORT_PIN);
     GPIO_PinOutSet(US0_MOSI_PORT_PIN);
+
+    fd_delay_ms(10); // tPUW
+}
+
+void fd_spi_power_off(void) {
+    GPIO_PinOutClear(US0_PWR_PORT_PIN);
+    GPIO_PinOutClear(MEM_CSN_PORT_PIN);
+    GPIO_PinOutClear(US0_CLK_PORT_PIN);
+    GPIO_PinOutClear(US0_MOSI_PORT_PIN);
+
+    fd_delay_ms(10);
 }
 
 void fd_spi_enable(void) {
@@ -86,12 +97,15 @@ void fd_spi_tx1(uint8_t data) {
 }
 
 void fd_w25q16dw_wake(void) {
+    fd_spi_power_on();
+
     uint8_t txdata[] = {RELEASE_POWER_DOWN, 0, 0, 0};
     uint8_t device_id;
     fd_spi_txn_rxn(txdata, sizeof(txdata), &device_id, 1);
     fd_delay_us(30); // tRES2
 }
 
+#if 0
 void fd_w25q16dw_test(void) {
     fd_w25q16dw_wake();
     uint32_t address = 0;
@@ -107,14 +121,13 @@ void fd_w25q16dw_test(void) {
         return;
     }
 }
+#endif
 
 void fd_w25q16dw_initialize(void) {
     mem_index = 0;
     for (uint32_t i = 0; i < 256; ++i) {
         mem_data[i] = 0;
     }
-
-    fd_spi_power_on();
 
     fd_w25q16dw_wake();
 
@@ -130,7 +143,7 @@ void fd_w25q16dw_initialize(void) {
         fd_log_assert_fail("");
     }
 
-    fd_w25q16dw_test();
+//    fd_w25q16dw_test();
 }
 
 static
@@ -145,6 +158,8 @@ void fd_w25q16dw_sleep(void) {
     fd_w25q16dw_wait_while_busy();
 
     fd_spi_tx1(POWER_DOWN);
+
+    fd_spi_power_off();
 }
 
 void fd_w25q16dw_enable_write(void) {

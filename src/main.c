@@ -58,7 +58,7 @@ void main_sleep(void) {
     fd_i2c1_sleep();
     fd_i2c1_power_off();
 
-    USB->IFC = USB_IFC_VREGOSH;
+    USB->IFC = USB_IFC_VREGOSH | USB_IFC_VREGOSL;
 }
 
 static
@@ -127,6 +127,7 @@ int main(void) {
     fd_reset_initialize();
     fd_processor_initialize();
 
+/*
 #ifdef DEBUG
 #warning debug is defined - watchdog is not enabled
 #else
@@ -137,6 +138,7 @@ int main(void) {
 //    wdog_init.lock = true;
     WDOG_Init(&wdog_init);
 #endif
+*/
 
     main_mode = fd_main_mode_run;
     main_sleep_when_bluetooth_is_asleep = false;
@@ -192,15 +194,47 @@ int main(void) {
 
     fd_indicator_initialize();
     fd_indicator_wake();
-/*
-    fd_indicator_set_usb(0xff, 0xff);
+
+    fd_indicator_set_usb(0xff, 0x00);
     fd_indicator_set_d0(0x00);
     fd_indicator_set_d1(0x00, 0x00, 0x00);
     fd_indicator_set_d2(0x00, 0x00, 0x00);
     fd_indicator_set_d3(0x00, 0x00, 0x00);
     fd_indicator_set_d4(0x00);
-    while (true);
-*/
+    fd_delay_ms(250);
+    fd_indicator_set_usb(0xff, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_usb(0x00, 0xff);
+    fd_delay_ms(250);
+    fd_indicator_set_usb(0x00, 0x00);
+    fd_indicator_set_d0(0xff);
+    fd_delay_ms(250);
+    fd_indicator_set_d0(0x00);
+    fd_indicator_set_d1(0xff, 0x00, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_d1(0x00, 0xff, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_d1(0x00, 0x00, 0xff);
+    fd_delay_ms(250);
+    fd_indicator_set_d1(0x00, 0x00, 0x00);
+    fd_indicator_set_d2(0xff, 0x00, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_d2(0x00, 0xff, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_d2(0x00, 0x00, 0xff);
+    fd_delay_ms(250);
+    fd_indicator_set_d2(0x00, 0x00, 0x00);
+    fd_indicator_set_d3(0xff, 0x00, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_d3(0x00, 0xff, 0x00);
+    fd_delay_ms(250);
+    fd_indicator_set_d3(0x00, 0x00, 0xff);
+    fd_delay_ms(250);
+    fd_indicator_set_d3(0x00, 0x00, 0x00);
+    fd_indicator_set_d4(0xff);
+    fd_delay_ms(250);
+    fd_indicator_set_d4(0x00);
+    fd_delay_ms(250);
 
     fd_ui_initialize();
     fd_sync_initialize();
@@ -219,7 +253,7 @@ int main(void) {
             main_sleep_when_bluetooth_is_asleep = false;
             main_sleep();
         }
-        if ((main_mode == fd_main_mode_storage) && (USB->IF & USB_IF_VREGOSH)) {
+        if ((main_mode == fd_main_mode_storage) && (USB->IF & (USB_IF_VREGOSH | USB_IF_VREGOSL))) {
             fd_main_set_mode(fd_main_mode_run);
         }
     }

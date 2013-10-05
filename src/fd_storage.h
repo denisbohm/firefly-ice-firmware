@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define FD_STORAGE_MAX_DATA_LENGTH 120
+#define FD_STORAGE_MAX_DATA_LENGTH 248
 
 #define FD_STORAGE_TYPE(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))
 

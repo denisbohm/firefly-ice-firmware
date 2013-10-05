@@ -186,7 +186,6 @@ void fd_lis3dh_wake(void) {
     );
 }
 
-/*
 void fd_lis3dh_read(float *x, float *y, float *z) {
     uint8_t tx_bytes[] = {SPI_READ | SPI_ADDRESS_INCREMENT | LIS3DH_OUT_X_L};
     fd_lis3dh_out_t out;
@@ -199,4 +198,3 @@ void fd_lis3dh_read(float *x, float *y, float *z) {
     *y = out.y / 16384.0f;
     *z = out.z / 16384.0f;
 }
-*/

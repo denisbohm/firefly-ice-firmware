@@ -286,6 +286,29 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
     }
 }
 
+void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t external_address = fd_binary_get_uint32(&binary);
+    uint32_t external_length = fd_binary_get_uint32(&binary);
+    uint8_t hash[FD_SHA_HASH_SIZE];
+    fd_update_get_external_hash(external_address, external_length, hash);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_GET_EXTERNAL_HASH);
+    fd_binary_put_bytes(binary_out, hash, FD_SHA_HASH_SIZE);
+    fd_control_send_complete(detour_source_collection);
+}
+
+void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t page = fd_binary_get_uint32(&binary);
+    uint8_t page_data[256];
+    fd_update_read_page(page, page_data);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_READ_PAGE);
+    fd_binary_put_bytes(binary_out, page_data, 256);
+    fd_control_send_complete(detour_source_collection);
+}
+
 void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -412,6 +435,13 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
             break;
         case FD_CONTROL_RESET:
             command = fd_control_reset;
+            break;
+
+        case FD_CONTROL_UPDATE_GET_EXTERNAL_HASH:
+            command = fd_control_update_get_external_hash;
+            break;
+        case FD_CONTROL_UPDATE_READ_PAGE:
+            command = fd_control_update_read_page;
             break;
 
         case FD_CONTROL_UPDATE_GET_SECTOR_HASHES:

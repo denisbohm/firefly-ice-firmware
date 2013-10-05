@@ -194,6 +194,7 @@ void fd_usb_initialize(void) {
         DETOUR_SOURCE_COLLECTION_SIZE
     );
 
+    fd_event_add_em2_check(fd_usb_is_safe_to_enter_em2);
     fd_event_add_callback(FD_EVENT_USB_TRANSFER, fd_usb_transfer);
 }
 

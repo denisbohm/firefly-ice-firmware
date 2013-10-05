@@ -208,6 +208,7 @@ void main(void) {
     fd_processor_initialize();
     spi_initialize();
     fd_bluetooth_reset();
-    fd_nrf8001_test_broadcast(0, 0);
+    uint8_t data[10];
+    uint32_t result __attribute__ ((unused)) = fd_nrf8001_test_broadcast(data, sizeof(data));
     halt();
 }

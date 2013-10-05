@@ -1,6 +1,6 @@
 #include "fd_event.h"
+#include "fd_log.h"
 #include "fd_processor.h"
-#include "fd_usb.h"
 
 #include <em_emu.h>
 #include <em_gpio.h>
@@ -20,11 +20,19 @@ fd_event_item_t fd_event_items[ITEM_LIMIT];
 static
 uint32_t fd_event_item_count;
 
+#define CHECK_LIMIT 2
+
+static
+fd_event_em2_check_t fd_event_em2_checks[CHECK_LIMIT];
+static
+uint32_t fd_event_em2_check_count;
+
 volatile uint32_t fd_event_pending;
 volatile uint32_t fd_event_mask;
 
 void fd_event_initialize(void) {
     fd_event_item_count = 0;
+    fd_event_em2_check_count = 0;
     fd_event_pending = 0;
     fd_event_mask = 0;
 
@@ -34,9 +42,18 @@ void fd_event_initialize(void) {
     NVIC_EnableIRQ(GPIO_ODD_IRQn);
 }
 
+void fd_event_add_em2_check(fd_event_em2_check_t em2_check) {
+    if (fd_event_em2_check_count >= CHECK_LIMIT) {
+        fd_log("");
+        return;
+    }
+
+    fd_event_em2_checks[fd_event_em2_check_count++] = em2_check;
+}
+
 void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
     if (fd_event_item_count >= ITEM_LIMIT) {
-        // !!! log something
+        fd_log("");
         return;
     }
 
@@ -98,9 +115,13 @@ void fd_event_process(void) {
             }
         }
     } else {
-        if (fd_usb_is_safe_to_enter_em2()) {
-            EMU_EnterEM2(true);
+        for (uint32_t i = 0; i < fd_event_em2_check_count; ++i) {
+            fd_event_em2_check_t em2_check = fd_event_em2_checks[i];
+            if (!em2_check()) {
+                return;
+            }
         }
+        EMU_EnterEM2(true);
     }
 }
 

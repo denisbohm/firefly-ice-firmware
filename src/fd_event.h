@@ -1,6 +1,7 @@
 #ifndef FD_EVENT_H
 #define FD_EVENT_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define FD_EVENT_NRF_RDYN (1 << 0)
@@ -22,7 +23,12 @@
 
 typedef void (*fd_event_callback_t)(void);
 
+typedef bool (*fd_event_em2_check_t)(void);
+
 void fd_event_initialize(void);
+
+void fd_event_add_em2_check(fd_event_em2_check_t em2_check);
+
 void fd_event_add_callback(uint32_t events, fd_event_callback_t callback);
 
 void fd_event_set(uint32_t events);

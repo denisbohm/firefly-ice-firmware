@@ -97,10 +97,10 @@ int main(void) {
             GPIO_PinOutSet(LED0_PORT_PIN);
             GPIO_PinOutSet(LED4_PORT_PIN);
             copy_firmware();
-//            if (is_internal_firmware_valid()) {
+            if (is_internal_firmware_valid()) {
                 GPIO_PinOutSet(LED5_PORT_PIN);
                 run_firmware();
-//            }
+            }
         }
     }
 

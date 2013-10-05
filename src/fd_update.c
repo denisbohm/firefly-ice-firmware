@@ -14,6 +14,15 @@ void fd_update_get_sector_hash(uint32_t sector, uint8_t *hash) {
     fd_sha1(fd_w25q16dw_read, FD_UPDATE_DATA_BASE_ADDRESS + sector * SECTOR_SIZE, SECTOR_SIZE, hash);
 }
 
+void fd_update_get_external_hash(uint32_t address, uint32_t length, uint8_t *hash) {
+    fd_sha1(fd_w25q16dw_read, address, length, hash);
+}
+
+void fd_update_read_page(uint32_t page, uint8_t *data) {
+    uint32_t address = FD_UPDATE_DATA_BASE_ADDRESS + page * FD_W25Q16DW_PAGE_SIZE;
+    fd_w25q16dw_read(address, data, FD_W25Q16DW_PAGE_SIZE);
+}
+
 void fd_update_erase_sector(uint32_t sector) {
     uint32_t address = FD_UPDATE_DATA_BASE_ADDRESS + sector * SECTOR_SIZE;
     fd_w25q16dw_enable_write();
@@ -51,9 +60,9 @@ void fd_update_write_metadata(fd_update_metadata_t *metadata) {
 }
 
 uint8_t fd_update_commit(fd_update_metadata_t *metadata) {
-    uint8_t hash[FD_SHA_HASH_SIZE];
-    fd_sha1(fd_w25q16dw_read, FD_UPDATE_DATA_BASE_ADDRESS, metadata->length, hash);
-    if (!fd_sha1_is_equal(hash, metadata->hash)) {
+    uint8_t external_hash[FD_SHA_HASH_SIZE];
+    fd_sha1(fd_w25q16dw_read, FD_UPDATE_DATA_BASE_ADDRESS, metadata->length, external_hash);
+    if (!fd_sha1_is_equal(metadata->hash, external_hash)) {
         return FD_UPDATE_COMMIT_FAIL_HASH_MISMATCH;
     }
 
@@ -64,7 +73,7 @@ uint8_t fd_update_commit(fd_update_metadata_t *metadata) {
         fd_aes_decrypt_start(&decrypt, key, metadata->crypt_iv);
         fd_sha1(decrypt_get, FD_UPDATE_DATA_BASE_ADDRESS, metadata->length, crypt_hash);
         fd_aes_decrypt_stop(&decrypt);
-        if (!fd_sha1_is_equal(hash, metadata->crypt_hash)) {
+        if (!fd_sha1_is_equal(crypt_hash, metadata->crypt_hash)) {
             return FD_UPDATE_COMMIT_FAIL_CRYPT_HASH_MISMATCH;
         }
     }

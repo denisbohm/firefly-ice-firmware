@@ -28,6 +28,9 @@ void fd_update_read_crypto_key(uint8_t *key);
 void fd_update_read_metadata(fd_update_metadata_t *metadata);
 void fd_update_write_metadata(fd_update_metadata_t *metadata);
 
+void fd_update_get_external_hash(uint32_t address, uint32_t length, uint8_t *hash);
+void fd_update_read_page(uint32_t page, uint8_t *data);
+
 void fd_update_get_sector_hash(uint32_t sector, uint8_t *hash);
 void fd_update_erase_sector(uint32_t sector);
 void fd_update_write_page(uint32_t page, uint8_t *data);

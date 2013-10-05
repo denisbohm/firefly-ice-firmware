@@ -12,6 +12,6 @@ void fd_lis3dh_wake(void);
 
 void fd_lis3dh_read_fifo(void);
 
-// void fd_lis3dh_read(float *x, float *y, float *z);
+void fd_lis3dh_read(float *x, float *y, float *z);
 
 #endif

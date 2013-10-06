@@ -45,11 +45,11 @@ void fd_rtc_initialize(void) {
 }
 
 void fd_rtc_sleep(void) {
-    RTC_CompareSet(0, 65536); // 2 s
+    RTC_CompareSet(0, 65535); // 2 s
 }
 
 void fd_rtc_wake(void) {
-    RTC_CompareSet(0, 1024); // 31250 us
+    RTC_CompareSet(0, 1023); // 31250 us
     RTC_CounterReset();
 }
 
@@ -102,7 +102,7 @@ uint32_t fd_rtc_get_countdown(void) {
 void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
-    if (RTC->COMP0 == 1024) {
+    if (RTC->COMP0 == 1023) {
         uint32_t microseconds = rtc_time_microseconds + 31250;
         if (microseconds >= 1000000) {
             microseconds -= 1000000;

@@ -39,7 +39,6 @@ void fd_timer_add(fd_timer_t *timer, fd_timer_callback_t callback) {
 static
 void fd_timer_schedule_countdown(void) {
     uint32_t new_countdown = UINT32_MAX;
-    fd_interrupts_disable();
     uint32_t remaining_countdown = fd_rtc_get_countdown();
     uint32_t elapsed_countdown = scheduled_countdown - remaining_countdown;
     for (uint32_t i = 0; i < timer_count; ++i) {
@@ -67,7 +66,6 @@ void fd_timer_schedule_countdown(void) {
     }
     scheduled_countdown = new_countdown;
     fd_rtc_set_countdown(new_countdown);
-    fd_interrupts_enable();
 }
 
 static

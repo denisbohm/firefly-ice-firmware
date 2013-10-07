@@ -45,13 +45,8 @@ void fd_mag3110_initialize(void) {
         fd_log_assert_fail("");
         return;
     }
-    result = fd_i2c1_register_write(ADDRESS, CTRL_REG2, CTRL_REG2_AUTO_MRST_EN);
-    if (!result) {
-         fd_log_assert_fail("");
-         return;
-    }
 
-    fd_mag3110_wake();
+    fd_mag3110_sleep();
 }
 
 void fd_mag3110_calibrate_offsets(void) {

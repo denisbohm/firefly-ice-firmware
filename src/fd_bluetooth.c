@@ -323,7 +323,7 @@ void fd_bluetooth_system_step(void) {
         } else
         if (fd_bluetooth_system_steps & fd_nrf8001_connect_step) {
             uint16_t timeout = 0; // infinite advertisement - no timeout
-            uint16_t interval = 32; // 20ms (0.625ms units)
+            uint16_t interval = 1600; // 1s (0.625ms units)
             fd_nrf8001_connect(timeout, interval);
             fd_bluetooth_step_complete(fd_nrf8001_connect_step);
         } else

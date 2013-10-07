@@ -48,15 +48,16 @@ void main_sleep(void) {
     fd_adc_sleep();
     fd_rtc_sleep();
     fd_lis3dh_sleep();
-    fd_lp55231_sleep();
+//    fd_lp55231_sleep();
+//    fd_lp55231_power_off();
     fd_mag3110_sleep();
-    fd_w25q16dw_sleep();
+//    fd_w25q16dw_sleep();
 
 //    fd_spi_sleep(FD_SPI_BUS_0);
 //    fd_spi_off(FD_SPI_BUS_0);
     fd_spi_sleep(FD_SPI_BUS_1);
     fd_i2c1_sleep();
-    fd_i2c1_power_off();
+//    fd_i2c1_power_off();
 
     USB->IFC = USB_IFC_VREGOSH | USB_IFC_VREGOSL;
 }
@@ -73,11 +74,12 @@ void main_wake(void) {
     fd_adc_wake();
     fd_rtc_wake();
     fd_lis3dh_wake();
-    fd_lp55231_wake();
-    fd_mag3110_wake();
-    fd_w25q16dw_wake();
+    fd_lp55231_power_on();
+//    fd_lp55231_wake();
+//    fd_mag3110_wake();
+//    fd_w25q16dw_wake();
 
-    fd_indicator_wake();
+//    fd_indicator_wake();
     fd_sensing_wake();
 }
 
@@ -162,8 +164,7 @@ int main(void) {
     fd_i2c1_power_on();
     //
     fd_lp55231_initialize();
-    fd_lp55231_wake();
-
+    fd_lp55231_power_on();
     //
     fd_mag3110_initialize();
 
@@ -193,7 +194,6 @@ int main(void) {
     fd_power_initialize();
 
     fd_indicator_initialize();
-    fd_indicator_wake();
 
     fd_indicator_set_usb(0xff, 0x00);
     fd_indicator_set_d0(0x00);

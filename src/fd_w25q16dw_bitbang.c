@@ -97,8 +97,6 @@ void fd_spi_tx1(uint8_t data) {
 }
 
 void fd_w25q16dw_wake(void) {
-    fd_spi_power_on();
-
     uint8_t txdata[] = {RELEASE_POWER_DOWN, 0, 0, 0};
     uint8_t device_id;
     fd_spi_txn_rxn(txdata, sizeof(txdata), &device_id, 1);
@@ -129,6 +127,8 @@ void fd_w25q16dw_initialize(void) {
         mem_data[i] = 0;
     }
 
+    fd_spi_power_on();
+
     fd_w25q16dw_wake();
 
     uint8_t txdata[] = {READ_MANUFACTURER_DEVICE_ID, 0x00, 0x00, 0x00};
@@ -158,8 +158,6 @@ void fd_w25q16dw_sleep(void) {
     fd_w25q16dw_wait_while_busy();
 
     fd_spi_tx1(POWER_DOWN);
-
-    fd_spi_power_off();
 }
 
 void fd_w25q16dw_enable_write(void) {

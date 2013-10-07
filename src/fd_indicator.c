@@ -12,44 +12,13 @@
 // D5 (usb.o) PE9
 // D6 (usb.g) PA15 TIM3_CC2 #0
 
+#define TOP 0xff00
+
 static
 fd_timer_t override_timer;
 
-void fd_indicator_set_usb(uint8_t orange, uint8_t green) {
-    // to distinguish overflow and compare interrupts unambiguously -denis
-    if (orange == 0xff) {
-        orange = 0xfe;
-    }
-
-    TIMER_CompareSet(TIMER3, /* channel */ 1, (~orange) << 8);
-    TIMER_CompareSet(TIMER3, /* channel */ 2, (~green) << 8);
-}
-
-void fd_indicator_set_d0(uint8_t value) {
-    TIMER_CompareSet(TIMER0, /* channel */ 2, (~value) << 8);
-}
-
-void fd_indicator_set_d1(uint8_t red, uint8_t green, uint8_t blue) {
-    fd_lp55231_set_led_pwm(9, red);
-    fd_lp55231_set_led_pwm(6, green);
-    fd_lp55231_set_led_pwm(5, blue);
-}
-
-void fd_indicator_set_d2(uint8_t red, uint8_t green, uint8_t blue) {
-    fd_lp55231_set_led_pwm(8, red);
-    fd_lp55231_set_led_pwm(4, green);
-    fd_lp55231_set_led_pwm(3, blue);
-}
-
-void fd_indicator_set_d3(uint8_t red, uint8_t green, uint8_t blue) {
-    fd_lp55231_set_led_pwm(7, red);
-    fd_lp55231_set_led_pwm(2, green);
-    fd_lp55231_set_led_pwm(1, blue);
-}
-
-void fd_indicator_set_d4(uint8_t value) {
-    TIMER_CompareSet(TIMER0, /* channel */ 1, (~value) << 8);
-}
+static
+uint32_t active_leds;
 
 static
 void override_callback(void) {
@@ -66,11 +35,109 @@ void override_callback(void) {
 
 void fd_indicator_initialize(void) {
     fd_timer_add(&override_timer, override_callback);
+
+    TIMER_CompareSet(TIMER0, /* channel */ 1, TOP);
+    TIMER_CompareSet(TIMER0, /* channel */ 2, TOP);
+
+    TIMER_CompareSet(TIMER3, /* channel */ 1, TOP);
+    TIMER_CompareSet(TIMER3, /* channel */ 2, TOP);
+
+    fd_indicator_sleep();
 }
 
-#define TOP 0xff00
+void fd_indicator_change_before(uint32_t n, uint32_t value) {
+    uint32_t active = active_leds;
+    bool was_active = (active != 0);
+    if (value != 0) {
+        active |= (1 << n);
+    } else {
+        active &= ~(1 << n);
+    }
+    bool is_active = (active != 0);
+    if (!was_active && is_active) {
+        fd_indicator_wake();
+    }
+}
+
+void fd_indicator_change_after(uint32_t n, uint32_t value) {
+    bool was_active = (active_leds != 0);
+    if (value != 0) {
+        active_leds |= (1 << n);
+    } else {
+        active_leds &= ~(1 << n);
+    }
+    bool is_active = (active_leds != 0);
+    if (was_active && !is_active) {
+        fd_indicator_sleep();
+    }
+}
+
+void fd_indicator_set_usb(uint8_t orange, uint8_t green) {
+    fd_indicator_change_before(5, orange);
+    fd_indicator_change_before(6, green);
+
+    // to distinguish overflow and compare interrupts unambiguously -denis
+    if (orange == 0xff) {
+        orange = 0xfe;
+    }
+
+    TIMER_CompareSet(TIMER3, /* channel */ 1, (~orange) << 8);
+    TIMER_CompareSet(TIMER3, /* channel */ 2, (~green) << 8);
+
+    fd_indicator_change_after(5, orange);
+    fd_indicator_change_after(6, green);
+}
+
+void fd_indicator_set_d0(uint8_t value) {
+    fd_indicator_change_before(0, value);
+
+    TIMER_CompareSet(TIMER0, /* channel */ 2, (~value) << 8);
+
+    fd_indicator_change_after(0, value);
+}
+
+void fd_indicator_set_d1(uint8_t red, uint8_t green, uint8_t blue) {
+    fd_indicator_change_before(1, (red << 24) | (green << 16) | blue);
+
+    fd_lp55231_set_led_pwm(9, red);
+    fd_lp55231_set_led_pwm(6, green);
+    fd_lp55231_set_led_pwm(5, blue);
+
+    fd_indicator_change_after(1, (red << 24) | (green << 16) | blue);
+}
+
+void fd_indicator_set_d2(uint8_t red, uint8_t green, uint8_t blue) {
+    fd_indicator_change_before(2, (red << 24) | (green << 16) | blue);
+
+    fd_lp55231_set_led_pwm(8, red);
+    fd_lp55231_set_led_pwm(4, green);
+    fd_lp55231_set_led_pwm(3, blue);
+
+    fd_indicator_change_after(2, (red << 24) | (green << 16) | blue);
+}
+
+void fd_indicator_set_d3(uint8_t red, uint8_t green, uint8_t blue) {
+    fd_indicator_change_before(3, (red << 24) | (green << 16) | blue);
+
+    fd_lp55231_set_led_pwm(7, red);
+    fd_lp55231_set_led_pwm(2, green);
+    fd_lp55231_set_led_pwm(1, blue);
+
+    fd_indicator_change_after(3, (red << 24) | (green << 16) | blue);
+}
+
+void fd_indicator_set_d4(uint8_t value) {
+    fd_indicator_change_before(4, value);
+
+    TIMER_CompareSet(TIMER0, /* channel */ 1, (~value) << 8);
+
+    fd_indicator_change_after(4, value);
+}
 
 void fd_indicator_wake(void) {
+    fd_lp55231_power_on();
+    fd_lp55231_wake();
+
     CMU_ClockEnable(cmuClock_TIMER0, true);
 
     TIMER_InitCC_TypeDef timer_initcc = TIMER_INITCC_DEFAULT;
@@ -107,6 +174,11 @@ void fd_indicator_wake(void) {
 }
 
 void fd_indicator_sleep(void) {
+    fd_lp55231_sleep();
+    fd_lp55231_power_off();
+
+    active_leds = 0;
+
     TIMER0->ROUTE = 0;
 
     CMU_ClockEnable(cmuClock_TIMER0, false);

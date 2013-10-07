@@ -43,6 +43,8 @@ uint32_t fd_storage_used_page_count(void) {
 #define increment_page(page) if (++page >= end_page) page = start_page
 
 void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
+    fd_w25q16dw_wake();
+
     uint32_t address = free_page * FD_W25Q16DW_PAGE_SIZE;
 
     if ((free_page % FD_W25Q16DW_PAGES_PER_SECTOR) == 0) {
@@ -69,6 +71,7 @@ void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
     buffer[3] = hash >> 8;
     fd_w25q16dw_enable_write();
     fd_w25q16dw_write_page(address, buffer, 8 + length);
+    fd_w25q16dw_sleep();
     increment_page(free_page);
     if (free_page == first_page) {
         increment_page(first_page);
@@ -79,11 +82,14 @@ bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, 
     if (first_page == free_page) {
         return false;
     }
+
     metadata->page = first_page;
     uint32_t address = first_page * FD_W25Q16DW_PAGE_SIZE;
     uint8_t buffer[FD_W25Q16DW_PAGE_SIZE];
     // !!! might be better to read length and then content -denis
+    fd_w25q16dw_wake();
     fd_w25q16dw_read(address, buffer, FD_W25Q16DW_PAGE_SIZE);
+    fd_w25q16dw_sleep();
     metadata->length = buffer[1];
     metadata->hash = fd_binary_unpack_uint16(&buffer[2]);
     metadata->type = fd_binary_unpack_uint32(&buffer[4]);
@@ -102,9 +108,11 @@ void fd_storage_erase_page(fd_storage_metadata_t *metadata) {
     }
 
     uint32_t address = first_page * FD_W25Q16DW_PAGE_SIZE;
+    fd_w25q16dw_wake();
     fd_w25q16dw_enable_write();
     uint8_t marker = PAGE_FREE;
     fd_w25q16dw_write_page(address, &marker, sizeof(marker));
+    fd_w25q16dw_sleep();
 
     increment_page(first_page);
 }

@@ -3,6 +3,9 @@
 
 void fd_lp55231_initialize(void);
 
+void fd_lp55231_power_on(void);
+void fd_lp55231_power_off(void);
+
 void fd_lp55231_wake(void);
 void fd_lp55231_sleep(void);
 

@@ -73,8 +73,7 @@ void fd_indicator_change_after(uint32_t n, uint32_t value) {
 }
 
 void fd_indicator_set_usb(uint8_t orange, uint8_t green) {
-    fd_indicator_change_before(5, orange);
-    fd_indicator_change_before(6, green);
+    fd_indicator_change_before(5, (orange << 8) | green);
 
     // to distinguish overflow and compare interrupts unambiguously -denis
     if (orange == 0xff) {
@@ -84,8 +83,7 @@ void fd_indicator_set_usb(uint8_t orange, uint8_t green) {
     TIMER_CompareSet(TIMER3, /* channel */ 1, (~orange) << 8);
     TIMER_CompareSet(TIMER3, /* channel */ 2, (~green) << 8);
 
-    fd_indicator_change_after(5, orange);
-    fd_indicator_change_after(6, green);
+    fd_indicator_change_after(5, (orange << 8) | green);
 }
 
 void fd_indicator_set_d0(uint8_t value) {

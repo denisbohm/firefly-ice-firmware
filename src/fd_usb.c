@@ -4,6 +4,7 @@
 #include "fd_log.h"
 #include "fd_usb.h"
 
+#include <em_system.h>
 #include <em_usb.h>
 #include <em_usbtypes.h>
 #include <em_usbhal.h>
@@ -22,8 +23,8 @@ static const USB_DeviceDescriptor_TypeDef deviceDesc __attribute__ ((aligned(4))
   .bDeviceSubClass    = 0,
   .bDeviceProtocol    = 0,
   .bMaxPacketSize0    = USB_EP0_SIZE,
-  .idVendor           = 0x2544,
-  .idProduct          = 0x0001,
+  .idVendor           = 0x2333,
+  .idProduct          = 0x0002,
   .bcdDevice          = 0x0000,
   .iManufacturer      = 1,
   .iProduct           = 2,
@@ -125,9 +126,28 @@ STATIC_CONST_STRING_DESC_LANGID( langID, 0x04, 0x09 );
 //STATIC_CONST_STRING_DESC( iManufacturer, L"Energy Micro AS" );
 //STATIC_CONST_STRING_DESC( iProduct     , L"Vendor Unique LED Device"   );
 //STATIC_CONST_STRING_DESC( iSerialNumber, L"000000001234"    );
-STATIC_CONST_STRING_DESC( iManufacturer, {'E', 'n', 'e', 'r', 'g', 'y', ' ', 'M', 'i', 'c', 'r', 'o', ' ', 'A', 'S', '\0'});
-STATIC_CONST_STRING_DESC( iProduct , {'V', 'e', 'n', 'd', 'o', 'r', ' ', 'U', 'n', 'i', 'q', 'u', 'e', ' ', 'L', 'E', 'D', ' ', 'D', 'e', 'v', 'i', 'c', 'e', '\0'});
-STATIC_CONST_STRING_DESC( iSerialNumber, {'0', '0', '0', '0', '0', '0', '0', '0', '1', '2', '3', '4', '\0'});
+STATIC_CONST_STRING_DESC( iManufacturer, {'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'D', 'e', 's', 'i', 'g', 'n', ' ', 'L', 'L', 'C', '\0'});
+STATIC_CONST_STRING_DESC( iProduct , {'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'I', 'c', 'e', '\0'});
+
+#define STATIC_STRING_DESC( name, ... ) \
+typedef struct \
+{ \
+uint8_t len; \
+uint8_t type; \
+utf16_t name[sizeof((utf16_t[]) __VA_ARGS__ )/2]; \
+} __attribute__ ((packed)) _##name; \
+EFM32_ALIGN( 4 ) \
+EFM32_PACK_START( 1 ) \
+static _##name name __attribute__ ((aligned(4)))= \
+{ \
+.len = sizeof((utf16_t[]) __VA_ARGS__ ), \
+.type = USB_STRING_DESCRIPTOR, \
+.name = __VA_ARGS__ \
+} \
+EFM32_PACK_END()
+
+
+STATIC_STRING_DESC( iSerialNumber, {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\0'});
 
 
 static const void * const strings[] =
@@ -196,6 +216,18 @@ void fd_usb_initialize(void) {
 
     fd_event_add_em2_check(fd_usb_is_safe_to_enter_em2);
     fd_event_add_callback(FD_EVENT_USB_TRANSFER, fd_usb_transfer);
+
+    uint64_t unique = SYSTEM_GetUnique();
+    for (uint32_t i = 0; i < 16; ++i) {
+        uint8_t c = unique & 0xf;
+        if (c < 10) {
+            c = '0' + c;
+        } else {
+            c = 'A' + c - 10;
+        }
+        iSerialNumber.iSerialNumber[i] = c;
+        unique >>= 4;
+    }
 }
 
 bool fd_usb_is_powered(void) {
@@ -350,6 +382,8 @@ void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), US
 
 static
 int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining __attribute__((unused))) {
+    fd_event_set(FD_EVENT_USB_TRANSFER);
+
     if (status != USB_STATUS_OK) {
         fd_log("");
         fd_detour_clear(&fd_usb_detour);
@@ -371,8 +405,6 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
         break;
     }
 
-    fd_event_set(FD_EVENT_USB_TRANSFER);
-
     return USB_STATUS_OK;
 }
 
@@ -393,11 +425,15 @@ void fd_usb_transfer(void) {
         if (result != USB_STATUS_OK) {
             ++fd_usb_errors;
         }
+    } else {
+        fd_event_set(FD_EVENT_USB_TRANSFER);
     }
 
     if (!USBD_EpIsBusy(INTR_IN_EP_ADDR)) {
         if (fd_detour_source_collection_get(&fd_usb_detour_source_collection, fd_usb_out_data)) {
             USBD_Write(INTR_IN_EP_ADDR, fd_usb_out_data, USB_MAX_EP_SIZE, fd_usb_write_complete);
         }
+    } else {
+        fd_event_set(FD_EVENT_USB_TRANSFER);
     }
 }

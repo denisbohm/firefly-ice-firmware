@@ -24,7 +24,7 @@ void fd_log_ram(char *message __attribute__((unused))) {
 }
 
 void fd_log(char *message) {
-    if (fd_log_use_storage) {
+    if (!fd_log_use_storage) {
         fd_log_ram(message);
         return;
     }

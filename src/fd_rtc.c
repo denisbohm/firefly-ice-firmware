@@ -1,29 +1,16 @@
 #include "fd_event.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 #include "fd_rtc.h"
-
 
 #include <em_cmu.h>
 #include <em_rtc.h>
 
 #include <stdint.h>
 
-static volatile uint32_t rtc_time_seconds;
-static volatile uint32_t rtc_time_microseconds;
-
 static volatile uint32_t rtc_countdown;
 
-fd_time_t fd_rtc_get_time_retained(void) {
-    fd_time_t time;
-    time.microseconds = rtc_time_microseconds;
-    time.seconds = rtc_time_seconds;
-    return time;
-}
-
 void fd_rtc_initialize(void) {
-    rtc_time_seconds = 0;
-    rtc_time_microseconds = 0;
-
     rtc_countdown = 0;
 
     CMU_ClockEnable(cmuClock_CORELE, true);
@@ -55,20 +42,20 @@ void fd_rtc_wake(void) {
 
 void fd_rtc_set_time(fd_time_t time) {
     fd_interrupts_disable();
-    rtc_time_seconds = time.seconds;
-    rtc_time_microseconds = (time.microseconds / 31250) * 31250;
+    RETAINED->rtc.seconds = time.seconds;
+    RETAINED->rtc.microseconds = (time.microseconds / 31250) * 31250;
     fd_interrupts_enable();
 }
 
 uint32_t fd_rtc_get_seconds(void) {
-    return rtc_time_seconds;
+    return RETAINED->rtc.seconds;
 }
 
 fd_time_t fd_rtc_get_time(void) {
     fd_time_t time;
     fd_interrupts_disable();
-    time.microseconds = rtc_time_microseconds;
-    time.seconds = rtc_time_seconds;
+    time.microseconds = RETAINED->rtc.microseconds;
+    time.seconds = RETAINED->rtc.seconds;
     fd_interrupts_enable();
     return time;
 }
@@ -77,10 +64,10 @@ fd_time_t fd_rtc_get_accurate_time(void) {
     fd_time_t time;
     uint32_t counter;
     while (true) {
-        time.microseconds = rtc_time_microseconds;
-        time.seconds = rtc_time_seconds;
+        time.microseconds = RETAINED->rtc.microseconds;
+        time.seconds = RETAINED->rtc.seconds;
         counter = RTC_CounterGet();
-        uint32_t again = rtc_time_microseconds;
+        uint32_t again = RETAINED->rtc.microseconds;
         if (time.microseconds == again) {
             break;
         }
@@ -103,12 +90,12 @@ void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
     if (RTC->COMP0 == 1023) {
-        uint32_t microseconds = rtc_time_microseconds + 31250;
+        uint32_t microseconds = RETAINED->rtc.microseconds + 31250;
         if (microseconds >= 1000000) {
             microseconds -= 1000000;
-            ++rtc_time_seconds;
+            ++RETAINED->rtc.seconds;
         }
-        rtc_time_microseconds = microseconds;
+        RETAINED->rtc.microseconds = microseconds;
 
         if (rtc_countdown) {
             if (--rtc_countdown == 0) {
@@ -116,6 +103,6 @@ void RTC_IRQHandler(void) {
             }
         }
     } else {
-        rtc_time_seconds += 2;
+        RETAINED->rtc.seconds += 2;
     }
 }

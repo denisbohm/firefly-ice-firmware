@@ -2,15 +2,12 @@
 #include "fd_event.h"
 #include "fd_power.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 #include "fd_timer.h"
 #include "fd_usb.h"
 
 #include <em_gpio.h>
 
-#define MAGIC 0xa610efcc
-
-static uint32_t fd_power_magic __attribute__ ((section(".non_init")));
-static double fd_power_battery_level __attribute__ ((section(".non_init")));
 static fd_timer_t fd_power_update_timer;
 
 #define UPDATE_INTERVAL 60
@@ -27,8 +24,8 @@ void fd_power_charge_status_callback(void) {
     bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered && !is_charging && (battery_voltage > 4.0f)) {
         // The battery appears to be fully charged.
-        if (fd_power_battery_level < 1.0) {
-            fd_power_battery_level = 1.0;
+        if (RETAINED->power_battery_level < 1.0) {
+            RETAINED->power_battery_level = 1.0;
         }
     }
 }
@@ -51,22 +48,22 @@ void fd_power_charge_current_callback(void) {
     bool is_usb_powered = fd_usb_is_powered();
     bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered && is_charging) {
-        fd_power_battery_level -= CHARGE_LEVEL_CHANGE_PER_INTERVAL;
-        if (fd_power_battery_level > 1.0) {
-            fd_power_battery_level = 1.0;
+        RETAINED->power_battery_level -= CHARGE_LEVEL_CHANGE_PER_INTERVAL;
+        if (RETAINED->power_battery_level > 1.0) {
+            RETAINED->power_battery_level = 1.0;
         }
     } else {
-        fd_power_battery_level -= DISCHARGE_LEVEL_CHANGE_PER_INTERVAL;
-        if (fd_power_battery_level < 0.0) {
-            fd_power_battery_level = 0.0;
+        RETAINED->power_battery_level -= DISCHARGE_LEVEL_CHANGE_PER_INTERVAL;
+        if (RETAINED->power_battery_level < 0.0) {
+            RETAINED->power_battery_level = 0.0;
         }
     }
 
     float battery_voltage = fd_adc_get_battery_voltage();
     if (battery_voltage < 3.5f) {
         // The battery appears to be almost discharged.
-        if (fd_power_battery_level > 0.05) {
-            fd_power_battery_level = 0.05;
+        if (RETAINED->power_battery_level > 0.05) {
+            RETAINED->power_battery_level = 0.05;
         }
     }
 
@@ -99,10 +96,9 @@ double fd_power_estimate_battery_level(void) {
 }
 
 void fd_power_initialize(void) {
-    if ((fd_power_magic != MAGIC) || (fd_power_battery_level < 0.0) || (fd_power_battery_level > 1.0)) {
+    if (RETAINED->power_battery_level == 0) {
         // battery level is uninitialized/unknown, so make a guess... -denis
-        fd_power_battery_level = fd_power_estimate_battery_level();
-        fd_power_magic = MAGIC;
+        RETAINED->power_battery_level = fd_power_estimate_battery_level();
     }
 
     fd_event_add_callback(FD_EVENT_CHG_STAT, fd_power_charge_status_callback);
@@ -116,7 +112,7 @@ void fd_power_initialize(void) {
 }
 
 void fd_power_get(fd_power_t *power) {
-    power->battery_level = fd_power_battery_level;
+    power->battery_level = RETAINED->power_battery_level;
     power->battery_voltage = fd_adc_get_battery_voltage();
     power->is_usb_powered = fd_usb_is_powered();
     power->is_charging = power->is_usb_powered && !GPIO_PinInGet(CHG_STAT_PORT_PIN);
@@ -125,5 +121,5 @@ void fd_power_get(fd_power_t *power) {
 }
 
 void fd_power_set(float battery_level) {
-    fd_power_battery_level = battery_level;
+    RETAINED->power_battery_level = battery_level;
 }

@@ -129,18 +129,15 @@ int main(void) {
     fd_reset_initialize();
     fd_processor_initialize();
 
-/*
 #ifdef DEBUG
 #warning debug is defined - watchdog is not enabled
 #else
     CMU_ClockEnable(cmuClock_CORELE, true);
     WDOG_Init_TypeDef wdog_init = WDOG_INIT_DEFAULT;
-    wdog_init.perSel = wdogPeriod_8k;
-    wdog_init.swoscBlock = true;
+    wdog_init.perSel = wdogPeriod_32k;
 //    wdog_init.lock = true;
     WDOG_Init(&wdog_init);
 #endif
-*/
 
     main_mode = fd_main_mode_run;
     main_sleep_when_bluetooth_is_asleep = false;

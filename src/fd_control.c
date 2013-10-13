@@ -75,11 +75,11 @@ bool fd_get_debug_lock(void) {
 void fd_set_debug_lock(void) {
     if (!fd_get_debug_lock()) {
         uint32_t word = 0xfffffff0;
+        fd_interrupts_disable();
         MSC_Init();
-        INT_Disable();
         MSC_WriteWord((uint32_t*)DEBUG_LOCK_WORD_ADDRESS, &word, 4);
-        INT_Enable();
         MSC_Deinit();
+        fd_interrupts_enable();
     }
 }
 
@@ -111,12 +111,12 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
 
     uint32_t *address = (uint32_t*)USER_DATA_ADDRESS;
     uint32_t n = (provision_data_length + 3) & ~0x3; // round up to multiple of 4 bytes
+    fd_interrupts_disable();
     MSC_Init();
-    __disable_irq();
     MSC_ErasePage(address);
     MSC_WriteWord(address, provision_data, n);
-    __enable_irq();
     MSC_Deinit();
+    fd_interrupts_enable();
 
     if (options & PROVISION_OPTION_DEBUG_LOCK) {
         fd_set_debug_lock();

@@ -1,14 +1,16 @@
 <!--
 Firefly Memory Map:
   1) Boot loader is in region 0x00000 - 0x07000.
-  1) AES-128 crypto key is in region 0x07000 - 0x07800.
-  2) Firmware metadata is in region 0x07800 - 0x08000.
-  3) Firmware is in region 0x08000 - 0x40000.
+  2) AES-128 crypto key is in region 0x07000 - 0x07800.
+  3) Firmware metadata is in region 0x07800 - 0x08000.
+  4) Firmware is in region 0x08000 - 0x40000.
+  5) Firmware retained RAM is in region 0x20000000 - 0x20000100.
 -->
 
 <Processor name="EFM32LG330F256">
   <MemorySegment start="0x00000000" size="0x07000" access="ReadOnly" name="FLASH"/>
-  <MemorySegment start="0x20000000" size="0x8000" access="Read/Write" name="RAM"/>
+  <MemorySegment start="0x20000000" size="0x0100" access="Read/Write" name="RETAIN"/>
+  <MemorySegment start="0x20000100" size="0x7f00" access="Read/Write" name="RAM"/>
   <RegisterGroup name="MSC" start="0x400C0000" description="MSC">
     <Register start="+0x000" size="4" name="CTRL" access="Read/Write" description="Memory System Control Register" reset_value="0x00000001" reset_mask="0x00000001">
       <BitField start="0" size="1" name="BUSFAULT" description="Bus Fault Response Enable"/>

@@ -1,4 +1,5 @@
 #include "fd_aes.h"
+#include "fd_processor.h"
 #include "fd_sha.h"
 #include "fd_update.h"
 #include "fd_w25q16dw.h"
@@ -61,10 +62,12 @@ void fd_update_read_metadata(fd_update_metadata_t *metadata) {
 }
 
 void fd_update_write_metadata(fd_update_metadata_t *metadata) {
+    fd_interrupts_disable();
     MSC_Init();
     MSC_ErasePage((void *)FD_UPDATE_METADATA_ADDRESS);
     MSC_WriteWord((void *)FD_UPDATE_METADATA_ADDRESS, metadata, sizeof(fd_update_metadata_t));
     MSC_Deinit();
+    fd_interrupts_enable();
 }
 
 uint8_t fd_update_commit(fd_update_metadata_t *metadata) {
@@ -89,6 +92,11 @@ uint8_t fd_update_commit(fd_update_metadata_t *metadata) {
             return FD_UPDATE_COMMIT_FAIL_CRYPT_HASH_MISMATCH;
         }
     }
+
+#ifdef DEBUG
+#warning debug is defined - firmware update commit is not enabled
+    return FD_UPDATE_COMMIT_FAIL_UNSUPPORTED;
+#endif
 
     fd_update_write_metadata(metadata);
 

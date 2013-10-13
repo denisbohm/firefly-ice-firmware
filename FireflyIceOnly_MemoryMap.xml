@@ -8,7 +8,7 @@ Firefly Memory Map:
 -->
 
 <Processor name="EFM32LG330F256">
-  <MemorySegment start="0x00008000" size="0x00040000" access="ReadOnly" name="FLASH"/>
+  <MemorySegment start="0x00000000" size="0x40000" access="ReadOnly" name="FLASH"/>
   <MemorySegment start="0x20000000" size="0x0100" access="Read/Write" name="RETAIN"/>
   <MemorySegment start="0x20000100" size="0x7f00" access="Read/Write" name="RAM"/>
   <RegisterGroup name="MSC" start="0x400C0000" description="MSC">

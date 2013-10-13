@@ -61,8 +61,14 @@ void fd_lp55231_power_off(void) {
 }
 
 void fd_lp55231_set_led_pwm(uint8_t led, uint8_t pwm) {
+    uint8_t before;
+    fd_i2c1_register_read(ADDRESS, D1_PWM + led - 1, &before);
+
     bool result = fd_i2c1_register_write(ADDRESS, D1_PWM + led - 1, pwm);
     if (!result) {
         fd_log_assert_fail("");
     }
+
+    uint8_t after;
+    fd_i2c1_register_read(ADDRESS, D1_PWM + led - 1, &after);
 }

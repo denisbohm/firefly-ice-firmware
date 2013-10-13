@@ -2,6 +2,7 @@
 #include "fd_detour.h"
 #include "fd_event.h"
 #include "fd_log.h"
+#include "fd_system.h"
 #include "fd_usb.h"
 
 #include <em_system.h>
@@ -23,8 +24,8 @@ static const USB_DeviceDescriptor_TypeDef deviceDesc __attribute__ ((aligned(4))
   .bDeviceSubClass    = 0,
   .bDeviceProtocol    = 0,
   .bMaxPacketSize0    = USB_EP0_SIZE,
-  .idVendor           = 0x2333,
-  .idProduct          = 0x0002,
+  .idVendor           = VENDOR,
+  .idProduct          = PRODUCT,
   .bcdDevice          = 0x0000,
   .iManufacturer      = 1,
   .iProduct           = 2,

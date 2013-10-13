@@ -22,12 +22,6 @@ uint32_t active_leds;
 
 static
 void override_callback(void) {
-// !!! these should go back to their desired values, not zero -denis
-    fd_indicator_set_usb(0, 0);
-
-    fd_indicator_set_d0(0);
-    fd_indicator_set_d4(0);
-
     fd_indicator_set_d1(0, 0, 0);
     fd_indicator_set_d2(0, 0, 0);
     fd_indicator_set_d3(0, 0, 0);
@@ -203,10 +197,10 @@ void TIMER3_IRQHandler(void) {
 }
 
 void fd_indicator_override(fd_indicator_state_t *state, fd_time_t duration) {
-    fd_indicator_set_usb(state->usb.o, state->usb.g);
+//    fd_indicator_set_usb(state->usb.o, state->usb.g);
 
-    fd_indicator_set_d0(state->d0.r);
-    fd_indicator_set_d4(state->d4.r);
+//    fd_indicator_set_d0(state->d0.r);
+//    fd_indicator_set_d4(state->d4.r);
 
     fd_indicator_set_d1(state->d1.r, state->d1.g, state->d1.b);
     fd_indicator_set_d2(state->d2.r, state->d2.g, state->d2.b);

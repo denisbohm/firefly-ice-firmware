@@ -12,7 +12,8 @@ void fd_i2c1_initialize(void) {
     CMU_ClockEnable(cmuClock_I2C1, true);
 
     I2C_Init_TypeDef i2c_init = I2C_INIT_DEFAULT;
-    i2c_init.freq = I2C_FREQ_FAST_MAX; // 400 KHz
+    i2c_init.refFreq = 48000000;
+    i2c_init.freq = I2C_FREQ_STANDARD_MAX; // I2C_FREQ_FAST_MAX; // 400 KHz
     I2C_Init(I2C1, &i2c_init);
 
     I2C1->ROUTE = I2C_ROUTE_SDAPEN | I2C_ROUTE_SCLPEN | I2C1_LOCATION;
@@ -58,7 +59,12 @@ void I2C1_IRQHandler(void) {
 
 bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
     i2c1_status = I2C_TransferInit(I2C1, seq);
-    while (i2c1_status == i2cTransferInProgress);
+    for (uint32_t i = 0; i < 10000; ++i) {
+        i2c1_status = I2C_Transfer(I2C1);
+        if (i2c1_status != i2cTransferInProgress) {
+            break;
+        }
+    }
     if (i2c1_status != i2cTransferDone) {
         fd_log_assert_fail("");
         return false;

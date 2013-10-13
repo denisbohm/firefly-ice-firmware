@@ -3,10 +3,10 @@
 
 #include "fd_binary.h"
 
-#define VENDOR 0x0001
-#define PRODUCT 0x0001
+#define VENDOR 0x2333
+#define PRODUCT 0x0002
 #define HARDWARE_MAJOR 1
-#define HARDWARE_MINOR 0
+#define HARDWARE_MINOR 3
 
 #define HARDWARE_ID_SIZE 16
 

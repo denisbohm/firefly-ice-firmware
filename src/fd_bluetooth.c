@@ -141,6 +141,7 @@ static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTE
 #define fd_nrf8001_test_enable_step BIT(8)
 #define fd_nrf8001_test_command_step BIT(9)
 #define fd_nrf8001_test_exit_step BIT(10)
+#define fd_nrf8001_set_tx_power_step BIT(11)
 
 #define fd_nrf8001_detour_send_data_ack_step BIT(0)
 
@@ -153,6 +154,7 @@ static uint64_t fd_bluetooth_pipes_closed;
 static bool fd_bluetooth_idle;
 static uint16_t fd_nrf8001_dtm_request;
 static uint16_t fd_nrf8001_dtm_data;
+static uint8_t fd_nrf8001_tx_power;
 
 #define DETOUR_SIZE 300
 static uint8_t fd_bluetooth_detour_data[DETOUR_SIZE];
@@ -379,6 +381,10 @@ void fd_bluetooth_system_step(void) {
         if (fd_bluetooth_system_steps & fd_nrf8001_test_exit_step) {
             fd_nrf8001_test(TestFeatureExitTestMode);
             fd_bluetooth_step_complete(fd_nrf8001_test_exit_step);
+        } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_set_tx_power_step) {
+            fd_nrf8001_set_tx_power(fd_nrf8001_tx_power);
+            fd_bluetooth_step_complete(fd_nrf8001_set_tx_power_step);
         }
     }
 }
@@ -576,6 +582,15 @@ void fd_bluetooth_direct_test_mode_enter(uint16_t request, fd_time_t duration) {
     if (duration.seconds != 0) {
         fd_timer_start(&fd_bluetooth_dtm_timer, duration);
     }
+}
+
+void fd_bluetooth_set_tx_power(uint8_t level) {
+    fd_nrf8001_tx_power = level;
+    fd_bluetooth_step_queue(fd_nrf8001_set_tx_power_step);
+}
+
+uint8_t fd_bluetooth_get_tx_power(void) {
+    return fd_nrf8001_tx_power;
 }
 
 bool fd_bluetooth_is_asleep(void) {

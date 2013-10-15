@@ -219,6 +219,15 @@ void fd_control_set_property_mode(fd_binary_t *binary) {
     fd_main_set_mode(mode);
 }
 
+void fd_control_get_property_tx_power(fd_binary_t *binary) {
+    fd_binary_put_uint8(binary, fd_bluetooth_get_tx_power());
+}
+
+void fd_control_set_property_tx_power(fd_binary_t *binary) {
+    uint8_t level = fd_binary_get_uint8(binary);
+    fd_bluetooth_set_tx_power(level);
+}
+
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -256,6 +265,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_MODE: {
                     fd_control_get_property_mode(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_TX_POWER: {
+                    fd_control_get_property_tx_power(binary_out);
+                } break;
             }
         }
     }
@@ -280,6 +292,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_MODE: {
                     fd_control_set_property_mode(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_TX_POWER: {
+                    fd_control_set_property_tx_power(&binary);
                 } break;
             }
         }

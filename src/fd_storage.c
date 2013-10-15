@@ -83,7 +83,7 @@ uint32_t fd_storage_used_page_count(void) {
     if (first_page <= free_page) {
         return free_page - first_page;
     }
-    return first_page - free_page;
+    return (end_page - first_page) + (free_page - first_page);
 }
 
 #define increment_page(page) if (++page >= end_page) page = start_page

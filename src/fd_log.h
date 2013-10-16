@@ -9,11 +9,12 @@ void fd_log_initialize(void);
 void fd_log_enable_storage(bool enable);
 
 void fd_log(char *message);
+void fd_log_at(char *file, int line, char *message);
 
 #define fd_log_string_helper(a) #a
 #define fd_log_string(a) fd_log_string_helper(a)
 
-#define fd_log_assert_fail(message) fd_log(__FILE__ ":" fd_log_string(__LINE__) ":" message)
+#define fd_log_assert_fail(message) fd_log_at(__FILE__, __LINE__, message)
 #define fd_log_assert(condition) if (!(condition)) fd_log_assert_fail(#condition)
 
 #endif

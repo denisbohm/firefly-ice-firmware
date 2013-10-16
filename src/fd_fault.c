@@ -1,5 +1,8 @@
+#include "fd_log.h"
+
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /* The prototype shows it is a naked function - in effect this is just an assembly function. */
 void HardFault_Handler( void ) __attribute__((naked));
@@ -41,6 +44,30 @@ void fdFaultGetRegistersFromStack(uint32_t *pulFaultStackAddress) {
     lr = pulFaultStackAddress[5];
     pc = pulFaultStackAddress[6];
     psr = pulFaultStackAddress[7];
+
+    // Configurable Fault Status Register
+    // Consists of MMSR, BFSR and UFSR
+    uint32_t CFSR = (*((volatile unsigned long *)(0xE000ED28))) ;
+
+    // Hard Fault Status Register
+    uint32_t HFSR = (*((volatile unsigned long *)(0xE000ED2C))) ;
+
+    // Debug Fault Status Register
+    uint32_t DFSR = (*((volatile unsigned long *)(0xE000ED30))) ;
+
+    // Auxiliary Fault Status Register
+    uint32_t AFSR = (*((volatile unsigned long *)(0xE000ED3C))) ;
+
+    // Read the Fault Address Registers. These may not contain valid values.
+    // Check BFARVALID/MMARVALID to see if they are valid values
+    // MemManage Fault Address Register
+    uint32_t MMAR = (*((volatile unsigned long *)(0xE000ED34))) ;
+    // Bus Fault Address Register
+    uint32_t BFAR = (*((volatile unsigned long *)(0xE000ED38))) ;
+
+    char buffer[80];
+    sprintf(buffer, "pc=%08x lr=%08x", pc, lr);
+    fd_log_assert_fail(buffer);
 
     /* When the following line is hit, the variables contain the register values. */
     while (true);

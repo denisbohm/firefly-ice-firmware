@@ -200,7 +200,8 @@ static fd_detour_t fd_usb_detour;
 
 static uint8_t fd_usb_out_data[USB_MAX_EP_SIZE];
 
-#define DETOUR_SOURCE_COLLECTION_SIZE 300
+// 300 + 10% overhead for detour packet overhead
+#define DETOUR_SOURCE_COLLECTION_SIZE 330
 static fd_detour_source_collection_t fd_usb_detour_source_collection;
 static uint8_t fd_usb_detour_source_collection_data[DETOUR_SOURCE_COLLECTION_SIZE];
 

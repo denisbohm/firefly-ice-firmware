@@ -186,7 +186,7 @@ int main(void) {
 
     fd_storage_initialize();
     fd_storage_buffer_collection_initialize();
-//    fd_log_enable_storage(true);
+    fd_log_enable_storage(true);
 
     fd_power_initialize();
 

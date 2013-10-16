@@ -60,7 +60,7 @@ void I2C1_IRQHandler(void) {
 bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
     i2c1_status = I2C_TransferInit(I2C1, seq);
     for (uint32_t i = 0; i < 10000; ++i) {
-        i2c1_status = I2C_Transfer(I2C1);
+//        i2c1_status = I2C_Transfer(I2C1);
         if (i2c1_status != i2cTransferInProgress) {
             break;
         }

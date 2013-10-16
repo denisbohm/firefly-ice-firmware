@@ -16,8 +16,8 @@
 #include <string.h>
 
 #define PAGE_UNUSED 0xff
-#define PAGE_USED 0x01
-#define PAGE_FREE 0x81
+#define PAGE_USED 0xfe
+#define PAGE_FREE 0xfc
 
 static uint32_t start_page;
 static uint32_t end_page;
@@ -149,13 +149,12 @@ bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, 
     fd_w25q16dw_read(address, buffer, FD_W25Q16DW_PAGE_SIZE);
     fd_w25q16dw_sleep();
     metadata->length = buffer[1];
+    if (metadata->length > length) {
+        metadata->length = length;
+    }
     metadata->hash = fd_binary_unpack_uint16(&buffer[2]);
     metadata->type = fd_binary_unpack_uint32(&buffer[4]);
-    uint32_t len = metadata->length;
-    if (length < len) {
-        len = length;
-    }
-    memcpy(data, &buffer[8], len);
+    memcpy(data, &buffer[8], metadata->length);
     return true;
 }
 

@@ -89,13 +89,14 @@ uint32_t fd_rtc_get_countdown(void) {
 void RTC_IRQHandler(void) {
     RTC_IntClear(RTC_IFC_COMP0);
 
+    fd_reset_retained_t *retained = RETAINED;
     if (RTC->COMP0 == 1023) {
-        uint32_t microseconds = RETAINED->rtc.microseconds + 31250;
+        uint32_t microseconds = retained->rtc.microseconds + 31250;
         if (microseconds >= 1000000) {
             microseconds -= 1000000;
-            ++RETAINED->rtc.seconds;
+            ++retained->rtc.seconds;
         }
-        RETAINED->rtc.microseconds = microseconds;
+        retained->rtc.microseconds = microseconds;
 
         if (rtc_countdown) {
             if (--rtc_countdown == 0) {
@@ -103,6 +104,6 @@ void RTC_IRQHandler(void) {
             }
         }
     } else {
-        RETAINED->rtc.seconds += 2;
+        retained->rtc.seconds += 2;
     }
 }

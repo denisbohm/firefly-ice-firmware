@@ -289,7 +289,7 @@ void start_async_transfer(fd_spi_t *spi) {
     spi->rx_index = 0;
     spi->usart->CMD = USART_CMD_CLEARRX;
     NVIC_ClearPendingIRQ(spi->rx_irqn);
-    NVIC_EnableIRQ(spi->rx_irqn);
+//    NVIC_EnableIRQ(spi->rx_irqn);
     spi->usart->IEN |= USART_IEN_RXDATAV;
 
     spi->tx_buffer = transfer->tx_buffer;
@@ -297,7 +297,7 @@ void start_async_transfer(fd_spi_t *spi) {
     spi->tx_index = 0;
     spi->usart->CMD = USART_CMD_CLEARTX;
     NVIC_ClearPendingIRQ(spi->tx_irqn);
-    NVIC_EnableIRQ(spi->tx_irqn);
+//    NVIC_EnableIRQ(spi->tx_irqn);
     spi->usart->IEN |= USART_IEN_TXBL;
 }
 
@@ -331,7 +331,12 @@ void fd_spi_io(fd_spi_device_t device, fd_spi_io_t *io) {
 
 void fd_spi_wait(fd_spi_bus_t bus) {
     fd_spi_t *spi = &spis[bus];
-    while (spi->in_progress);
+    while (spi->in_progress) {
+//        spi_rx_irq_handler(&spis[0]);
+//        spi_tx_irq_handler(&spis[0]);
+        spi_rx_irq_handler(&spis[1]);
+        spi_tx_irq_handler(&spis[1]);
+    }
 }
 
 void fd_spi_chip_select(fd_spi_device_t device, bool select) {

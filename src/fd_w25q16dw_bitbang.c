@@ -12,6 +12,7 @@
 #define READ_MANUFACTURER_DEVICE_ID 0x90
 #define POWER_DOWN 0xb9
 #define RELEASE_POWER_DOWN 0xab
+#define CHIP_ERASE 0xc7
 
 #define WEL 0x02
 #define BUSY 0x01
@@ -146,7 +147,6 @@ void fd_w25q16dw_initialize(void) {
 //    fd_w25q16dw_test();
 }
 
-static
 void fd_w25q16dw_wait_while_busy(void) {
     uint8_t status;
     do {
@@ -192,4 +192,8 @@ void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {
 
     uint8_t tx_bytes[] = {FAST_READ, address >> 16, address >> 8, address, 0};
     fd_spi_txn_rxn(tx_bytes, sizeof(tx_bytes), data, length);
+}
+
+void fd_w25q16dw_chip_erase(void) {
+    fd_spi_tx1(CHIP_ERASE);
 }

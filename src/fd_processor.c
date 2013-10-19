@@ -18,11 +18,11 @@ void *memset(void *s, int c, size_t n) {
 }
 */
 
-void fd_interrupts_disable() {
+void fd_interrupts_disable(void) {
     INT_Disable();
 }
 
-void fd_interrupts_enable() {
+void fd_interrupts_enable(void) {
     INT_Enable();
 }
 

@@ -6,7 +6,7 @@
 #include <em_gpio.h>
 #include <em_i2c.h>
 
-static I2C_TransferReturn_TypeDef i2c1_status;
+static volatile I2C_TransferReturn_TypeDef i2c1_status;
 
 void fd_i2c1_initialize(void) {
     CMU_ClockEnable(cmuClock_I2C1, true);
@@ -41,7 +41,7 @@ void fd_i2c1_power_on(void) {
     fd_delay_ms(100); // wait for power to come up (?ms)
 
     NVIC_ClearPendingIRQ(I2C1_IRQn);
-    NVIC_EnableIRQ(I2C1_IRQn);
+//    NVIC_EnableIRQ(I2C1_IRQn);
 }
 
 void fd_i2c1_power_off(void) {
@@ -58,18 +58,26 @@ void I2C1_IRQHandler(void) {
 }
 
 bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
-    i2c1_status = I2C_TransferInit(I2C1, seq);
-    for (uint32_t i = 0; i < 10000; ++i) {
-//        i2c1_status = I2C_Transfer(I2C1);
-        if (i2c1_status != i2cTransferInProgress) {
-            break;
+    for (uint32_t r = 0; r < 5; ++r) {
+        i2c1_status = I2C_TransferInit(I2C1, seq);
+        for (uint32_t i = 0; i < 10000; ++i) {
+            i2c1_status = I2C_Transfer(I2C1);
+            if (i2c1_status != i2cTransferInProgress) {
+                break;
+            }
         }
+        if (i2c1_status == i2cTransferNack) {
+            // retry
+            continue;
+        }
+        if (i2c1_status != i2cTransferDone) {
+            fd_log_assert_fail("");
+            return false;
+        }
+        return true;
     }
-    if (i2c1_status != i2cTransferDone) {
-        fd_log_assert_fail("");
-        return false;
-    }
-    return true;
+    fd_log_assert_fail("");
+    return false;
 }
 
 bool fd_i2c1_register_read(uint8_t device, uint8_t reg, uint8_t *presult) {

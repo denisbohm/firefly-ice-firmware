@@ -22,4 +22,7 @@ void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length);
 
 void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length);
 
+void fd_w25q16dw_wait_while_busy(void);
+void fd_w25q16dw_chip_erase(void);
+
 #endif

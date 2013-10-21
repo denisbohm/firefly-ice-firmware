@@ -29,6 +29,8 @@ int main(void) {
     char *message __attribute__((unused)) = fd_log_get_message();
     fd_event_initialize();
 
+    bool is_charging __attribute__ ((unused)) = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
+
     fd_adc_initialize();
     fd_adc_start(fd_adc_channel_temperature, true);
     float temperature __attribute__ ((unused)) = fd_adc_get_temperature();

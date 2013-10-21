@@ -1,6 +1,7 @@
 #include "fd_log.h"
 
 #include <stdint.h>
+#include <stdio.h>
 
 bool fd_log_did_log;
 uint32_t fd_log_count;

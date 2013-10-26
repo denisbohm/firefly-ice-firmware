@@ -98,7 +98,9 @@ uint8_t fd_update_commit(fd_update_metadata_t *metadata) {
     return FD_UPDATE_COMMIT_FAIL_UNSUPPORTED;
 #endif
 
-    fd_update_write_metadata(metadata);
+    if (memcmp((void *)FD_UPDATE_METADATA_ADDRESS, metadata, sizeof(fd_update_metadata_t)) != 0) {
+        fd_update_write_metadata(metadata);
+    }
 
     // on the next reset the boot loader will notice the new version and decrypt before executing
 

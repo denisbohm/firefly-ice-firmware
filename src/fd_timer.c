@@ -61,6 +61,9 @@ void fd_timer_schedule_countdown(void) {
             new_countdown = timer->countdown;
         }
     }
+    if (new_countdown == 0) {
+        new_countdown = 1;
+    }
     if (new_countdown == UINT32_MAX) {
         new_countdown = 0;
     }

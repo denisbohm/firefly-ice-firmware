@@ -57,6 +57,7 @@ static fd_spi_slave_t spi1_slaves[2];
 
 void fd_spi_initialize(void) {
     USART_InitSync_TypeDef init_sync_default = USART_INITSYNC_DEFAULT;
+    init_sync_default.refFreq = 32000000;
     USART_InitSync_TypeDef init_sync;
 
     // SPI 0
@@ -144,6 +145,7 @@ void fd_spi_on(fd_spi_bus_t bus) {
     }
 
     CMU_ClockEnable(spi->clock, true);
+    USART_Reset(spi->usart);
     USART_InitSync(spi->usart, &spi->slave->init_sync);
     spi->usart->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | spi->location;
     USART_Enable(spi->usart, usartEnable);
@@ -307,6 +309,7 @@ void fd_spi_set_device(fd_spi_device_t device) {
     fd_spi_slave_t *slave = &spi->slaves[device & 0xffff];
     if (slave != spi->slave) {
         spi->slave = slave;
+        USART_Reset(spi->usart);
         USART_InitSync(spi->usart, &slave->init_sync);
         spi->usart->ROUTE = USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN | spi->location;
     }

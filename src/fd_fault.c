@@ -66,7 +66,7 @@ void fdFaultGetRegistersFromStack(uint32_t *pulFaultStackAddress) {
     uint32_t BFAR = (*((volatile unsigned long *)(0xE000ED38))) ;
 
     char buffer[80];
-    sprintf(buffer, "pc=%08x lr=%08x", pc, lr);
+    sprintf(buffer, "pc=%x lr=%x", pc, lr);
     fd_log_assert_fail(buffer);
 
     /* When the following line is hit, the variables contain the register values. */

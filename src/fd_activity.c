@@ -1,37 +1,77 @@
 #include "fd_activity.h"
+#include "fd_lis3dh.h"
 
 #include <math.h>
 #include <stdint.h>
 
-#define FD_ACTIVITY_K 0.25f
+#define ACTIVITY_K 0.1f
 
-static float fd_activity_vm;
-static float fd_activity_total;
-static uint32_t fd_activity_count;
+static float activity_acc_dc;
+static float activity_vm;
+static uint32_t activity_sample_count;
 
 void fd_activity_initialize(void) {
-    fd_activity_vm = 1.0f;
-    fd_activity_total = 0.0f;
-    fd_activity_count = 0;
+    activity_acc_dc = 1.0f;
+    activity_sample_count = 0;
+    activity_vm = 0.0f;
 }
 
-void fd_activity_prime(float x, float y, float z) {
-    fd_activity_vm = sqrt(x * x + y * y + z * z);
+void fd_activity_prime(int16_t x __attribute__((unused)), int16_t y __attribute__((unused)), int16_t z __attribute__((unused))) {
+    activity_acc_dc = 1.0f;
 }
 
 void fd_activity_start(void) {
-    fd_activity_total = 0.0f;
-    fd_activity_count = 0;
+    activity_sample_count = 0;
+    activity_vm = 0.0f;
 }
 
-void fd_activity_accumulate(float x, float y, float z) {
-    float vm = sqrt(x * x + y * y + z * z);
-    float d = vm - fd_activity_vm;
-    fd_activity_vm += d * FD_ACTIVITY_K;
-    fd_activity_total += fabs(d);
-    ++fd_activity_count;
+#define Minus32 0x80000000
+
+// return square root of 32-bit number in 16.16 format
+// (see SLAA024)
+static
+uint32_t isqrt(uint32_t x) {
+    uint32_t h = x;
+    x = 0;
+    uint32_t y = 0;
+    for (uint32_t i = 0; i < 32; i++) {
+        x <<= 1; x++; // 4 * x + 1
+        if (y < x) {
+            x -= 2;
+        } else {
+            y -= x;
+        }
+        x++;
+        y <<= 1;
+        if (h & Minus32) {
+            y++;
+        }
+        h <<= 1;
+        y <<= 1;
+        if (h & Minus32) {
+            y++;
+        }
+        h <<= 1;
+    }
+    return x;
 }
 
-float fd_activity_value(float time_interval) {
-    return fd_activity_total / (fd_activity_count * time_interval);
+void fd_activity_accumulate(int16_t xg, int16_t yg, int16_t zg) {
+    uint32_t x = xg;
+    uint32_t y = yg;
+    uint32_t z = zg;
+    uint32_t t = isqrt(x * x + y * y + z * z);
+    float v = t * (FD_LIS3DH_SCALE / 65536.0f);
+
+    float value = v - activity_acc_dc;
+    activity_acc_dc += value * ACTIVITY_K;
+    if (value < 0.0f) {
+        value = -value;
+    }
+    activity_vm += value;
+    ++activity_sample_count;
+}
+
+float fd_activity_value(float time_interval __attribute__((unused))) {
+    return 10.0f * activity_vm / activity_sample_count;
 }

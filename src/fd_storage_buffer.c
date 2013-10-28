@@ -40,8 +40,11 @@ bool fd_storage_buffer_get_first_page(fd_storage_metadata_t *metadata, uint8_t *
     while (storage_buffer) {
         uint8_t storage_buffer_length = storage_buffer->index;
         if (storage_buffer_length > 0) {
+            if (storage_buffer_length > FD_STORAGE_MAX_DATA_LENGTH) {
+                storage_buffer_length = FD_STORAGE_MAX_DATA_LENGTH;
+            }
             uint32_t type = storage_buffer->type;
-            uint8_t buffer[128] = {0x00, storage_buffer_length, 0, 0, type, type >> 8, type >> 16, type >> 24};
+            uint8_t buffer[8 + 256] = {0x00, storage_buffer_length, 0, 0, type, type >> 8, type >> 16, type >> 24};
             memcpy(&buffer[8], storage_buffer->data, storage_buffer_length);
             uint16_t hash = fd_crc_16(0xffff, &buffer[4], 4 + storage_buffer_length);
             buffer[2] = hash;
@@ -68,7 +71,7 @@ void fd_storage_buffer_clear_page(fd_storage_metadata_t *metadata) {
         uint32_t type = storage_buffer->type;
         if (type == metadata->type) {
             uint8_t length = storage_buffer->index;
-            uint8_t buffer[128] = {0x00, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
+            uint8_t buffer[8 + 256] = {0x00, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
             memcpy(&buffer[8], storage_buffer->data, length);
             uint16_t hash = fd_crc_16(0xffff, &buffer[4], 4 + length);
             if (hash == metadata->hash) {

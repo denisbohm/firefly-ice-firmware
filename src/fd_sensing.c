@@ -14,10 +14,7 @@ static uint32_t fd_sensing_samples;
 
 static
 void fd_sensing_sample_callback(int16_t x, int16_t y, int16_t z) {
-    float ax = x / 16384.0f;
-    float ay = y / 16384.0f;
-    float az = z / 16384.0f;
-    fd_activity_accumulate(ax, ay, az);
+    fd_activity_accumulate(x, y, z);
     ++fd_sensing_samples;
 }
 

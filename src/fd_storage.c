@@ -11,6 +11,7 @@
 #include "fd_w25q16dw.h"
 #include "fd_binary.h"
 #include "fd_crc.h"
+#include "fd_log.h"
 #include "fd_storage.h"
 
 #include <string.h>
@@ -101,6 +102,11 @@ void fd_storage_erase_first_page(void) {
 }
 
 void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
+    if (length > FD_STORAGE_MAX_DATA_LENGTH) {
+        fd_log_assert_fail("");
+        length = FD_STORAGE_MAX_DATA_LENGTH;
+    }
+
     fd_w25q16dw_wake();
 
     uint32_t address = free_page * FD_W25Q16DW_PAGE_SIZE;
@@ -139,6 +145,10 @@ void fd_storage_append_page(uint32_t type, uint8_t *data, uint32_t length) {
 bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {
     if (first_page == free_page) {
         return false;
+    }
+
+    if (length > FD_STORAGE_MAX_DATA_LENGTH) {
+        length = FD_STORAGE_MAX_DATA_LENGTH;
     }
 
     metadata->page = first_page;

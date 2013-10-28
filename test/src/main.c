@@ -167,9 +167,9 @@ void fd_bluetooth_reset(void) {
     fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
 }
 
-void fd_bluetooth_spi_transfer(void) {
+bool fd_bluetooth_spi_transfer(void) {
     if (GPIO_PinInGet(NRF_RDYN_PORT_PIN)) {
-        return;
+        return false;
     }
 
     uint8_t rx_buffer[FD_NRF8001_SPI_RX_BUFFER_SIZE];
@@ -195,6 +195,7 @@ void fd_bluetooth_spi_transfer(void) {
     if (length > 0) {
         fd_nrf8001_dispatch(&rx_buffer[1], length);
     }
+    return true;
 }
 
 void fd_nrf8001_spi_transfer(void) {

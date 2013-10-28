@@ -1,5 +1,6 @@
 #include "fd_binary.h"
 #include "fd_control_codes.h"
+#include "fd_log.h"
 #include "fd_storage.h"
 #include "fd_storage_buffer.h"
 #include "fd_sync.h"
@@ -20,6 +21,7 @@ void fd_sync_initialize(void) {
 
 static
 void fd_sync_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
+    fd_log_assert((offset + length) <= SYNC_SIZE);
     memcpy(data, &fd_sync_detour_buffer[offset], length);
 }
 
@@ -35,6 +37,11 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
             metadata.hash = 0;
             metadata.type = 0;
         }
+    }
+
+    if (metadata.length > FD_STORAGE_MAX_DATA_LENGTH) {
+        fd_log_assert_fail("");
+        metadata.length = FD_STORAGE_MAX_DATA_LENGTH;
     }
 
     fd_binary_t binary;

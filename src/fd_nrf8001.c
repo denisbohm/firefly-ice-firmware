@@ -111,12 +111,18 @@ void fd_nrf8001_spi_tx_queue(uint8_t *data, uint32_t length) {
 }
 
 void fd_nrf8001_send(uint8_t *message, uint32_t length) {
+    if (fd_nrf8001_spi_tx_length != 0) {
+        fd_nrf8001_error();
+    }
     fd_nrf8001_spi_tx_clear();
     fd_nrf8001_spi_tx_queue(message, length);
     fd_nrf8001_spi_transfer();
 }
 
 void fd_nrf8001_send_with_data(uint8_t *message, uint32_t length, uint8_t *data, uint32_t data_length) {
+    if (fd_nrf8001_spi_tx_length != 0) {
+        fd_nrf8001_error();
+    }
     fd_nrf8001_spi_tx_clear();
     fd_nrf8001_spi_tx_queue(message, length);
     fd_nrf8001_spi_tx_queue(data, data_length);

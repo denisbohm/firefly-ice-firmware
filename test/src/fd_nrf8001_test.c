@@ -157,7 +157,7 @@ typedef struct {
 static fd_test_packet_t fd_send_packets[10];
 static uint32_t fd_send_packet_index;
 
-void fd_bluetooth_spi_transfer(void);
+bool fd_bluetooth_spi_transfer(void);
 void fd_bluetooth_step(void);
 
 void fd_bluetooth_ready(void) {

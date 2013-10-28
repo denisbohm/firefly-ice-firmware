@@ -85,7 +85,7 @@
 
 typedef union {
     uint8_t bytes[6];
-    struct {
+    struct __attribute__ ((packed)) {
         int16_t x;
         int16_t y;
         int16_t z;
@@ -127,7 +127,7 @@ void fd_lis3dh_initialize(void) {
         FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG4,
         LIS3DH_CTRL_REG4_BDU |
-        LIS3DH_CTRL_REG4_FS_2G |
+        LIS3DH_CTRL_REG4_FS_8G |
         LIS3DH_CTRL_REG4_HR
     );
 
@@ -179,14 +179,14 @@ void fd_lis3dh_wake(void) {
         FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,
         LIS3DH_CTRL_REG1_ODR_25HZ |
-        LIS3DH_CTRL_REG1_LPEN |
+//        LIS3DH_CTRL_REG1_LPEN |
         LIS3DH_CTRL_REG1_ZEN |
         LIS3DH_CTRL_REG1_YEN |
         LIS3DH_CTRL_REG1_XEN
     );
 }
 
-void fd_lis3dh_read(float *x, float *y, float *z) {
+void fd_lis3dh_read(int16_t *x, int16_t *y, int16_t *z) {
     uint8_t tx_bytes[] = {SPI_READ | SPI_ADDRESS_INCREMENT | LIS3DH_OUT_X_L};
     fd_lis3dh_out_t out;
     fd_spi_sync_txn_rxn(
@@ -194,7 +194,7 @@ void fd_lis3dh_read(float *x, float *y, float *z) {
         tx_bytes, sizeof(tx_bytes),
         out.bytes, sizeof(out.bytes)
     );
-    *x = out.x / 16384.0f;
-    *y = out.y / 16384.0f;
-    *z = out.z / 16384.0f;
+    *x = out.x;
+    *y = out.y;
+    *z = out.z;
 }

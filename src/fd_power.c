@@ -48,7 +48,7 @@ void fd_power_charge_current_callback(void) {
     bool is_usb_powered = fd_usb_is_powered();
     bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered && is_charging) {
-        RETAINED->power_battery_level -= CHARGE_LEVEL_CHANGE_PER_INTERVAL;
+        RETAINED->power_battery_level += CHARGE_LEVEL_CHANGE_PER_INTERVAL;
         if (RETAINED->power_battery_level > 1.0) {
             RETAINED->power_battery_level = 1.0;
         }

@@ -13,6 +13,7 @@ typedef struct {
     uint8_t crypt_iv[16];
 } fd_update_metadata_t;
 
+#define FD_UPDATE_COMMIT_SUCCESS 0
 #define FD_UPDATE_COMMIT_FAIL_HASH_MISMATCH 1
 #define FD_UPDATE_COMMIT_FAIL_CRYPT_HASH_MISMATCH 2
 #define FD_UPDATE_COMMIT_FAIL_UNSUPPORTED 3

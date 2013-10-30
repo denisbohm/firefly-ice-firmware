@@ -104,5 +104,5 @@ uint8_t fd_update_commit(fd_update_metadata_t *metadata) {
 
     // on the next reset the boot loader will notice the new version and decrypt before executing
 
-    return 0;
+    return FD_UPDATE_COMMIT_SUCCESS;
 }

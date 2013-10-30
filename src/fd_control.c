@@ -136,7 +136,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 8
+#define VERSION_PATCH 9
 #define VERSION_CAPABILITIES 0x00000000
 
 // !!! should come from gcc command line define

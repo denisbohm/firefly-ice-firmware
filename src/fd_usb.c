@@ -124,32 +124,30 @@ static const uint8_t configDesc[] __attribute__ ((aligned(4)))=
 };
 
 STATIC_CONST_STRING_DESC_LANGID( langID, 0x04, 0x09 );
-//STATIC_CONST_STRING_DESC( iManufacturer, L"Energy Micro AS" );
-//STATIC_CONST_STRING_DESC( iProduct     , L"Vendor Unique LED Device"   );
-//STATIC_CONST_STRING_DESC( iSerialNumber, L"000000001234"    );
-STATIC_CONST_STRING_DESC( iManufacturer, {'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'D', 'e', 's', 'i', 'g', 'n', ' ', 'L', 'L', 'C', '\0'});
-STATIC_CONST_STRING_DESC( iProduct , {'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'I', 'c', 'e', '\0'});
+STATIC_CONST_STRING_DESC( iManufacturer, 'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'D', 'e', 's', 'i', 'g', 'n', ' ', 'L', 'L', 'C', '\0' );
+STATIC_CONST_STRING_DESC( iProduct, 'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'I', 'c', 'e', '\0' );
 
-#define STATIC_STRING_DESC( name, ... ) \
-typedef struct \
-{ \
-uint8_t len; \
-uint8_t type; \
-utf16_t name[sizeof((utf16_t[]) __VA_ARGS__ )/2]; \
-} __attribute__ ((packed)) _##name; \
-EFM32_ALIGN( 4 ) \
-EFM32_PACK_START( 1 ) \
-static _##name name __attribute__ ((aligned(4)))= \
-{ \
-.len = sizeof((utf16_t[]) __VA_ARGS__ ), \
-.type = USB_STRING_DESCRIPTOR, \
-.name = __VA_ARGS__ \
-} \
+#define STATIC_STRING_DESC( _name, ... )                  \
+EFM32_PACK_START( 1 )                                           \
+typedef struct                                                  \
+{                                                               \
+  uint8_t  len;                                                 \
+  uint8_t  type;                                                \
+  char16_t name[ 1 + sizeof( (char16_t[]){__VA_ARGS__} ) / 2];  \
+} __attribute__ ((packed)) _##_name;                            \
+EFM32_PACK_END()                                                \
+EFM32_ALIGN( 4 )                                                \
+EFM32_PACK_START( 1 )                                           \
+static _##_name _name __attribute__ ((aligned(4)))=       \
+{                                                               \
+  .len  = sizeof( _##_name ) - 2,                               \
+  .type = USB_STRING_DESCRIPTOR,                                \
+  .name = {__VA_ARGS__},                                        \
+  .name[ ( ( sizeof( _##_name ) - 2 ) / 2 ) - 1 ] = '\0'        \
+}                                                               \
 EFM32_PACK_END()
 
-
-STATIC_STRING_DESC( iSerialNumber, {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\0'});
-
+STATIC_STRING_DESC( iSerialNumber, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\0' );
 
 static const void * const strings[] =
 {
@@ -227,7 +225,7 @@ void fd_usb_initialize(void) {
         } else {
             c = 'A' + c - 10;
         }
-        iSerialNumber.iSerialNumber[i] = c;
+        iSerialNumber.name[i] = c;
         unique >>= 4;
     }
 }

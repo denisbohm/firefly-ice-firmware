@@ -3,7 +3,7 @@
 #include "em_device.h"
 
 void halt(void) {
-    *(uint32_t *)0xE000EDF0 = 0xA05F0003; // DHCSR = DBGKEY | C_HALT | C_DEBUGEN;
+    __asm("BKPT   #0");
 }
 
 #define OPTION_ERASE_BEFORE_WRITE 0x00000001
@@ -39,15 +39,15 @@ void write_pages(uint32_t *address, uint32_t *data, uint32_t pages, uint32_t opt
 }
 
 void main(void) {
-/*
+#if 0
     static uint8_t bytes[512];
 
     for (int i = 0; i < sizeof(bytes); ++i) {
         bytes[i] = i;
     }
-    write_pages((uint32_t *)0x800, (uint32_t *)bytes, 1);
-*/
+    write_pages((uint32_t *)0x800, (uint32_t *)bytes, 1, OPTION_ERASE_BEFORE_WRITE);
+#endif
 
-    halt();
     write_pages(0,0,0,0);
+    halt();
 }

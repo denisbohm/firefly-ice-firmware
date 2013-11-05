@@ -45,7 +45,8 @@ int main(void) {
     fd_lp55231_initialize();
     fd_lp55231_power_on();
     fd_lp55231_wake();
-    fd_lp55231_set_led_pwm(0, 255);
+    fd_lp55231_set_led_pwm(1, 255);
+    float voltage __attribute__ ((unused)) = fd_lp55231_test_led(1);
     //
     fd_mag3110_initialize();
     fd_mag3110_wake();
@@ -79,7 +80,7 @@ int main(void) {
 
     fd_lis3dh_initialize();
     fd_lis3dh_wake();
-    float ax, ay, az;
+    int16_t ax, ay, az;
     fd_lis3dh_read(&ax, &ay, &az);
 
     fd_log_get_count();

@@ -61,14 +61,31 @@ void fd_lp55231_power_off(void) {
 }
 
 void fd_lp55231_set_led_pwm(uint8_t led, uint8_t pwm) {
-    uint8_t before;
-    fd_i2c1_register_read(ADDRESS, D1_PWM + led - 1, &before);
-
     bool result = fd_i2c1_register_write(ADDRESS, D1_PWM + led - 1, pwm);
     if (!result) {
         fd_log_assert_fail("");
     }
+}
 
-    uint8_t after;
-    fd_i2c1_register_read(ADDRESS, D1_PWM + led - 1, &after);
+#define LED_TEST_CONTROL 0x41
+#define EN_LEDTEST_ADC 0x80
+#define EN_LEDTEST_INT 0x40
+#define CONTINUOUS_CONV 0x20
+
+#define LED_TEST_ADC 0x42
+
+float fd_lp55231_test_led(uint8_t led) {
+    bool result = fd_i2c1_register_write(ADDRESS, LED_TEST_CONTROL, EN_LEDTEST_ADC | (led - 1));
+    if (!result) {
+        fd_log_assert_fail("");
+    }
+    fd_delay_ms(5);
+    uint8_t adc;
+    result = fd_i2c1_register_read(ADDRESS, LED_TEST_ADC, &adc);
+    if (!result) {
+        fd_log_assert_fail("");
+    }
+
+    float v = adc * 0.03f - 1.478f;
+    return v;
 }

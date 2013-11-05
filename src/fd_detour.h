@@ -11,6 +11,8 @@ In the first chunk the sequence number is followed by a uint16 length.  All subs
 the content data.  The last chunk can have extra data (which will be ignored).
 */
 
+#include "fd_lock.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -43,6 +45,7 @@ typedef struct fd_detour_source {
 } fd_detour_source_t;
 
 typedef struct {
+    fd_lock_owner_t owner;
     uint32_t packetSize;
     uint8_t *buffer;
     uint32_t bufferSize;
@@ -63,7 +66,7 @@ void fd_detour_source_set(fd_detour_source_t *source, fd_detour_supplier_t suppl
 
 bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t length);
 
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize);
+void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, fd_lock_owner_t owner, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize);
 
 void fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source);
 

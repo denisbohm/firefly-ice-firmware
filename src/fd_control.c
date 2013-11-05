@@ -4,6 +4,7 @@
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_indicator.h"
+#include "fd_lock.h"
 #include "fd_main.h"
 #include "fd_map.h"
 #include "fd_power.h"
@@ -136,8 +137,8 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 10
-#define VERSION_CAPABILITIES 0x00000000
+#define VERSION_PATCH 11
+#define VERSION_CAPABILITIES FD_CONTROL_CAPABILITY_LOCK
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
@@ -425,6 +426,21 @@ void fd_control_indicator_override(fd_detour_source_collection_t *detour_source_
     fd_indicator_override(&state, duration);
 }
 
+void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    fd_lock_identifier_t identifier = fd_binary_get_uint8(&binary);
+    fd_lock_operation_t operation = fd_binary_get_uint8(&binary);
+    fd_lock_owner_t owner = detour_source_collection->owner;
+    fd_lock_owner_t lock_owner = fd_lock(identifier, operation, owner);
+
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_LOCK);
+    fd_binary_put_uint8(binary_out, identifier);
+    fd_binary_put_uint8(binary_out, operation);
+    fd_binary_put_uint32(binary_out, lock_owner);
+    fd_control_send_complete(detour_source_collection);
+}
+
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis
 
 void fd_control_process(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -495,6 +511,10 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
             break;
         case FD_CONTROL_SYNC_ACK:
             command = fd_sync_ack;
+            break;
+
+        case FD_CONTROL_LOCK:
+            command = fd_control_lock;
             break;
     }
     if (command) {

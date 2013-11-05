@@ -125,7 +125,8 @@ bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t le
     return true;
 }
 
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize) {
+void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, fd_lock_owner_t owner, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize) {
+    collection->owner = owner;
     collection->packetSize = packetSize;
     collection->buffer = buffer;
     collection->bufferSize = bufferSize;

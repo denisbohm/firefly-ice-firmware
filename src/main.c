@@ -8,6 +8,7 @@
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
 #include "fd_indicator.h"
+#include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_lp55231.h"
 #include "fd_main.h"
@@ -145,6 +146,7 @@ int main(void) {
     fd_log_initialize();
     fd_event_initialize();
     fd_timer_initialize();
+    fd_lock_initialize();
     fd_control_initialize();
 
     GPIO_PinOutClear(LED0_PORT_PIN);

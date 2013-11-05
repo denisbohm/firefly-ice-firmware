@@ -1,6 +1,7 @@
 #include "fd_control.h"
 #include "fd_detour.h"
 #include "fd_event.h"
+#include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_system.h"
 #include "fd_usb.h"
@@ -209,6 +210,7 @@ void fd_usb_initialize(void) {
     fd_detour_initialize(&fd_usb_detour, fd_usb_detour_data, DETOUR_SIZE);
     fd_detour_source_collection_initialize(
         &fd_usb_detour_source_collection,
+        fd_lock_owner_usb,
         USB_MAX_EP_SIZE,
         fd_usb_detour_source_collection_data,
         DETOUR_SOURCE_COLLECTION_SIZE
@@ -373,6 +375,8 @@ bool fd_usb_is_safe_to_enter_em2(void) {
 
 static
 void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), USBD_State_TypeDef newState) {
+    fd_lock_close(fd_lock_owner_ble);
+
     if (newState == USBD_STATE_CONFIGURED) {
         fd_detour_clear(&fd_usb_detour);
     }

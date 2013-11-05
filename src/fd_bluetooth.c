@@ -2,6 +2,7 @@
 #include "fd_control.h"
 #include "fd_detour.h"
 #include "fd_event.h"
+#include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_callbacks.h"
@@ -205,6 +206,7 @@ void fd_bluetooth_initialize(void) {
 
     fd_detour_source_collection_initialize(
         &fd_bluetooth_detour_source_collection,
+        fd_lock_owner_ble,
         MAX_CHARACTERISTIC_SIZE,
         fd_bluetooth_detour_source_collection_data,
         DETOUR_SOURCE_COLLECTION_SIZE
@@ -492,6 +494,8 @@ void fd_nrf8001_disconnected_event(
     uint8_t aci_status __attribute__((unused)),
     uint8_t btle_status __attribute__((unused))
 ) {
+    fd_lock_close(fd_lock_owner_ble);
+
     fd_bluetooth_system_steps = 0;
     fd_bluetooth_data_steps = 0;
     fd_bluetooth_pipes_open = 0;

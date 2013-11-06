@@ -203,14 +203,14 @@ bool fd_bluetooth_spi_transfer(void) {
 
     uint32_t length = rx_buffer[0];
 
-    for (uint32_t i = 0; i <= length; ++i) {
-        xfers[xfers_index++] = rx_buffer[i];
-        if (xfers_index >= 2048) {
-            xfers_index = 0;
-        }
-    }
-
     if (length > 0) {
+        for (uint32_t i = 0; i <= length; ++i) {
+            xfers[xfers_index++] = rx_buffer[i];
+            if (xfers_index >= 2048) {
+                xfers_index = 0;
+            }
+        }
+
         fd_nrf8001_dispatch(&rx_buffer[1], length);
     }
     return true;

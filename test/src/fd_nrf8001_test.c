@@ -235,6 +235,9 @@ static void get_hardware_id(uint8_t *s) {
 
 void fd_bluetooth_system_step(void) {
     while ((fd_bluetooth_system_steps != 0) && fd_nrf8001_has_system_credits()) {
+        if (fd_bluetooth_system_steps & fd_bluetooth_setup_continue_step) {
+            // nothing to do, just waiting for response
+        } else
         if (fd_bluetooth_system_steps & fd_bluetooth_sleep_step) {
             fd_nrf8001_sleep();
             fd_bluetooth_step_complete(fd_bluetooth_sleep_step);
@@ -243,9 +246,6 @@ void fd_bluetooth_system_step(void) {
         if (fd_bluetooth_system_steps & fd_bluetooth_wakeup_step) {
             fd_nrf8001_wakeup();
             fd_bluetooth_step_complete(fd_bluetooth_wakeup_step);
-        } else
-        if (fd_bluetooth_system_steps & fd_bluetooth_setup_continue_step) {
-            fd_nrf8001_setup_continue();
         } else
         if (fd_bluetooth_system_steps & fd_bluetooth_set_device_name_step) {
             uint8_t hwid[20] = "hwid";
@@ -339,6 +339,7 @@ void fd_nrf8001_device_started_event(
             fd_nrf8001_set_system_credits(1);
             fd_bluetooth_setup_index = 0;
             fd_bluetooth_step_queue(fd_bluetooth_setup_continue_step);
+            fd_nrf8001_setup_continue();
         } break;
     }
 }

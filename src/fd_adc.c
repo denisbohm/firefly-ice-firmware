@@ -38,7 +38,7 @@ float fd_adc_get_battery_voltage(void) {
 }
 
 float fd_adc_get_charge_current(void) {
-    return adc_charge_current_value * (2.2f / 4095.0f) * (80.0f / 1.22f);
+    return adc_charge_current_value * (2.2f / 4095.0f) * (0.080f / 1.22f);
 }
 
 void fd_adc_sleep(void) {

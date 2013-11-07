@@ -96,9 +96,10 @@ double fd_power_estimate_battery_level(void) {
 }
 
 void fd_power_initialize(void) {
-    if (RETAINED->power_battery_level == 0) {
+    fd_reset_retained_t *retained = RETAINED;
+    if (retained->power_battery_level == 0) {
         // battery level is uninitialized/unknown, so make a guess... -denis
-        RETAINED->power_battery_level = fd_power_estimate_battery_level();
+        retained->power_battery_level = fd_power_estimate_battery_level();
     }
 
     fd_event_add_callback(FD_EVENT_CHG_STAT, fd_power_charge_status_callback);

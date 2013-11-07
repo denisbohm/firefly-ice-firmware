@@ -20,6 +20,7 @@ typedef struct {
 #define FD_RESET_SYSTEM_REQUEST 1
 #define FD_RESET_WATCHDOG 2
 #define FD_RESET_HARD_FAULT 3
+#define FD_RESET_RETAIN 4
 
 extern uint32_t fd_reset_last_cause;
 extern fd_time_t fd_reset_last_time;

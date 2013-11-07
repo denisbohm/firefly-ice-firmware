@@ -15,6 +15,10 @@ static bool retain_was_valid;
 
 static
 bool is_ram_retained_reset(uint32_t cause) {
+    if (cause == 0) {
+        return true;
+    }
+
     if (cause & 1) {
         return false; // Power On Reset
     }
@@ -36,6 +40,7 @@ bool is_ram_retained_reset(uint32_t cause) {
     if (cause & 64) {
         return true; // System Request Reset
     }
+
     return false;
 }
 
@@ -43,19 +48,20 @@ void fd_reset_initialize(void) {
     fd_reset_last_cause = RMU_ResetCauseGet();
     RMU_ResetCauseClear();
 
+    fd_reset_retained_t *retained = RETAINED;
     retain_was_valid =
-        (RETAINED->magic == MAGIC) &&
-        (RETAINED->power_battery_level >= 0.0) && (RETAINED->power_battery_level <= 1.0) &&
-        (RETAINED->rtc.seconds > 1381363200) && (RETAINED->rtc.seconds < 2328048000) &&
-        (RETAINED->rtc.microseconds < 1000000) &&
+        (retained->magic == MAGIC) &&
+        (retained->power_battery_level >= 0.0) && (retained->power_battery_level <= 1.0) &&
+        (retained->rtc.seconds > 1381363200) && (retained->rtc.seconds < 2328048000) &&
+        (retained->rtc.microseconds < 1000000) &&
         is_ram_retained_reset(fd_reset_last_cause);
 
     if (!retain_was_valid) {
-        memset(RETAINED, 0, sizeof(fd_reset_retained_t));
-        RETAINED->magic = MAGIC;
+        memset(retained, 0, sizeof(fd_reset_retained_t));
+        retained->magic = MAGIC;
     }
 
-    fd_reset_last_time = RETAINED->rtc;
+    fd_reset_last_time = retained->rtc;
 }
 
 bool fd_retain_was_valid_on_startup(void) {
@@ -74,6 +80,10 @@ void fd_reset_by(uint8_t type) {
             void (*null_fn)(void) = 0;
             (*null_fn)();
         } break;
-        default: break;
+        case FD_RESET_RETAIN: {
+            fd_reset_initialize();
+        } break;
+        default: {
+        } break;
     }
 }

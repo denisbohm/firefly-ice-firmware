@@ -1,4 +1,5 @@
 #include "fd_binary.h"
+#include "fd_ieee754.h"
 #include "fd_log.h"
 
 #include <string.h>
@@ -19,6 +20,11 @@ uint64_t fd_binary_unpack_uint64(uint8_t *buffer) {
     uint64_t lo = fd_binary_unpack_uint32(buffer);
     uint64_t hi = fd_binary_unpack_uint32(&buffer[8]);
     return (hi << 32) | lo;
+}
+
+float fd_binary_unpack_float16(uint8_t *buffer) {
+    uint16_t value = fd_binary_unpack_uint16(buffer);
+    return fd_ieee754_uint16_to_float(value);
 }
 
 typedef union {
@@ -58,6 +64,11 @@ void fd_binary_pack_uint32(uint8_t *buffer, uint32_t value) {
 void fd_binary_pack_uint64(uint8_t *buffer, uint64_t value) {
     fd_binary_pack_uint32(buffer, value);
     fd_binary_pack_uint32(&buffer[4], value >> 32);
+}
+
+void fd_binary_pack_float16(uint8_t *buffer, float value) {
+    uint16_t iv = fd_ieee754_float_to_uint16(value);
+    fd_binary_pack_uint16(buffer, iv);
 }
 
 void fd_binary_pack_float32(uint8_t *buffer, float value) {
@@ -109,6 +120,12 @@ uint64_t fd_binary_get_uint64(fd_binary_t *binary) {
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 8;
     return fd_binary_unpack_uint64(buffer);
+}
+
+float fd_binary_get_float16(fd_binary_t *binary) {
+    uint8_t *buffer = &binary->buffer[binary->get_index];
+    binary->get_index += 2;
+    return fd_binary_unpack_float16(buffer);
 }
 
 float fd_binary_get_float32(fd_binary_t *binary) {
@@ -167,6 +184,14 @@ void fd_binary_put_uint64(fd_binary_t *binary, uint64_t value) {
         uint8_t *buffer = &binary->buffer[binary->put_index];
         binary->put_index += 8;
         fd_binary_pack_uint64(buffer, value);
+    }
+}
+
+void fd_binary_put_float16(fd_binary_t *binary, float value) {
+    if (fd_binary_put_check(binary, 2)) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 2;
+        fd_binary_pack_float16(buffer, value);
     }
 }
 

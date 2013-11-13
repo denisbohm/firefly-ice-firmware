@@ -95,6 +95,9 @@
       <file file_name="src/fd_main.h"/>
       <file file_name="src/fd_lock.h"/>
       <file file_name="src/fd_lock.c"/>
+      <file file_name="src/fd_ieee754.c"/>
+      <file file_name="src/fd_ieee754.h"/>
+      <file file_name="src/fd_boot.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
@@ -190,8 +193,8 @@
     <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
   </project>
   <project Name="FireflyBoot">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(ProjectDir)/FireflyBoot_MemoryMap.xml" linker_printf_width_precision_supported="No" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
+    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(ProjectDir)/FireflyBoot_MemoryMap.xml" linker_output_format="hex" linker_printf_width_precision_supported="No" linker_section_placement_file="$(ProjectDir)/FireflyBoot_Placement.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
+    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(ProjectDir)/FireflyBoot_Placement.xml" target_reset_script="FLASHReset()"/>
     <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
     <folder Name="Source Files" file_name="">
       <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
@@ -210,7 +213,7 @@
       <file file_name="src/fd_log_null.c"/>
       <file file_name="src/fd_update.c"/>
       <file file_name="src/fd_update.h"/>
-      <file file_name="src/fd_fault.c"/>
+      <file file_name="src/fd_boot.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
@@ -393,6 +396,8 @@
       <file file_name="src/fd_reset.h"/>
       <file file_name="src/fd_lock.c"/>
       <file file_name="src/fd_lock.h"/>
+      <file file_name="src/fd_ieee754.c"/>
+      <file file_name="src/fd_ieee754.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
@@ -738,6 +743,72 @@
           <file file_name="../energymicro/usb/src/em_usbhint.c"/>
           <file file_name="../energymicro/usb/src/em_usbtimer.c"/>
         </folder>
+      </folder>
+    </folder>
+  </project>
+  <project Name="FireflyIceUnitTests">
+    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="256" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
+    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_Giant_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
+    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
+    <folder Name="Source Files" file_name="">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
+      <file file_name="src/fd_unit_tests.c"/>
+      <file file_name="src/fd_storage_unit_tests.c"/>
+      <file file_name="src/fd_crc.c"/>
+      <file file_name="src/fd_crc.h"/>
+      <file file_name="src/fd_event.c"/>
+      <file file_name="src/fd_event.h"/>
+      <file file_name="src/fd_log.h"/>
+      <file file_name="src/fd_log_null.c"/>
+      <file file_name="src/fd_processor.c"/>
+      <file file_name="src/fd_processor.h"/>
+      <file file_name="src/fd_storage.c"/>
+      <file file_name="src/fd_storage.h"/>
+      <file file_name="src/fd_w25q16dw.h"/>
+      <file file_name="src/fd_w25q16dw_bitbang.c"/>
+      <file file_name="src/fd_usb.c"/>
+      <file file_name="src/fd_usb.h"/>
+      <file file_name="src/usbconfig.h"/>
+      <file file_name="src/fd_storage_buffer_unit_tests.c"/>
+      <file file_name="src/fd_storage_buffer.c"/>
+      <file file_name="src/fd_storage_buffer.h"/>
+      <file file_name="src/fd_binary.c"/>
+      <file file_name="src/fd_binary.h"/>
+      <file file_name="src/fd_sync_unit_tests.c"/>
+      <file file_name="src/fd_sync.c"/>
+      <file file_name="src/fd_sync.h"/>
+      <file file_name="src/fd_detour.c"/>
+      <file file_name="src/fd_detour.h"/>
+      <file file_name="src/fd_system.c"/>
+      <file file_name="src/fd_system.h"/>
+      <file file_name="src/fd_binary_unit_tests.c"/>
+      <file file_name="src/fd_ieee754.c"/>
+      <file file_name="src/fd_ieee754.h"/>
+      <file file_name="src/fd_detour_unit_tests.c"/>
+      <file file_name="src/fd_fault.c"/>
+    </folder>
+    <folder Name="CMSIS Files">
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
+        <configuration Name="Common" file_type="Reset Script"/>
+      </file>
+    </folder>
+    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <folder Name="Energy Micro Files">
+      <folder Name="emlib">
+        <folder Name="src" filter="*.c;*.h;*.cpp" path="../../../development/energymicro/EM_CMSIS_3/emlib/src" recurse="No"/>
+        <folder Name="inc" filter="*.c;*.h;*.cpp" path="../../../development/energymicro/EM_CMSIS_3/emlib/inc" recurse="No"/>
+      </folder>
+      <folder Name="usb">
+        <folder Name="inc" filter="*.h" path="../energymicro/usb/inc" recurse="No"/>
+        <folder Name="src" filter="*.c;*.h;*.cpp" path="../energymicro/usb/src" recurse="No"/>
       </folder>
     </folder>
   </project>

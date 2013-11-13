@@ -1,6 +1,7 @@
 #include "fd_aes.h"
 #include "fd_binary.h"
 #include "fd_bluetooth.h"
+#include "fd_boot.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_indicator.h"
@@ -137,21 +138,20 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 12
-#define VERSION_CAPABILITIES FD_CONTROL_CAPABILITY_LOCK
+#define VERSION_PATCH 13
+#define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION)
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
 
-static
-uint8_t git_commit[20] = {GIT_COMMIT};
+static const uint8_t git_commit[20] = {GIT_COMMIT};
 
 void fd_control_get_property_version(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, VERSION_MAJOR);
     fd_binary_put_uint16(binary, VERSION_MINOR);
     fd_binary_put_uint16(binary, VERSION_PATCH);
     fd_binary_put_uint32(binary, VERSION_CAPABILITIES);
-    fd_binary_put_bytes(binary, git_commit, sizeof(git_commit));
+    fd_binary_put_bytes(binary, (uint8_t *)git_commit, sizeof(git_commit));
 }
 
 void fd_control_get_property_hardware_id(fd_binary_t *binary) {
@@ -229,6 +229,20 @@ void fd_control_set_property_tx_power(fd_binary_t *binary) {
     fd_bluetooth_set_tx_power(level);
 }
 
+void fd_control_get_property_boot_version(fd_binary_t *binary) {
+    fd_boot_data_t boot_data = *FD_BOOT_DATA;
+    if (boot_data.magic != FD_BOOT_MAGIC) {
+        memset(&boot_data, 0, sizeof(fd_boot_data_t));
+        boot_data.minor = 1;
+    }
+
+    fd_binary_put_uint16(binary, boot_data.major);
+    fd_binary_put_uint16(binary, boot_data.minor);
+    fd_binary_put_uint16(binary, boot_data.patch);
+    fd_binary_put_uint32(binary, boot_data.capabilities);
+    fd_binary_put_bytes(binary, boot_data.git_commit, sizeof(boot_data.git_commit));
+}
+
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -268,6 +282,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_TX_POWER: {
                     fd_control_get_property_tx_power(binary_out);
+                } break;
+                case FD_CONTROL_PROPERTY_BOOT_VERSION: {
+                    fd_control_get_property_boot_version(binary_out);
                 } break;
             }
         }

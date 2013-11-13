@@ -1,3 +1,4 @@
+#include "fd_boot.h"
 #include "fd_log.h"
 #include "fd_processor.h"
 #include "fd_sha.h"
@@ -8,8 +9,18 @@
 #include <em_msc.h>
 
 #include <stdbool.h>
+#include <string.h>
 
 #define INTERNAL_PAGE_SIZE 2048
+
+const fd_boot_data_t boot_data __attribute__ ((used, section(".boot_data"))) = {
+    .magic = FD_BOOT_MAGIC,
+    .major = 1,
+    .minor = 0,
+    .patch = 1,
+    .capabilities = 0,
+    .git_commit = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19}
+};
 
 bool is_metadata_valid(void) {
     uint32_t *address = (uint32_t *)FD_UPDATE_METADATA_ADDRESS;
@@ -84,6 +95,9 @@ int main(void) {
     GPIO_PinOutClear(LED4_PORT_PIN);
     GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
+
+    uint8_t data[1];
+    memcpy(data, boot_data.git_commit, sizeof(data));
 
     fd_log_initialize();
     fd_w25q16dw_initialize();

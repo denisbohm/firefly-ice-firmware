@@ -10,6 +10,7 @@
 
 bool fd_log_did_log;
 bool fd_log_use_storage;
+fd_storage_area_t fd_log_storage_area;
 
 void fd_log_initialize(void) {
     fd_log_did_log = false;
@@ -18,6 +19,7 @@ void fd_log_initialize(void) {
 
 void fd_log_enable_storage(bool enable) {
     fd_log_use_storage = enable;
+    fd_storage_area_initialize(&fd_log_storage_area, 62, 63);
 }
 
 void fd_log_ram(char *message __attribute__((unused))) {
@@ -50,7 +52,7 @@ void fd_log_at(char *file, int line, char *message) {
         length = remaining_length;
     }
     fd_binary_put_bytes(&binary, (uint8_t *)message, length);
-    fd_storage_append_page(FD_LOG_STORAGE_TYPE, data, binary.put_index);
+    fd_storage_area_append_page(&fd_log_storage_area, FD_LOG_STORAGE_TYPE, data, binary.put_index);
 }
 
 void fd_log(char *message) {

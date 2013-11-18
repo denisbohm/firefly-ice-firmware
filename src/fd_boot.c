@@ -13,7 +13,7 @@
 
 #define INTERNAL_PAGE_SIZE 2048
 
-const fd_boot_data_t boot_data __attribute__ ((used, section(".boot_data"))) = {
+static const fd_boot_data_t boot_data __attribute__ ((used, section(".boot_data"))) = {
     .magic = FD_BOOT_MAGIC,
     .major = 1,
     .minor = 0,
@@ -96,6 +96,7 @@ int main(void) {
     GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
 
+    // workaround so that boot_data is not stripped (static used should work though according to gcc docs)... -denis
     uint8_t data[1];
     memcpy(data, boot_data.git_commit, sizeof(data));
 

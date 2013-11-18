@@ -168,6 +168,8 @@ void fd_w25q16dw_enable_write(void) {
 
 // erase a 4K-byte sector
 void fd_w25q16dw_erase_sector(uint32_t address) {
+    fd_w25q16dw_wait_while_busy();
+
     uint8_t buffer[] = {SECTOR_ERASE, address >> 16, address >> 8, address};
     fd_spi_txn_rxn(buffer, sizeof(buffer), 0, 0);
 }
@@ -195,5 +197,7 @@ void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {
 }
 
 void fd_w25q16dw_chip_erase(void) {
+    fd_w25q16dw_wait_while_busy();
+
     fd_spi_tx1(CHIP_ERASE);
 }

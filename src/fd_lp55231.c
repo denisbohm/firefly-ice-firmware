@@ -24,13 +24,32 @@
 
 #define MISC 0x36
 #define MISC_INT_CLK_EN 0x01
+#define MISC_CLK_DET_EN 0x02
+#define MISC_PWM_PS_EN 0x04
 #define MISC_CP_MODE_AUTOMATIC 0x18
+#define MISC_POWERSAVE_EN 0x20
+#define MISC_EN_AUTO_INCR 0x40
+#define MISC_VARIABLE_D_SEL 0x80
 
 void fd_lp55231_initialize(void) {
 }
 
 void fd_lp55231_power_on(void) {
     GPIO_PinOutSet(LED_EN_PORT_PIN);
+
+#define RC 40
+#define GC 10
+#define BC 80
+    const uint8_t current_controls[] = {
+        BC /* D3.B */, GC /* D3.G */, BC /* D1.B */,
+        GC /* D2.G */, BC /* D1.B */, GC /* D1.G */,
+        RC /* D3.R */, RC /* D2.R */, RC /* D1.R */,
+    };
+    bool result = fd_i2c1_register_write_bytes(ADDRESS, D1_CURRENT_CONTROL, (uint8_t *)current_controls, sizeof(current_controls));
+    if (!result) {
+        fd_log_assert_fail("");
+    }
+
 //    fd_delay_us(500); // power on delay for analog blocks (charge pump, etc)
 }
 
@@ -39,14 +58,14 @@ void fd_lp55231_wake(void) {
     if (!result) {
         fd_log_assert_fail("");
     }
-    result = fd_i2c1_register_write(ADDRESS, MISC, MISC_INT_CLK_EN | MISC_CP_MODE_AUTOMATIC);
+    result = fd_i2c1_register_write(ADDRESS, MISC, MISC_INT_CLK_EN | MISC_CP_MODE_AUTOMATIC | MISC_EN_AUTO_INCR);
     if (!result) {
         fd_log_assert_fail("");
     }
 }
 
 void fd_lp55231_sleep(void) {
-    bool result = fd_i2c1_register_write(ADDRESS, MISC, 0x00);
+    bool result = fd_i2c1_register_write(ADDRESS, MISC, MISC_EN_AUTO_INCR);
     if (!result) {
         fd_log_assert_fail("");
     }

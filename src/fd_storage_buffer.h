@@ -10,12 +10,13 @@ typedef struct fd_storage_buffer {
     struct fd_storage_buffer *next;
     struct fd_storage_buffer *previous;
 
+    fd_storage_area_t *area;
     uint32_t type;
     uint8_t data[FD_STORAGE_MAX_DATA_LENGTH];
     uint32_t index;
 } fd_storage_buffer_t;
 
-void fd_storage_buffer_initialize(fd_storage_buffer_t *storage_buffer, uint32_t type);
+void fd_storage_buffer_initialize(fd_storage_buffer_t *storage_buffer, fd_storage_area_t *storage_area, uint32_t type);
 
 void fd_storage_buffer_flush(fd_storage_buffer_t *storage_buffer);
 

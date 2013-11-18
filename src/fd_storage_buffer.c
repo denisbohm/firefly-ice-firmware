@@ -82,16 +82,18 @@ void fd_storage_buffer_clear_page(fd_storage_metadata_t *metadata) {
     }
 }
 
-void fd_storage_buffer_initialize(fd_storage_buffer_t *storage_buffer, uint32_t type) {
+void fd_storage_buffer_initialize(fd_storage_buffer_t *storage_buffer, fd_storage_area_t *area, uint32_t type) {
     storage_buffer->next = 0;
     storage_buffer->previous = 0;
+
+    storage_buffer->area = area;
     storage_buffer->type = type;
     storage_buffer->index = 0;
 }
 
 void fd_storage_buffer_flush(fd_storage_buffer_t *storage_buffer) {
     if (storage_buffer->index > 0) {
-        fd_storage_append_page(storage_buffer->type, storage_buffer->data, storage_buffer->index);
+        fd_storage_area_append_page(storage_buffer->area, storage_buffer->type, storage_buffer->data, storage_buffer->index);
         storage_buffer->index = 0;
     }
 }

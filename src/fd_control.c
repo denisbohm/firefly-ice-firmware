@@ -4,6 +4,7 @@
 #include "fd_boot.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
+#include "fd_event.h"
 #include "fd_indicator.h"
 #include "fd_lock.h"
 #include "fd_main.h"
@@ -25,14 +26,66 @@
 
 typedef void (*fd_control_command_t)(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length);
 
+#define COMMAND_BUFFER_SIZE 300
+
+uint8_t fd_control_command_buffer[COMMAND_BUFFER_SIZE];
+
+#define INPUT_BUFFER_SIZE 600
+
+uint8_t fd_control_input_buffer[INPUT_BUFFER_SIZE];
+uint32_t fd_control_input_buffer_count;
+
+typedef struct {
+    fd_detour_source_collection_t *detour_source_collection;
+    uint8_t *data;
+    uint32_t length;
+} fd_control_input_t;
+
+#define INPUTS_SIZE 16
+
+fd_control_input_t fd_control_inputs[INPUTS_SIZE];
+uint32_t fd_control_inputs_count;
+
 #define DETOUR_BUFFER_SIZE 300
 
 fd_detour_source_t fd_control_detour_source;
 uint8_t fd_control_detour_buffer[DETOUR_BUFFER_SIZE];
 fd_binary_t fd_control_detour_binary;
 
+void fd_control_command(void);
+
 void fd_control_initialize(void) {
     fd_detour_source_initialize(&fd_control_detour_source);
+
+    fd_control_input_buffer_count = 0;
+    fd_control_inputs_count = 0;
+
+    fd_event_add_callback(FD_EVENT_COMMAND, fd_control_command);
+}
+
+void fd_control_process(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    if (fd_control_inputs_count >= INPUTS_SIZE) {
+        return;
+    }
+    if ((fd_control_input_buffer_count + length) >= INPUT_BUFFER_SIZE) {
+        return;
+    }
+
+    fd_interrupts_disable();
+
+    fd_control_input_t *input = &fd_control_inputs[fd_control_inputs_count];
+    input->detour_source_collection = detour_source_collection;
+    input->data = &fd_control_input_buffer[fd_control_input_buffer_count];
+    input->length = length;
+
+    memcpy(&fd_control_input_buffer[fd_control_input_buffer_count], data, length);
+    fd_control_input_buffer_count += length;
+
+    ++fd_control_inputs_count;
+
+    fd_event_set(FD_EVENT_COMMAND);
+
+    fd_interrupts_enable();
 }
 
 void fd_control_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
@@ -138,7 +191,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 13
+#define VERSION_PATCH 14
 #define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION)
 
 // !!! should come from gcc command line define
@@ -243,13 +296,26 @@ void fd_control_get_property_boot_version(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, boot_data.git_commit, sizeof(boot_data.git_commit));
 }
 
+#define GET_PROPERTY_MASK\
+ (FD_CONTROL_PROPERTY_VERSION |\
+ FD_CONTROL_PROPERTY_HARDWARE_ID |\
+ FD_CONTROL_PROPERTY_DEBUG_LOCK |\
+ FD_CONTROL_PROPERTY_RTC |\
+ FD_CONTROL_PROPERTY_POWER |\
+ FD_CONTROL_PROPERTY_SITE |\
+ FD_CONTROL_PROPERTY_RESET |\
+ FD_CONTROL_PROPERTY_STORAGE |\
+ FD_CONTROL_PROPERTY_MODE |\
+ FD_CONTROL_PROPERTY_TX_POWER |\
+ FD_CONTROL_PROPERTY_BOOT_VERSION)
+
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t properties = fd_binary_get_uint32(&binary);
 
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_GET_PROPERTIES);
-    fd_binary_put_uint32(binary_out, properties);
+    fd_binary_put_uint32(binary_out, properties & GET_PROPERTY_MASK);
     for (uint32_t property = 1; property != 0; property <<= 1) {
         if (property & properties) {
             switch (property) {
@@ -460,7 +526,7 @@ void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, ui
 
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis
 
-void fd_control_process(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_process_command(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     if (length < 1) {
         return;
     }
@@ -536,5 +602,34 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
     }
     if (command) {
         (*command)(detour_source_collection, &data[1], length - 1);
+    }
+}
+
+void fd_control_command(void) {
+    if (fd_control_inputs_count == 0) {
+        return;
+    }
+
+    fd_interrupts_disable();
+
+    // get the command info
+    fd_control_input_t *input = &fd_control_inputs[0];
+    fd_detour_source_collection_t *detour_source_collection = input->detour_source_collection;
+    memcpy(fd_control_command_buffer, input->data, input->length);
+    uint32_t length = input->length;
+
+    // remove it from the inputs
+    --fd_control_inputs_count;
+    memcpy(fd_control_inputs, &fd_control_inputs[1], sizeof(fd_control_input_t) * fd_control_inputs_count);
+    fd_control_input_buffer_count -= length;
+    memcpy(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
+
+    fd_interrupts_enable();
+
+    // process it
+    fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
+
+    if (fd_control_inputs_count > 0) {
+        fd_event_set(FD_EVENT_COMMAND);
     }
 }

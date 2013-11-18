@@ -24,6 +24,11 @@ fd_storage_metadata_t get_metadata(uint8_t *bytes, uint32_t length) {
 }
 
 void fd_sync_unit_tests(void) {
+    fd_storage_initialize();
+    fd_storage_area_t area;
+    fd_storage_area_initialize(&area, 0, 1);
+    fd_log_assert(fd_storage_used_page_count() == 0);
+
     fd_sync_initialize();
 
     fd_detour_t detour;
@@ -40,7 +45,7 @@ void fd_sync_unit_tests(void) {
     fd_sync_start(&collection, (uint8_t *)0, 0);
     fd_log_assert(collection.bufferCount == 64);
     fd_storage_metadata_t metadata = get_metadata(collection_bytes, sizeof(collection_bytes));
-    fd_log_assert(metadata.page = 0xfffffffe);
+    fd_log_assert(metadata.page == 0xfffffffe);
 
     // reset detour...
     fd_detour_clear(&detour);
@@ -48,12 +53,12 @@ void fd_sync_unit_tests(void) {
     fd_detour_source_collection_initialize(&collection, fd_lock_owner_usb, 64, collection_bytes, sizeof(collection_bytes));
 
     uint8_t bytes[2] = {0x5a, 0x00};
-    fd_storage_append_page(0x1234, bytes, 1);
+    fd_storage_area_append_page(&area, 0x1234, bytes, 1);
 
     fd_sync_start(&collection, (uint8_t *)0, 0);
     fd_log_assert(collection.bufferCount == 64);
     metadata = get_metadata(collection_bytes, sizeof(collection_bytes));
-    fd_log_assert(metadata.page = 1024);
+    fd_log_assert(metadata.page == 0);
 
     fd_detour_source_collection_initialize(&collection, fd_lock_owner_usb, 64, collection_bytes, sizeof(collection_bytes));
     uint8_t data[64];
@@ -70,5 +75,5 @@ void fd_sync_unit_tests(void) {
     fd_sync_start(&collection, (uint8_t *)0, 0);
     fd_log_assert(collection.bufferCount == 64);
     metadata = get_metadata(collection_bytes, sizeof(collection_bytes));
-    fd_log_assert(metadata.page = 0xfffffffe);
+    fd_log_assert(metadata.page == 0xfffffffe);
 }

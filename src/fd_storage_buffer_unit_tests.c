@@ -5,9 +5,12 @@
 void fd_storage_buffer_unit_tests(void) {
     fd_log_assert(fd_storage_used_page_count() == 0);
 
+    fd_storage_initialize();
+    fd_storage_area_t area;
+    fd_storage_area_initialize(&area, 0, 1);
     fd_storage_buffer_collection_initialize();
     fd_storage_buffer_t storage_buffer;
-    fd_storage_buffer_initialize(&storage_buffer, 0x4321);
+    fd_storage_buffer_initialize(&storage_buffer, &area, 0x4321);
     fd_storage_buffer_collection_push(&storage_buffer);
 
     uint32_t time = 665193600; // Jan 30, 1991 00:00

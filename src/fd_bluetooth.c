@@ -548,7 +548,7 @@ void fd_nrf8001_detour_data_received(
             fd_detour_clear(&fd_bluetooth_detour);
         break;
         case fd_detour_state_error:
-            fd_log("");
+            fd_log_assert_fail("");
             fd_detour_clear(&fd_bluetooth_detour);
         break;
     }

@@ -389,7 +389,7 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
     fd_event_set(FD_EVENT_USB_TRANSFER);
 
     if (status != USB_STATUS_OK) {
-        fd_log("");
+        fd_log_assert_fail("");
         fd_detour_clear(&fd_usb_detour);
         return USB_STATUS_OK;
     }
@@ -404,7 +404,7 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
             fd_detour_clear(&fd_usb_detour);
         break;
         case fd_detour_state_error:
-            fd_log("");
+            fd_log_assert_fail("");
             fd_detour_clear(&fd_usb_detour);
         break;
     }

@@ -371,7 +371,7 @@ bool fd_usb_done;
 static
 int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining __attribute__((unused))) {
     if (status != USB_STATUS_OK) {
-        fd_log("");
+        fd_log_assert_fail("");
         return USB_STATUS_OK;
     }
 

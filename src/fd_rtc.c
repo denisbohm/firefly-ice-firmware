@@ -83,7 +83,10 @@ void fd_rtc_set_countdown(uint32_t countdown) {
 }
 
 uint32_t fd_rtc_get_countdown(void) {
-    return rtc_countdown;
+    fd_interrupts_disable();
+    uint32_t countdown = rtc_countdown;
+    fd_interrupts_enable();
+    return countdown;
 }
 
 void RTC_IRQHandler(void) {

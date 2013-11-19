@@ -32,6 +32,7 @@ void fd_event_add_em2_check(fd_event_em2_check_t em2_check);
 
 void fd_event_add_callback(uint32_t events, fd_event_callback_t callback);
 
+void fd_event_set_exclusive(uint32_t events);
 void fd_event_set(uint32_t events);
 void fd_event_mask_set(uint32_t mask);
 void fd_event_mask_clear(uint32_t mask);

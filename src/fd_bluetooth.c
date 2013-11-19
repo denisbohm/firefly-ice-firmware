@@ -291,7 +291,7 @@ void fd_nrf8001_spi_transfer(void) {
 
 void fd_bluetooth_step_queue(uint32_t step) {
     fd_bluetooth_system_steps |= step;
-    fd_event_set(FD_EVENT_BLE_STEP);
+    fd_event_set_exclusive(FD_EVENT_BLE_STEP);
 }
 
 void fd_bluetooth_step_complete(uint32_t step) {
@@ -300,7 +300,7 @@ void fd_bluetooth_step_complete(uint32_t step) {
 
 void fd_bluetooth_data_step_queue(uint32_t step) {
     fd_bluetooth_data_steps |= step;
-    fd_event_set(FD_EVENT_BLE_STEP);
+    fd_event_set_exclusive(FD_EVENT_BLE_STEP);
 }
 
 void fd_bluetooth_data_step_complete(uint32_t step) {

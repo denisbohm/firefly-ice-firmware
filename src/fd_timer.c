@@ -10,7 +10,6 @@ static fd_timer_t *timers[TIMERS_LIMIT];
 static uint32_t timer_count;
 static uint32_t scheduled_countdown;
 
-static
 void fd_timer_update(void);
 
 void fd_timer_initialize(void) {
@@ -65,7 +64,8 @@ void fd_timer_schedule_countdown(void) {
         new_countdown = 1;
     }
     if (new_countdown == UINT32_MAX) {
-        new_countdown = 0;
+        // nothing to do, but schedule a countdown in 5 seconds as a fail-safe
+        new_countdown = 5 * 32;
     }
     scheduled_countdown = new_countdown;
     fd_rtc_set_countdown(new_countdown);
@@ -82,7 +82,6 @@ void fd_timer_callback_triggered(void) {
     }
 }
 
-static
 void fd_timer_update(void) {
     fd_timer_schedule_countdown();
     fd_timer_callback_triggered();
@@ -95,7 +94,7 @@ void fd_timer_start(fd_timer_t *timer, fd_time_t duration) {
     timer->scheduled = false;
     timer->triggered = false;
 
-    fd_event_set(FD_EVENT_TIMER_SCHEDULE);
+    fd_event_set_exclusive(FD_EVENT_TIMER_SCHEDULE);
 }
 
 void fd_timer_start_next(fd_timer_t *timer, uint32_t interval) {

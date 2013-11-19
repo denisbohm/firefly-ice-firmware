@@ -125,8 +125,8 @@ static const uint8_t configDesc[] __attribute__ ((aligned(4)))=
 };
 
 STATIC_CONST_STRING_DESC_LANGID( langID, 0x04, 0x09 );
-STATIC_CONST_STRING_DESC( iManufacturer, 'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'D', 'e', 's', 'i', 'g', 'n', ' ', 'L', 'L', 'C', '\0' );
-STATIC_CONST_STRING_DESC( iProduct, 'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'I', 'c', 'e', '\0' );
+STATIC_CONST_STRING_DESC( iManufacturer, 'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'D', 'e', 's', 'i', 'g', 'n', ' ', 'L', 'L', 'C' );
+STATIC_CONST_STRING_DESC( iProduct, 'F', 'i', 'r', 'e', 'f', 'l', 'y', ' ', 'I', 'c', 'e' );
 
 #define STATIC_STRING_DESC( _name, ... )                  \
 EFM32_PACK_START( 1 )                                           \
@@ -148,7 +148,7 @@ static _##_name _name __attribute__ ((aligned(4)))=       \
 }                                                               \
 EFM32_PACK_END()
 
-STATIC_STRING_DESC( iSerialNumber, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\0' );
+STATIC_STRING_DESC( iSerialNumber, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' );
 
 static const void * const strings[] =
 {
@@ -430,7 +430,7 @@ void fd_usb_transfer(void) {
             ++fd_usb_errors;
         }
     } else {
-        fd_event_set(FD_EVENT_USB_TRANSFER);
+        fd_event_set_exclusive(FD_EVENT_USB_TRANSFER);
     }
 
     if (!USBD_EpIsBusy(INTR_IN_EP_ADDR)) {
@@ -438,6 +438,6 @@ void fd_usb_transfer(void) {
             USBD_Write(INTR_IN_EP_ADDR, fd_usb_out_data, USB_MAX_EP_SIZE, fd_usb_write_complete);
         }
     } else {
-        fd_event_set(FD_EVENT_USB_TRANSFER);
+        fd_event_set_exclusive(FD_EVENT_USB_TRANSFER);
     }
 }

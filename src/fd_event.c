@@ -62,6 +62,12 @@ void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
     item->callback = callback;
 }
 
+void fd_event_set_exclusive(uint32_t events) {
+    fd_interrupts_disable();
+    fd_event_set(events);
+    fd_interrupts_enable();
+}
+
 void fd_event_set(uint32_t events) {
     fd_event_pending |= events;
 }

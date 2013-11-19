@@ -71,8 +71,6 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
         return;
     }
 
-    fd_interrupts_disable();
-
     fd_control_input_t *input = &fd_control_inputs[fd_control_inputs_count];
     input->detour_source_collection = detour_source_collection;
     input->data = &fd_control_input_buffer[fd_control_input_buffer_count];
@@ -84,8 +82,6 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
     ++fd_control_inputs_count;
 
     fd_event_set(FD_EVENT_COMMAND);
-
-    fd_interrupts_enable();
 }
 
 void fd_control_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
@@ -191,7 +187,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 14
+#define VERSION_PATCH 16
 #define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION)
 
 // !!! should come from gcc command line define
@@ -630,6 +626,6 @@ void fd_control_command(void) {
     fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
 
     if (fd_control_inputs_count > 0) {
-        fd_event_set(FD_EVENT_COMMAND);
+        fd_event_set_exclusive(FD_EVENT_COMMAND);
     }
 }

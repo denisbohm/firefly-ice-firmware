@@ -133,17 +133,17 @@ void fd_detour_source_collection_initialize(fd_detour_source_collection_t *colle
     collection->bufferCount = 0;
 }
 
-void fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {
+bool fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {
     while (true) {
         if ((collection->bufferCount + collection->packetSize) > collection->bufferSize) {
-            fd_log_assert_fail("");
-            break;
+            return false;
         }
         if (!fd_detour_source_get(source, &collection->buffer[collection->bufferCount], collection->packetSize)) {
             break;
         }
         collection->bufferCount += collection->packetSize;
     }
+    return true;
 }
 
 bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, uint8_t *buffer) {

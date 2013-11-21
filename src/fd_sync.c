@@ -57,7 +57,10 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     // encrypt
 
     fd_detour_source_set(&fd_sync_detour_source, fd_sync_detour_supplier, sync_length);
-    fd_detour_source_collection_push(detour_source_collection, &fd_sync_detour_source);
+    bool result = fd_detour_source_collection_push(detour_source_collection, &fd_sync_detour_source);
+    if (!result) {
+        fd_log_assert_fail("");
+    }
 }
 
 void fd_sync_ack(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {

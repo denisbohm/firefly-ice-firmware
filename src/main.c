@@ -191,49 +191,7 @@ int main(void) {
     fd_log_enable_storage(true);
 
     fd_power_initialize();
-
     fd_indicator_initialize();
-
-    fd_indicator_set_usb(0xff, 0x00);
-    fd_indicator_set_d0(0x00);
-    fd_indicator_set_d1(0x00, 0x00, 0x00);
-    fd_indicator_set_d2(0x00, 0x00, 0x00);
-    fd_indicator_set_d3(0x00, 0x00, 0x00);
-    fd_indicator_set_d4(0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_usb(0xff, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_usb(0x00, 0xff);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_usb(0x00, 0x00);
-    fd_indicator_set_d0(0xff);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d0(0x00);
-    fd_indicator_set_d1(0xff, 0x00, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d1(0x00, 0xff, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d1(0x00, 0x00, 0xff);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d1(0x00, 0x00, 0x00);
-    fd_indicator_set_d2(0xff, 0x00, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d2(0x00, 0xff, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d2(0x00, 0x00, 0xff);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d2(0x00, 0x00, 0x00);
-    fd_indicator_set_d3(0xff, 0x00, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d3(0x00, 0xff, 0x00);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d3(0x00, 0x00, 0xff);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d3(0x00, 0x00, 0x00);
-    fd_indicator_set_d4(0xff);
-    fd_delay_ms(250); WDOG_Feed();
-    fd_indicator_set_d4(0x00);
-    fd_delay_ms(250); WDOG_Feed();
 
     fd_ui_initialize();
     fd_sync_initialize();

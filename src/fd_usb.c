@@ -193,14 +193,14 @@ static int fd_usb_errors = 0;
 EFM32_ALIGN(4)
 static uint8_t fd_usb_in_data[USB_MAX_EP_SIZE];
 
-#define DETOUR_SIZE 300
+#define DETOUR_SIZE 400
 static uint8_t fd_usb_detour_data[DETOUR_SIZE];
 static fd_detour_t fd_usb_detour;
 
 static uint8_t fd_usb_out_data[USB_MAX_EP_SIZE];
 
-// 300 + 10% overhead for detour packet overhead
-#define DETOUR_SOURCE_COLLECTION_SIZE 330
+// needs room for detour packet overhead
+#define DETOUR_SOURCE_COLLECTION_SIZE 400
 static fd_detour_source_collection_t fd_usb_detour_source_collection;
 static uint8_t fd_usb_detour_source_collection_data[DETOUR_SOURCE_COLLECTION_SIZE];
 
@@ -387,6 +387,11 @@ void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), US
 static
 int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t remaining __attribute__((unused))) {
     fd_event_set(FD_EVENT_USB_TRANSFER);
+
+    if ((status == USB_STATUS_DEVICE_RESET) || (status == USB_STATUS_DEVICE_SUSPENDED)) {
+        fd_detour_clear(&fd_usb_detour);
+        return USB_STATUS_OK;
+    }
 
     if (status != USB_STATUS_OK) {
         fd_log_assert_fail("");

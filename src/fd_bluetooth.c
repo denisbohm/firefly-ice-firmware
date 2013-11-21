@@ -157,14 +157,14 @@ static uint16_t fd_nrf8001_dtm_request;
 static uint16_t fd_nrf8001_dtm_data;
 static uint8_t fd_nrf8001_tx_power;
 
-#define DETOUR_SIZE 300
+#define DETOUR_SIZE 400
 static uint8_t fd_bluetooth_detour_data[DETOUR_SIZE];
 static fd_detour_t fd_bluetooth_detour;
 
 static uint8_t fd_bluetooth_out_data[MAX_CHARACTERISTIC_SIZE];
 
 // 300 + 10% overhead for detour packet overhead
-#define DETOUR_SOURCE_COLLECTION_SIZE 330
+#define DETOUR_SOURCE_COLLECTION_SIZE 400
 static fd_detour_source_collection_t fd_bluetooth_detour_source_collection;
 static uint8_t fd_bluetooth_detour_source_collection_data[DETOUR_SOURCE_COLLECTION_SIZE];
 

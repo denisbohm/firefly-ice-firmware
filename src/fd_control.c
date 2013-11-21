@@ -7,6 +7,7 @@
 #include "fd_event.h"
 #include "fd_indicator.h"
 #include "fd_lock.h"
+#include "fd_log.h"
 #include "fd_main.h"
 #include "fd_map.h"
 #include "fd_power.h"
@@ -96,7 +97,10 @@ fd_binary_t *fd_control_send_start(fd_detour_source_collection_t *detour_source_
 
 void fd_control_send_complete(fd_detour_source_collection_t *detour_source_collection) {
     fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, fd_control_detour_binary.put_index);
-    fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+    bool result = fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
+    if (!result) {
+        fd_log_assert_fail("");
+    }
 }
 
 void fd_control_ping(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -187,7 +191,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 17
+#define VERSION_PATCH 18
 #define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION)
 
 // !!! should come from gcc command line define

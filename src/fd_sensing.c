@@ -34,7 +34,7 @@ void fd_sensing_timer_callback(void) {
 void fd_sensing_initialize(void) {
     // sensing storage will use sectors 64-511 (sectors 0-63 are for firmware updates)
     fd_storage_area_initialize(&fd_sensing_storage_area, 64, 511);
-    fd_storage_buffer_initialize(&fd_sensing_storage_buffer, &fd_sensing_storage_area, FD_STORAGE_TYPE('F', 'D', 'V', 'M'));
+    fd_storage_buffer_initialize(&fd_sensing_storage_buffer, &fd_sensing_storage_area, FD_STORAGE_TYPE('F', 'D', 'V', '2'));
     fd_storage_buffer_collection_push(&fd_sensing_storage_buffer);
 
     fd_lis3dh_set_sample_callback(fd_sensing_sample_callback);

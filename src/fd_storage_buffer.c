@@ -106,18 +106,22 @@ void fd_storage_buffer_add(fd_storage_buffer_t *storage_buffer, uint8_t *data, u
     storage_buffer->index += length;
 }
 
+#define SIZEOF_TIME 4
+#define SIZEOF_INTERVAL 2
+#define SIZEOF_VALUE 2
+
 void fd_storage_buffer_add_time_series(
     fd_storage_buffer_t *storage_buffer, uint32_t time, uint16_t interval, float value
 ) {
-    if ((storage_buffer->index + 4 /* binary size of value */) > FD_STORAGE_MAX_DATA_LENGTH) {
+    if ((storage_buffer->index + SIZEOF_VALUE) > FD_STORAGE_MAX_DATA_LENGTH) {
         fd_storage_buffer_flush(storage_buffer);
     }
     if (storage_buffer->index == 0) {
         fd_binary_pack_uint32(&storage_buffer->data[storage_buffer->index], time);
-        storage_buffer->index += 4; // binary size of time
+        storage_buffer->index += SIZEOF_TIME;
         fd_binary_pack_uint16(&storage_buffer->data[storage_buffer->index], interval);
-        storage_buffer->index += 2; // binary size of interval
+        storage_buffer->index += SIZEOF_INTERVAL;
     }
-    fd_binary_pack_float32(&storage_buffer->data[storage_buffer->index], value);
-    storage_buffer->index += 4; // binary size of value
+    fd_binary_pack_float16(&storage_buffer->data[storage_buffer->index], value);
+    storage_buffer->index += SIZEOF_VALUE;
 }

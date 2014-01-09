@@ -26,10 +26,24 @@ void fd_sync_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
 }
 
 void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
+    uint32_t flags = 0;
+    uint32_t offset = 0;
+    if (length >= 4) {
+        fd_binary_t binary;
+        fd_binary_initialize(&binary, data, length);
+        flags = fd_binary_get_uint32(&binary);
+        if (flags & FD_CONTROL_SYNC_AHEAD) {
+            offset = fd_binary_get_uint32(&binary);
+        }
+    }
+
     fd_storage_metadata_t metadata;
-    bool has_page = fd_storage_read_first_page(&metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
-    if (!has_page) {
-        has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
+    uint32_t shortage = fd_storage_read_nth_page(offset, &metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
+    if (shortage > 0) {
+        bool has_page = false;
+        if (shortage == 1) {
+            has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
+        }
         if (!has_page) {
             // send indication that there is nothing to sync -denis
             metadata.page = 0xfffffffe;

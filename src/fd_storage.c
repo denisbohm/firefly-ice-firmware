@@ -105,7 +105,7 @@ uint32_t fd_storage_area_used_page_count(fd_storage_area_t *area) {
     if (area->first_page <= area->free_page) {
         return area->free_page - area->first_page;
     }
-    return (area->end_page - area->first_page) + (area->free_page - area->first_page);
+    return (area->end_page - area->first_page) + (area->free_page - area->start_page);
 }
 
 #define increment_page(page) if (++page >= area->end_page) page = area->start_page
@@ -161,6 +161,30 @@ void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t
     }
 }
 
+void fd_storage_area_read_nth_page(fd_storage_area_t *area, uint32_t n, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {
+    if (length > FD_STORAGE_MAX_DATA_LENGTH) {
+        length = FD_STORAGE_MAX_DATA_LENGTH;
+    }
+
+    metadata->page = area->first_page + n;
+    if (metadata->page >= area->end_page) {
+        metadata->page = area->start_page + (metadata->page - area->end_page);
+    }
+    uint32_t address = area->first_page * FD_W25Q16DW_PAGE_SIZE;
+    uint8_t buffer[FD_W25Q16DW_PAGE_SIZE];
+    // !!! might be better to read length and then content -denis
+    fd_w25q16dw_wake();
+    fd_w25q16dw_read(address, buffer, FD_W25Q16DW_PAGE_SIZE);
+    fd_w25q16dw_sleep();
+    metadata->length = buffer[1];
+    if (metadata->length > length) {
+        metadata->length = length;
+    }
+    metadata->hash = fd_binary_unpack_uint16(&buffer[2]);
+    metadata->type = fd_binary_unpack_uint32(&buffer[4]);
+    memcpy(data, &buffer[8], metadata->length);
+}
+
 bool fd_storage_area_read_first_page(fd_storage_area_t *area, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {
     if (area->first_page == area->free_page) {
         return false;
@@ -204,6 +228,22 @@ uint32_t fd_storage_used_page_count(void) {
         area = area->next;
     }
     return count;
+}
+
+uint32_t fd_storage_read_nth_page(uint32_t offset, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {
+    uint32_t n = offset;
+    fd_storage_area_t *area = storage_area_collection.first;
+    while (area != 0) {
+        uint32_t count = fd_storage_area_used_page_count(area);
+        if (n < count) {
+            fd_storage_area_read_nth_page(area, n, metadata, data, length);
+            return 0;
+        }
+        n -= count;
+        area = area->next;
+    }
+    uint32_t shortage = n + 1;
+    return shortage;
 }
 
 bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {

@@ -5,7 +5,7 @@
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_event.h"
-#include "fd_indicator.h"
+#include "fd_led.h"
 #include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_main.h"
@@ -487,7 +487,7 @@ void fd_control_disconnect(fd_detour_source_collection_t *detour_source_collecti
 }
 
 static
-void get_rgb(fd_binary_t *binary, fd_indicator_rgb_t *rgb) {
+void get_rgb(fd_binary_t *binary, fd_led_rgb_t *rgb) {
     rgb->r = fd_binary_get_uint8(binary);
     rgb->g = fd_binary_get_uint8(binary);
     rgb->b = fd_binary_get_uint8(binary);
@@ -496,7 +496,7 @@ void get_rgb(fd_binary_t *binary, fd_indicator_rgb_t *rgb) {
 void fd_control_indicator_override(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    fd_indicator_state_t state;
+    fd_led_state_t state;
     state.usb.o = fd_binary_get_uint8(&binary);
     state.usb.g = fd_binary_get_uint8(&binary);
     state.d0.r = fd_binary_get_uint8(&binary);
@@ -506,7 +506,7 @@ void fd_control_indicator_override(fd_detour_source_collection_t *detour_source_
     state.d4.r = fd_binary_get_uint8(&binary);
     fd_time_t duration = fd_binary_get_time64(&binary);
 
-    fd_indicator_override(&state, duration);
+    fd_led_override(&state, duration);
 }
 
 void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {

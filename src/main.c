@@ -6,8 +6,9 @@
 #include "fd_detour.h"
 #include "fd_event.h"
 #include "fd_i2c1.h"
-#include "fd_lis3dh.h"
 #include "fd_indicator.h"
+#include "fd_lis3dh.h"
+#include "fd_led.h"
 #include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_lp55231.h"
@@ -43,7 +44,7 @@ static bool main_sleep_when_bluetooth_is_asleep;
 static
 void main_sleep(void) {
     fd_sensing_sleep();
-    fd_indicator_sleep();
+    fd_led_sleep();
 
     fd_usb_sleep();
     fd_adc_sleep();
@@ -80,7 +81,7 @@ void main_wake(void) {
 //    fd_mag3110_wake();
 //    fd_w25q16dw_wake();
 
-//    fd_indicator_wake();
+//    fd_led_wake();
     fd_sensing_wake();
 }
 
@@ -191,6 +192,7 @@ int main(void) {
     fd_log_enable_storage(true);
 
     fd_power_initialize();
+    fd_led_initialize();
     fd_indicator_initialize();
 
     fd_ui_initialize();

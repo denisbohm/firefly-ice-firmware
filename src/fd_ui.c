@@ -1,6 +1,7 @@
 #include "fd_bluetooth.h"
 #include "fd_event.h"
 #include "fd_indicator.h"
+#include "fd_led.h"
 #include "fd_processor.h"
 #include "fd_ui.h"
 #include "fd_usb.h"
@@ -12,12 +13,12 @@ void fd_ui_charge_status_callback(void) {
     bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
     if (is_usb_powered) {
         if (is_charging) {
-            fd_indicator_set_usb(0xff, 0x00);
+            fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_charging);
         } else {
-            fd_indicator_set_usb(0x00, 0xff);
+            fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_not_charging);
         }
     } else {
-        fd_indicator_set_usb(0x00, 0x00);
+        fd_indicator_set_usb_condition(fd_indicator_usb_condition_unpowered);
     }
 }
 
@@ -25,17 +26,17 @@ void fd_ui_usb_state_callback(void) {
     fd_ui_charge_status_callback();
 
     if (fd_usb_is_connected()) {
-        fd_indicator_set_d4(0xff);
+        fd_led_set_d4(0xff);
     } else {
-        fd_indicator_set_d4(0x00);
+        fd_led_set_d4(0x00);
     }
 }
 
 void fd_ui_ble_state_callback(void) {
     if (fd_nrf8001_did_connect) {
-        fd_indicator_set_d0(0xff);
+        fd_led_set_d0(0xff);
     } else {
-        fd_indicator_set_d0(0x00);
+        fd_led_set_d0(0x00);
     }
 }
 

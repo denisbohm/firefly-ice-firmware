@@ -98,6 +98,8 @@
       <file file_name="src/fd_ieee754.c"/>
       <file file_name="src/fd_ieee754.h"/>
       <file file_name="src/fd_boot.h"/>
+      <file file_name="src/fd_led.c"/>
+      <file file_name="src/fd_led.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
@@ -398,6 +400,8 @@
       <file file_name="src/fd_lock.h"/>
       <file file_name="src/fd_ieee754.c"/>
       <file file_name="src/fd_ieee754.h"/>
+      <file file_name="src/fd_led.c"/>
+      <file file_name="src/fd_led.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

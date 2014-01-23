@@ -1,46 +1,14 @@
 #ifndef FD_INDICATOR_H
 #define FD_INDICATOR_H
 
-#include "fd_time.h"
-
-#include <stdint.h>
-
-typedef struct {
-    uint8_t r;
-} fd_indicator_r_t;
-
-typedef struct {
-    uint8_t o;
-    uint8_t g;
-} fd_indicator_og_t;
-
-typedef struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} fd_indicator_rgb_t;
-
-typedef struct {
-    fd_indicator_og_t usb;
-    fd_indicator_r_t d0;
-    fd_indicator_rgb_t d1;
-    fd_indicator_rgb_t d2;
-    fd_indicator_rgb_t d3;
-    fd_indicator_r_t d4;
-} fd_indicator_state_t;
-
 void fd_indicator_initialize(void);
 
-void fd_indicator_wake(void);
-void fd_indicator_sleep(void);
+typedef enum {
+    fd_indicator_usb_condition_unpowered,            // USB LEDs are off
+    fd_indicator_usb_condition_powered_not_charging, // USB LEDs are steady green (eased in & out)
+    fd_indicator_usb_condition_powered_charging,     // USB LEDs are breathing orange (eased in & out)
+} fd_indicator_usb_condition_t;
 
-void fd_indicator_override(fd_indicator_state_t *state, fd_time_t duration);
-
-void fd_indicator_set_usb(uint8_t orange, uint8_t green);
-void fd_indicator_set_d0(uint8_t value);
-void fd_indicator_set_d1(uint8_t red, uint8_t green, uint8_t blue);
-void fd_indicator_set_d2(uint8_t red, uint8_t green, uint8_t blue);
-void fd_indicator_set_d3(uint8_t red, uint8_t green, uint8_t blue);
-void fd_indicator_set_d4(uint8_t value);
+void fd_indicator_set_usb_condition(fd_indicator_usb_condition_t condition);
 
 #endif

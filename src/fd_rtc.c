@@ -101,6 +101,8 @@ void RTC_IRQHandler(void) {
         }
         retained->rtc.microseconds = microseconds;
 
+        fd_event_set(FD_EVENT_RTC_TICK);
+
         if (rtc_countdown) {
             if (--rtc_countdown == 0) {
                 fd_event_set(FD_EVENT_RTC_COUNTDOWN);

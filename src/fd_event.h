@@ -22,6 +22,7 @@
 #define FD_EVENT_BLE_SYSTEM_CREDITS (1 << 15)
 #define FD_EVENT_BLE_STEP (1 << 16)
 #define FD_EVENT_COMMAND (1 << 17)
+#define FD_EVENT_LOCK_STATE (1 << 18)
 
 typedef void (*fd_event_callback_t)(void);
 

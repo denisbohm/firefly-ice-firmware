@@ -1,6 +1,7 @@
 #include "fd_event.h"
 #include "fd_indicator.h"
 #include "fd_led.h"
+#include "fd_timer.h"
 
 #include <math.h>
 
@@ -67,8 +68,10 @@ bool fd_indicator_animation_phase_step(fd_indicator_animation_phase_t *phase, bo
         return true;
     }
     bool done = (*phase->step_fn)(phase->step_state);
-    if (finish && done) {
-        phase->done = true;
+    if (done) {
+        if (finish) {
+            phase->done = true;
+        }
         if (phase->done_fn != 0) {
             phase->done_fn();
         }
@@ -155,6 +158,16 @@ typedef struct {
     uint32_t led;
 } fd_indicator_animation_list_step_rgb_state_t;
 
+void fd_indicator_animation_list_step_rgb_initialize(fd_indicator_animation_list_step_rgb_state_t *state) {
+    state->index = 0;
+    state->r.base = 0.0f;
+    state->r.scale = 1.0f;
+    state->g.base = 0.0f;
+    state->g.scale = 1.0f;
+    state->b.base = 0.0f;
+    state->b.scale = 1.0f;
+}
+
 bool fd_indicator_animation_list_step_rgb(void *state_p) {
     fd_indicator_animation_list_step_rgb_state_t *state = state_p;
     float v = state->values[state->index++];
@@ -174,7 +187,11 @@ bool fd_indicator_animation_list_step_rgb(void *state_p) {
         default:
             break;
     }
-    return state->index >= state->size;
+    bool done = state->index >= state->size;
+    if (done) {
+        state->index = 0;
+    }
+    return done;
 }
 
 typedef struct {
@@ -214,6 +231,12 @@ typedef struct {
     uint32_t led;
 } fd_indicator_animation_list_step_r_state_t;
 
+void fd_indicator_animation_list_step_r_initialize(fd_indicator_animation_list_step_r_state_t *state) {
+    state->index = 0;
+    state->r.base = 0.0f;
+    state->r.scale = 1.0f;
+}
+
 bool fd_indicator_animation_list_step_r(void *state_p) {
     fd_indicator_animation_list_step_r_state_t *state = state_p;
     float v = state->values[state->index++];
@@ -228,25 +251,33 @@ bool fd_indicator_animation_list_step_r(void *state_p) {
         default:
             break;
     }
-    return state->index >= state->size;
+    bool done = state->index >= state->size;
+    if (done) {
+        state->index = 0;
+    }
+    return done;
 }
 
-// When the condition changes the previous condition animation should complete its cycle
-// before the new condition animation starts.
+// USB power indication
+
+typedef struct {
+    fd_indicator_usb_condition_t condition_showing;
+    fd_indicator_usb_condition_t condition_current;
+
+    fd_indicator_animation_list_step_og_state_t in_state;
+    fd_indicator_animation_list_step_og_state_t cycle_state;
+    fd_indicator_animation_list_step_og_state_t out_state;
+    fd_indicator_animation_t animation;
+} fd_indicator_usb_t;
 
 static
-fd_indicator_usb_condition_t usb_condition_showing;
-static
-fd_indicator_usb_condition_t usb_condition_current;
+fd_indicator_usb_t usb;
 
 static
-fd_indicator_animation_list_step_og_state_t usb_in_og_state;
-static
-fd_indicator_animation_list_step_og_state_t usb_cycle_og_state;
-static
-fd_indicator_animation_list_step_og_state_t usb_out_og_state;
-static
-fd_indicator_animation_t usb_animation;
+void usb_initialize(void) {
+    usb.condition_showing = usb.condition_current = fd_indicator_usb_condition_unpowered;
+    fd_indicator_animation_initialize(&usb.animation);
+}
 
 static
 void usb_off(void) {
@@ -263,70 +294,70 @@ void usb_run(
     float cycle_base, float cycle_scale,
     float out_base, float out_scale
 ) {
-    usb_in_og_state.o.base = o * in_base;
-    usb_in_og_state.o.scale = o * in_scale;
-    usb_in_og_state.g.base = g * in_base;
-    usb_in_og_state.g.scale = g * in_scale;
+    usb.in_state.o.base = o * in_base;
+    usb.in_state.o.scale = o * in_scale;
+    usb.in_state.g.base = g * in_base;
+    usb.in_state.g.scale = g * in_scale;
 
-    usb_cycle_og_state.o.base = o * cycle_base;
-    usb_cycle_og_state.o.scale = o * cycle_scale;
-    usb_cycle_og_state.g.base = g * cycle_base;
-    usb_cycle_og_state.g.scale = g * cycle_scale;
+    usb.cycle_state.o.base = o * cycle_base;
+    usb.cycle_state.o.scale = o * cycle_scale;
+    usb.cycle_state.g.base = g * cycle_base;
+    usb.cycle_state.g.scale = g * cycle_scale;
 
-    usb_out_og_state.o.base = o * out_base;
-    usb_out_og_state.o.scale = o * out_scale;
-    usb_out_og_state.g.base = g * out_base;
-    usb_out_og_state.g.scale = g * out_scale;
+    usb.out_state.o.base = o * out_base;
+    usb.out_state.o.scale = o * out_scale;
+    usb.out_state.g.base = g * out_base;
+    usb.out_state.g.scale = g * out_scale;
 
-    fd_indicator_animation_initialize(&usb_animation);
-    usb_animation.in.step_fn = fd_indicator_animation_list_step_og;
-    usb_animation.in.step_state = &usb_in_og_state;
-    usb_animation.cycle.step_fn = fd_indicator_animation_list_step_og;
-    usb_animation.cycle.step_state = &usb_cycle_og_state;
-    usb_animation.out.step_fn = fd_indicator_animation_list_step_og;
-    usb_animation.out.step_state = &usb_out_og_state;
-    usb_animation.done_fn = usb_show;
+    fd_indicator_animation_initialize(&usb.animation);
+    usb.animation.in.step_fn = fd_indicator_animation_list_step_og;
+    usb.animation.in.step_state = &usb.in_state;
+    usb.animation.cycle.step_fn = fd_indicator_animation_list_step_og;
+    usb.animation.cycle.step_state = &usb.cycle_state;
+    usb.animation.out.step_fn = fd_indicator_animation_list_step_og;
+    usb.animation.out.step_state = &usb.out_state;
+    usb.animation.done_fn = usb_show;
 
-    fd_indicator_animation_run(&usb_animation);
+    fd_indicator_animation_run(&usb.animation);
 }
 
 static
 void usb_start_animation_powered_not_charging(void) {
-    fd_indicator_animation_list_step_og_initialize(&usb_in_og_state);
-    usb_in_og_state.size = sizeof(fd_indicator_animation_ease_linear_in);
-    usb_in_og_state.values = fd_indicator_animation_ease_linear_in;
+    fd_indicator_animation_list_step_og_initialize(&usb.in_state);
+    usb.in_state.size = sizeof(fd_indicator_animation_ease_linear_in);
+    usb.in_state.values = fd_indicator_animation_ease_linear_in;
 
-    fd_indicator_animation_list_step_og_initialize(&usb_cycle_og_state);
-    usb_cycle_og_state.size = sizeof(fd_indicator_animation_ease_single);
-    usb_cycle_og_state.values = fd_indicator_animation_ease_single;
+    fd_indicator_animation_list_step_og_initialize(&usb.cycle_state);
+    usb.cycle_state.size = sizeof(fd_indicator_animation_ease_single);
+    usb.cycle_state.values = fd_indicator_animation_ease_single;
 
-    fd_indicator_animation_list_step_og_initialize(&usb_out_og_state);
-    usb_out_og_state.size = sizeof(fd_indicator_animation_ease_linear_out);
-    usb_out_og_state.values = fd_indicator_animation_ease_linear_out;
+    fd_indicator_animation_list_step_og_initialize(&usb.out_state);
+    usb.out_state.size = sizeof(fd_indicator_animation_ease_linear_out);
+    usb.out_state.values = fd_indicator_animation_ease_linear_out;
 
     usb_run(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f);
 }
 
 static
 void usb_start_animation_powered_charging(void) {
-    fd_indicator_animation_list_step_og_initialize(&usb_in_og_state);
-    usb_in_og_state.size = sizeof(fd_indicator_animation_ease_linear_in);
-    usb_in_og_state.values = fd_indicator_animation_ease_linear_in;
+    fd_indicator_animation_list_step_og_initialize(&usb.in_state);
+    usb.in_state.size = sizeof(fd_indicator_animation_ease_linear_in);
+    usb.in_state.values = fd_indicator_animation_ease_linear_in;
 
-    fd_indicator_animation_list_step_og_initialize(&usb_cycle_og_state);
-    usb_cycle_og_state.size = sizeof(fd_indicator_animation_ease_quad_pulse);
-    usb_cycle_og_state.values = fd_indicator_animation_ease_quad_pulse;
+    fd_indicator_animation_list_step_og_initialize(&usb.cycle_state);
+    usb.cycle_state.size = sizeof(fd_indicator_animation_ease_quad_pulse);
+    usb.cycle_state.values = fd_indicator_animation_ease_quad_pulse;
 
-    fd_indicator_animation_list_step_og_initialize(&usb_out_og_state);
-    usb_out_og_state.size = sizeof(fd_indicator_animation_ease_linear_out);
-    usb_out_og_state.values = fd_indicator_animation_ease_linear_out;
+    fd_indicator_animation_list_step_og_initialize(&usb.out_state);
+    usb.out_state.size = sizeof(fd_indicator_animation_ease_linear_out);
+    usb.out_state.values = fd_indicator_animation_ease_linear_out;
 
     usb_run(1.0f, 1.0f, 0.0f, 0.2f, 51.0f, 0.8f, 0.0f, 0.2f);
 }
 
 static
 void usb_show(void) {
-    switch (usb_condition_current) {
+    switch (usb.condition_current) {
         case fd_indicator_usb_condition_unpowered:
             usb_off();
         break;
@@ -337,39 +368,391 @@ void usb_show(void) {
             usb_start_animation_powered_charging();
         break;
     }
-    usb_condition_showing = usb_condition_current;
+    usb.condition_showing = usb.condition_current;
 }
 
 void fd_indicator_set_usb_condition(fd_indicator_usb_condition_t condition) {
-    if (usb_condition_current == condition) {
+    if (usb.condition_current == condition) {
         return;
     }
 
-    if (usb_condition_showing == condition) {
-        fd_indicator_animation_run(&usb_animation);
-        usb_condition_current = condition;
+    if (usb.condition_showing == condition) {
+        fd_indicator_animation_run(&usb.animation);
+        usb.condition_current = condition;
         return;
     }
 
-    if (usb_animation.running) {
-        usb_animation.cancelling = true;
-        usb_condition_current = condition;
+    if (usb.animation.running) {
+        usb.animation.cancelling = true;
+        usb.condition_current = condition;
         return;
     }
 
     // start usb animation
-    usb_condition_current = condition;
+    usb.condition_current = condition;
 
     usb_show();
 }
 
+// communication indication
+
+typedef struct {
+    fd_indicator_connection_condition_t condition_showing;
+    fd_indicator_connection_condition_t condition_current;
+
+    fd_indicator_animation_list_step_rgb_state_t cycle_state;
+    fd_indicator_animation_t animation;
+
+    uint32_t led;
+    float r;
+    float g;
+    float b;
+} fd_indicator_connection_t;
+
+static
+void connection_initialize(fd_indicator_connection_t *connection, uint32_t led, float r, float g, float b, fd_indicator_animation_event_fn_t done_fn) {
+    connection->condition_showing = connection->condition_current = fd_indicator_connection_condition_unconnected;
+    fd_indicator_animation_initialize(&connection->animation);
+    connection->led = led;
+    connection->r = r;
+    connection->g = g;
+    connection->b = b;
+    connection->animation.done_fn = done_fn;
+}
+
+static
+void connection_off(fd_indicator_connection_t *connection) {
+    switch (connection->led) {
+        case 1:
+            fd_led_set_d1(0, 0, 0);
+        break;
+        case 2:
+            fd_led_set_d2(0, 0, 0);
+        break;
+        case 3:
+            fd_led_set_d3(0, 0, 0);
+        break;
+    }
+}
+
+static
+void connection_run(
+    fd_indicator_connection_t *connection,
+    float cycle_base, float cycle_scale
+) {
+    connection->cycle_state.r.base = connection->r * cycle_base;
+    connection->cycle_state.r.scale = connection->r * cycle_scale;
+    connection->cycle_state.g.base = connection->g * cycle_base;
+    connection->cycle_state.g.scale = connection->g * cycle_scale;
+    connection->cycle_state.b.base = connection->b * cycle_base;
+    connection->cycle_state.b.scale = connection->b * cycle_scale;
+    connection->cycle_state.led = connection->led;
+
+    fd_indicator_animation_t *animation = &connection->animation;
+    fd_indicator_animation_initialize(animation);
+    animation->cycle.step_fn = fd_indicator_animation_list_step_rgb;
+    animation->cycle.step_state = &connection->cycle_state;
+
+    fd_indicator_animation_run(animation);
+}
+
+static
+void connection_start_animation_not_syncing(fd_indicator_connection_t *connection) {
+    fd_indicator_animation_list_step_rgb_state_t *cycle_state = &connection->cycle_state;
+    fd_indicator_animation_list_step_rgb_initialize(cycle_state);
+    cycle_state->size = sizeof(fd_indicator_animation_ease_quad_pulse);
+    cycle_state->values = fd_indicator_animation_ease_quad_pulse;
+
+    connection_run(connection, 0.0f, 0.2f);
+}
+
+static
+void connection_start_animation_syncing(fd_indicator_connection_t *connection) {
+    fd_indicator_animation_list_step_rgb_state_t *cycle_state = &connection->cycle_state;
+    fd_indicator_animation_list_step_rgb_initialize(cycle_state);
+    cycle_state->size = sizeof(fd_indicator_animation_ease_quad_pulse);
+    cycle_state->values = fd_indicator_animation_ease_quad_pulse;
+
+    connection_run(connection, 0.0f, 0.1f);
+}
+
+static
+void connection_show(fd_indicator_connection_t *connection) {
+    switch (connection->condition_current) {
+        case fd_indicator_connection_condition_unconnected:
+            connection_off(connection);
+        break;
+        case fd_indicator_connection_condition_not_syncing:
+            connection_start_animation_not_syncing(connection);
+        break;
+        case fd_indicator_connection_condition_syncing:
+            connection_start_animation_syncing(connection);
+        break;
+    }
+    connection->condition_showing = connection->condition_current;
+}
+
+static
+void connection_set_condition(fd_indicator_connection_t *connection, fd_indicator_connection_condition_t condition) {
+    if (connection->condition_current == condition) {
+        return;
+    }
+
+    if (connection->condition_showing == condition) {
+        fd_indicator_animation_run(&connection->animation);
+        connection->condition_current = condition;
+        return;
+    }
+
+    if (connection->animation.running) {
+        connection->animation.cancelling = true;
+        connection->condition_current = condition;
+        return;
+    }
+
+    // start usb animation
+    connection->condition_current = condition;
+
+    connection_show(connection);
+}
+
+// usb communication indication
+
+static
+fd_indicator_connection_t usb_connection;
+
+static
+void usb_connection_show(void) {
+    connection_show(&usb_connection);
+}
+
+void fd_indicator_set_usb_connection_condition(fd_indicator_connection_condition_t condition) {
+    connection_set_condition(&usb_connection, condition);
+}
+
+// ble communication indication
+
+static
+fd_indicator_connection_t ble_connection;
+
+static
+void ble_connection_show(void) {
+    connection_show(&ble_connection);
+}
+
+void fd_indicator_set_ble_connection_condition(fd_indicator_connection_condition_t condition) {
+    connection_set_condition(&ble_connection, condition);
+}
+
+// identify indication
+
+typedef struct {
+    fd_indicator_identify_condition_t condition_showing;
+    fd_indicator_identify_condition_t condition_current;
+
+    fd_indicator_animation_list_step_rgb_state_t cycle_state;
+    fd_indicator_animation_t animation;
+} fd_indicator_identify_t;
+
+static
+fd_indicator_identify_t identify;
+
+static
+fd_timer_t identify_timer;
+
+static
+void identify_timer_callback(void) {
+    fd_indicator_set_identify_condition(fd_indicator_identify_condition_inactive);
+}
+
+static
+void identify_initialize(void) {
+    identify.condition_showing = identify.condition_current = fd_indicator_identify_condition_inactive;
+    fd_indicator_animation_initialize(&identify.animation);
+    identify.cycle_state.led = 2;
+
+    fd_timer_add(&identify_timer, identify_timer_callback);
+}
+
+static
+void identify_off(void) {
+    fd_led_set_d2(0, 0, 0);
+}
+
+static
+void identify_show(void);
+
+static
+void identify_run(
+    float r, float g, float b,
+    float cycle_base, float cycle_scale
+) {
+    identify.cycle_state.r.base = r * cycle_base;
+    identify.cycle_state.r.scale = r * cycle_scale;
+    identify.cycle_state.g.base = g * cycle_base;
+    identify.cycle_state.g.scale = g * cycle_scale;
+    identify.cycle_state.b.base = b * cycle_base;
+    identify.cycle_state.b.scale = b * cycle_scale;
+
+    fd_indicator_animation_initialize(&identify.animation);
+    identify.animation.cycle.step_fn = fd_indicator_animation_list_step_rgb;
+    identify.animation.cycle.step_state = &identify.cycle_state;
+    identify.animation.done_fn = identify_show;
+
+    fd_indicator_animation_run(&identify.animation);
+}
+
+static
+void identify_start_animation_active(void) {
+    fd_indicator_animation_list_step_rgb_initialize(&identify.cycle_state);
+    identify.cycle_state.size = sizeof(fd_indicator_animation_ease_quad_pulse);
+    identify.cycle_state.values = fd_indicator_animation_ease_quad_pulse;
+
+    identify_run(1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
+}
+
+static
+void identify_show(void) {
+    switch (identify.condition_current) {
+        case fd_indicator_identify_condition_inactive:
+            identify_off();
+        break;
+        case fd_indicator_identify_condition_active:
+            identify_start_animation_active();
+        break;
+    }
+    identify.condition_showing = identify.condition_current;
+}
+
+void fd_indicator_set_identify_condition(fd_indicator_identify_condition_t condition) {
+    if (identify.condition_current == condition) {
+        return;
+    }
+
+    if (identify.condition_showing == condition) {
+        fd_indicator_animation_run(&identify.animation);
+        identify.condition_current = condition;
+        return;
+    }
+
+    if (identify.animation.running) {
+        identify.animation.cancelling = true;
+        identify.condition_current = condition;
+        return;
+    }
+
+    // start identify animation
+    identify.condition_current = condition;
+
+    identify_show();
+}
+
+void fd_indicator_set_identify_condition_active(fd_time_t duration) {
+    fd_indicator_set_identify_condition(fd_indicator_identify_condition_active);
+    fd_timer_start(&identify_timer, duration);
+}
+
+// error indication
+
+typedef struct {
+    fd_indicator_error_condition_t condition_showing;
+    fd_indicator_error_condition_t condition_current;
+
+    fd_indicator_animation_list_step_r_state_t cycle_state;
+    fd_indicator_animation_t animation;
+} fd_indicator_error_t;
+
+static
+fd_indicator_error_t error;
+
+static
+void error_initialize(void) {
+    error.condition_showing = error.condition_current = fd_indicator_error_condition_inactive;
+    fd_indicator_animation_initialize(&error.animation);
+}
+
+static
+void error_off(void) {
+    fd_led_set_d0(0);
+    fd_led_set_d4(0);
+}
+
+static
+void error_flip(void) {
+    error.cycle_state.led = error.cycle_state.led == 0 ? 4 : 0;
+}
+
+static
+void error_show(void);
+
+static
+void error_start_animation_active(void) {
+    fd_indicator_animation_list_step_r_initialize(&error.cycle_state);
+    error.cycle_state.size = sizeof(fd_indicator_animation_ease_quad_pulse);
+    error.cycle_state.values = fd_indicator_animation_ease_quad_pulse;
+    error.cycle_state.led = 0;
+
+    fd_indicator_animation_initialize(&error.animation);
+    error.animation.cycle.step_fn = fd_indicator_animation_list_step_r;
+    error.animation.cycle.step_state = &error.cycle_state;
+    error.animation.cycle.done_fn = error_flip;
+    error.animation.done_fn = error_show;
+
+    fd_indicator_animation_run(&error.animation);
+}
+
+static
+void error_show(void) {
+    switch (error.condition_current) {
+        case fd_indicator_error_condition_inactive:
+            error_off();
+        break;
+        case fd_indicator_error_condition_active:
+            error_start_animation_active();
+        break;
+    }
+    error.condition_showing = error.condition_current;
+}
+
+void fd_indicator_set_error_condition(fd_indicator_error_condition_t condition) {
+    if (error.condition_current == condition) {
+        return;
+    }
+
+    if (error.condition_showing == condition) {
+        fd_indicator_animation_run(&error.animation);
+        error.condition_current = condition;
+        return;
+    }
+
+    if (error.animation.running) {
+        error.animation.cancelling = true;
+        error.condition_current = condition;
+        return;
+    }
+
+    // start error animation
+    error.condition_current = condition;
+
+    error_show();
+}
+
+// indicator
+
 void fd_indicator_step(void) {
-    fd_indicator_animation_step(&usb_animation);
+    fd_indicator_animation_step(&usb.animation);
+    fd_indicator_animation_step(&usb_connection.animation);
+    fd_indicator_animation_step(&ble_connection.animation);
+    fd_indicator_animation_step(&identify.animation);
+    fd_indicator_animation_step(&error.animation);
 }
 
 void fd_indicator_initialize(void) {
-    usb_condition_showing = usb_condition_current = fd_indicator_usb_condition_unpowered;
-    fd_indicator_animation_initialize(&usb_animation);
+    usb_initialize();
+    connection_initialize(&usb_connection, 1, 0.0f, 1.0f, 0.0f, usb_connection_show);
+    connection_initialize(&ble_connection, 3, 0.0f, 0.0f, 1.0f, ble_connection_show);
+    identify_initialize();
+    error_initialize();
 
     fd_event_add_callback(FD_EVENT_RTC_TICK, fd_indicator_step);
 }

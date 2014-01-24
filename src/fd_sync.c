@@ -44,7 +44,9 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
         if (shortage == 1) {
             has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
         }
-        if (!has_page) {
+        if (has_page) {
+            --shortage;
+        } else {
             // send indication that there is nothing to sync -denis
             metadata.page = 0xfffffffe;
             metadata.length = 0;

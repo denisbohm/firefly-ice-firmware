@@ -7,6 +7,8 @@
 #include <em_gpio.h>
 #include <em_timer.h>
 
+#include <string.h>
+
 // D0 (r) PC1 TIM0_CC2 #4
 // D4 (r) PC0 TIM0_CC1 #4
 // D5 (usb.o) PE9
@@ -21,13 +23,28 @@ static
 uint32_t active_leds;
 
 static
+fd_led_state_t led_state;
+
+static
+void fd_led_restore(void) {
+    fd_led_set_usb(led_state.usb.o, led_state.usb.g);
+
+    fd_led_set_d0(led_state.d0.r);
+    fd_led_set_d4(led_state.d4.r);
+
+    fd_led_set_d1(led_state.d1.r, led_state.d1.g, led_state.d1.b);
+    fd_led_set_d2(led_state.d2.r, led_state.d2.g, led_state.d2.b);
+    fd_led_set_d3(led_state.d3.r, led_state.d3.g, led_state.d3.b);
+}
+
+static
 void override_callback(void) {
-    fd_led_set_d1(0, 0, 0);
-    fd_led_set_d2(0, 0, 0);
-    fd_led_set_d3(0, 0, 0);
+    fd_led_restore();
 }
 
 void fd_led_initialize(void) {
+    memset(&led_state, 0, sizeof(led_state));
+
     fd_timer_add(&override_timer, override_callback);
 
     TIMER_CompareSet(TIMER0, /* channel */ 1, TOP);
@@ -67,6 +84,12 @@ void fd_led_change_after(uint32_t n, uint32_t value) {
 }
 
 void fd_led_set_usb(uint8_t orange, uint8_t green) {
+    led_state.usb.o = orange;
+    led_state.usb.g = green;
+    if (override_timer.active) {
+        return;
+    }
+
     fd_led_change_before(5, (orange << 8) | green);
 
     // to distinguish overflow and compare interrupts unambiguously -denis
@@ -81,6 +104,11 @@ void fd_led_set_usb(uint8_t orange, uint8_t green) {
 }
 
 void fd_led_set_d0(uint8_t value) {
+    led_state.d0.r = value;
+    if (override_timer.active) {
+        return;
+    }
+
     fd_led_change_before(0, value);
 
     TIMER_CompareSet(TIMER0, /* channel */ 2, (~value) << 8);
@@ -89,6 +117,13 @@ void fd_led_set_d0(uint8_t value) {
 }
 
 void fd_led_set_d1(uint8_t red, uint8_t green, uint8_t blue) {
+    led_state.d1.r = red;
+    led_state.d1.g = green;
+    led_state.d1.b = blue;
+    if (override_timer.active) {
+        return;
+    }
+
     fd_led_change_before(1, (red << 24) | (green << 16) | blue);
 
     fd_lp55231_set_led_pwm(9, red);
@@ -99,6 +134,13 @@ void fd_led_set_d1(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void fd_led_set_d2(uint8_t red, uint8_t green, uint8_t blue) {
+    led_state.d2.r = red;
+    led_state.d2.g = green;
+    led_state.d2.b = blue;
+    if (override_timer.active) {
+        return;
+    }
+
     fd_led_change_before(2, (red << 24) | (green << 16) | blue);
 
     fd_lp55231_set_led_pwm(8, red);
@@ -109,6 +151,13 @@ void fd_led_set_d2(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void fd_led_set_d3(uint8_t red, uint8_t green, uint8_t blue) {
+    led_state.d3.r = red;
+    led_state.d3.g = green;
+    led_state.d3.b = blue;
+    if (override_timer.active) {
+        return;
+    }
+
     fd_led_change_before(3, (red << 24) | (green << 16) | blue);
 
     fd_lp55231_set_led_pwm(7, red);
@@ -119,6 +168,11 @@ void fd_led_set_d3(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void fd_led_set_d4(uint8_t value) {
+    led_state.d4.r = value;
+    if (override_timer.active) {
+        return;
+    }
+
     fd_led_change_before(4, value);
 
     TIMER_CompareSet(TIMER0, /* channel */ 1, (~value) << 8);
@@ -166,6 +220,8 @@ void fd_led_wake(void) {
 }
 
 void fd_led_sleep(void) {
+    fd_timer_stop(&override_timer);
+
     fd_lp55231_sleep();
     fd_lp55231_power_off();
 
@@ -197,14 +253,15 @@ void TIMER3_IRQHandler(void) {
 }
 
 void fd_led_override(fd_led_state_t *state, fd_time_t duration) {
-//    fd_led_set_usb(state->usb.o, state->usb.g);
+    fd_led_state_t saved_state = led_state;
 
-//    fd_led_set_d0(state->d0.r);
-//    fd_led_set_d4(state->d4.r);
-
+    fd_led_set_usb(state->usb.o, state->usb.g);
+    fd_led_set_d0(state->d0.r);
+    fd_led_set_d4(state->d4.r);
     fd_led_set_d1(state->d1.r, state->d1.g, state->d1.b);
     fd_led_set_d2(state->d2.r, state->d2.g, state->d2.b);
     fd_led_set_d3(state->d3.r, state->d3.g, state->d3.b);
 
+    led_state = saved_state;
     fd_timer_start(&override_timer, duration);
 }

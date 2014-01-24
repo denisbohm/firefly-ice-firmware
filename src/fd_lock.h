@@ -26,6 +26,8 @@ enum {
 };
 typedef uint8_t fd_lock_identifier_t;
 
+fd_lock_owner_t fd_lock_owner(fd_lock_identifier_t identifier);
+
 fd_lock_owner_t fd_lock(fd_lock_identifier_t identifier, fd_lock_operation_t operation, fd_lock_owner_t owner);
 
 void fd_lock_close(fd_lock_owner_t owner);

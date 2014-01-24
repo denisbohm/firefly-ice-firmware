@@ -5,6 +5,7 @@
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_event.h"
+#include "fd_indicator.h"
 #include "fd_led.h"
 #include "fd_lock.h"
 #include "fd_log.h"
@@ -192,7 +193,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
 #define VERSION_PATCH 23
-#define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION | FD_CONTROL_CAPABILITY_SYNC_AHEAD)
+#define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION | FD_CONTROL_CAPABILITY_SYNC_AHEAD | FD_CONTROL_CAPABILITY_IDENTIFY)
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
@@ -493,7 +494,7 @@ void get_rgb(fd_binary_t *binary, fd_led_rgb_t *rgb) {
     rgb->b = fd_binary_get_uint8(binary);
 }
 
-void fd_control_indicator_override(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_led_override(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     fd_led_state_t state;
@@ -507,6 +508,18 @@ void fd_control_indicator_override(fd_detour_source_collection_t *detour_source_
     fd_time_t duration = fd_binary_get_time64(&binary);
 
     fd_led_override(&state, duration);
+}
+
+void fd_control_identify(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    bool active = fd_binary_get_uint8(&binary) != 0;
+    if (active) {
+        fd_time_t duration = fd_binary_get_time64(&binary);
+        fd_indicator_set_identify_condition_active(duration);
+    } else {
+        fd_indicator_set_identify_condition(fd_indicator_identify_condition_inactive);
+    }
 }
 
 void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -585,8 +598,12 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
             command = fd_control_disconnect;
             break;
 
-        case FD_CONTROL_INDICATOR_OVERRIDE:
-            command = fd_control_indicator_override;
+        case FD_CONTROL_LED_OVERRIDE:
+            command = fd_control_led_override;
+            break;
+
+        case FD_CONTROL_IDENTIFY:
+            command = fd_control_identify;
             break;
 
         case FD_CONTROL_SYNC_START:

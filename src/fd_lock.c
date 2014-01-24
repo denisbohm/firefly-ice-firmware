@@ -1,3 +1,4 @@
+#include "fd_event.h"
 #include "fd_lock.h"
 
 #include <stdint.h>
@@ -10,6 +11,10 @@ void fd_lock_initialize(void) {
     for (uint32_t i = 0; i < FD_LOCK_COUNT; ++i) {
         fd_lock_owners[i] = fd_lock_owner_none;
     }
+}
+
+fd_lock_owner_t fd_lock_owner(fd_lock_identifier_t identifier) {
+    return fd_lock_owners[identifier];
 }
 
 void fd_lock_close(fd_lock_owner_t owner) {
@@ -36,5 +41,6 @@ fd_lock_owner_t fd_lock(fd_lock_identifier_t identifier, fd_lock_operation_t ope
         }
         lock_owner = fd_lock_owners[identifier];
     }
+    fd_event_set(FD_EVENT_LOCK_STATE);
     return lock_owner;
 }

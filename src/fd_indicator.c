@@ -150,6 +150,7 @@ uint8_t fd_indicator_animation_equ(fd_indicator_animation_equ_t equ, float v) {
 
 typedef struct {
     uint32_t index;
+    uint32_t count;
     uint32_t size;
     uint8_t *values;
     fd_indicator_animation_equ_t r;
@@ -170,26 +171,31 @@ void fd_indicator_animation_list_step_rgb_initialize(fd_indicator_animation_list
 
 bool fd_indicator_animation_list_step_rgb(void *state_p) {
     fd_indicator_animation_list_step_rgb_state_t *state = state_p;
-    float v = state->values[state->index++];
-    uint8_t r = fd_indicator_animation_equ(state->r, v);
-    uint8_t g = fd_indicator_animation_equ(state->g, v);
-    uint8_t b = fd_indicator_animation_equ(state->b, v);
-    switch (state->led) {
-        case 1:
-            fd_led_set_d1(r, g, b);
-            break;
-        case 2:
-            fd_led_set_d2(r, g, b);
-            break;
-        case 3:
-            fd_led_set_d3(r, g, b);
-            break;
-        default:
-            break;
+    if (state->index < state->size) {
+        float v = state->values[state->index];
+        uint8_t r = fd_indicator_animation_equ(state->r, v);
+        uint8_t g = fd_indicator_animation_equ(state->g, v);
+        uint8_t b = fd_indicator_animation_equ(state->b, v);
+        switch (state->led) {
+            case 1:
+                fd_led_set_d1(r, g, b);
+                break;
+            case 2:
+                fd_led_set_d2(r, g, b);
+                break;
+            case 3:
+                fd_led_set_d3(r, g, b);
+                break;
+            default:
+                break;
+        }
     }
+    ++state->index;
     bool done = state->index >= state->size;
     if (done) {
-        state->index = 0;
+        if (state->index >= state->count) {
+            state->index = 0;
+        }
     }
     return done;
 }
@@ -460,16 +466,18 @@ static
 void connection_start_animation_not_syncing(fd_indicator_connection_t *connection) {
     fd_indicator_animation_list_step_rgb_state_t *cycle_state = &connection->cycle_state;
     fd_indicator_animation_list_step_rgb_initialize(cycle_state);
+    cycle_state->count = 3 * 32 + sizeof(fd_indicator_animation_ease_quad_pulse);
     cycle_state->size = sizeof(fd_indicator_animation_ease_quad_pulse);
     cycle_state->values = fd_indicator_animation_ease_quad_pulse;
 
-    connection_run(connection, 0.0f, 0.2f);
+    connection_run(connection, 0.0f, 0.1f);
 }
 
 static
 void connection_start_animation_syncing(fd_indicator_connection_t *connection) {
     fd_indicator_animation_list_step_rgb_state_t *cycle_state = &connection->cycle_state;
     fd_indicator_animation_list_step_rgb_initialize(cycle_state);
+    cycle_state->count = sizeof(fd_indicator_animation_ease_quad_pulse);
     cycle_state->size = sizeof(fd_indicator_animation_ease_quad_pulse);
     cycle_state->values = fd_indicator_animation_ease_quad_pulse;
 
@@ -605,6 +613,7 @@ void identify_run(
 static
 void identify_start_animation_active(void) {
     fd_indicator_animation_list_step_rgb_initialize(&identify.cycle_state);
+    identify.cycle_state.count = sizeof(fd_indicator_animation_ease_quad_pulse);
     identify.cycle_state.size = sizeof(fd_indicator_animation_ease_quad_pulse);
     identify.cycle_state.values = fd_indicator_animation_ease_quad_pulse;
 

@@ -4,7 +4,7 @@
 #include "fd_rtc.h"
 #include "fd_timer.h"
 
-#define TIMERS_LIMIT 8
+#define TIMERS_LIMIT 16
 
 static fd_timer_t *timers[TIMERS_LIMIT];
 static uint32_t timer_count;

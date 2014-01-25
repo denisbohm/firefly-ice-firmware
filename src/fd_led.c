@@ -1,3 +1,4 @@
+#include "fd_event.h"
 #include "fd_led.h"
 #include "fd_lp55231.h"
 #include "fd_processor.h"
@@ -42,6 +43,10 @@ void override_callback(void) {
     fd_led_restore();
 }
 
+static bool fd_led_em2_check(void) {
+    return active_leds == 0;
+}
+
 void fd_led_initialize(void) {
     memset(&led_state, 0, sizeof(led_state));
 
@@ -54,6 +59,8 @@ void fd_led_initialize(void) {
     TIMER_CompareSet(TIMER3, /* channel */ 2, TOP);
 
     fd_led_sleep();
+
+    fd_event_add_em2_check(fd_led_em2_check);
 }
 
 void fd_led_change_before(uint32_t n, uint32_t value) {

@@ -413,6 +413,7 @@ typedef struct {
     float r;
     float g;
     float b;
+    fd_indicator_animation_event_fn_t done_fn;
 } fd_indicator_connection_t;
 
 static
@@ -423,7 +424,7 @@ void connection_initialize(fd_indicator_connection_t *connection, uint32_t led, 
     connection->r = r;
     connection->g = g;
     connection->b = b;
-    connection->animation.done_fn = done_fn;
+    connection->done_fn = done_fn;
 }
 
 static
@@ -458,6 +459,7 @@ void connection_run(
     fd_indicator_animation_initialize(animation);
     animation->cycle.step_fn = fd_indicator_animation_list_step_rgb;
     animation->cycle.step_state = &connection->cycle_state;
+    animation->done_fn = connection->done_fn;
 
     fd_indicator_animation_run(animation);
 }
@@ -481,7 +483,7 @@ void connection_start_animation_syncing(fd_indicator_connection_t *connection) {
     cycle_state->size = sizeof(fd_indicator_animation_ease_quad_pulse);
     cycle_state->values = fd_indicator_animation_ease_quad_pulse;
 
-    connection_run(connection, 0.0f, 0.1f);
+    connection_run(connection, 0.0f, 1.0f);
 }
 
 static

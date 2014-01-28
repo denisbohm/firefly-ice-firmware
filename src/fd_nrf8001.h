@@ -21,6 +21,8 @@ void fd_nrf8001_send(uint8_t *message, uint32_t length);
 void fd_nrf8001_send_with_data(uint8_t *message, uint32_t length, uint8_t *data, uint32_t data_length);
 
 void fd_nrf8001_error(void);
+uint32_t fd_nrf8001_get_system_credits(void);
+uint32_t fd_nrf8001_get_data_credits(void);
 
 
 void fd_nrf8001_spi_tx_clear(void);

@@ -1,6 +1,7 @@
 #ifndef FD_BLUETOOTH_H
 #define FD_BLUETOOTH_H
 
+#include "fd_binary.h"
 #include "fd_time.h"
 
 #include <stdbool.h>
@@ -27,5 +28,7 @@ void fd_bluetooth_step(void);
 extern bool fd_nrf8001_did_setup;
 extern bool fd_nrf8001_did_connect;
 extern bool fd_nrf8001_did_receive_data;
+
+void fd_bluetooth_diagnostics(fd_binary_t *binary);
 
 #endif

@@ -192,8 +192,14 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 25
-#define VERSION_CAPABILITIES (FD_CONTROL_CAPABILITY_LOCK | FD_CONTROL_CAPABILITY_BOOT_VERSION | FD_CONTROL_CAPABILITY_SYNC_AHEAD | FD_CONTROL_CAPABILITY_IDENTIFY)
+#define VERSION_PATCH 26
+#define VERSION_CAPABILITIES (\
+ FD_CONTROL_CAPABILITY_LOCK |\
+ FD_CONTROL_CAPABILITY_BOOT_VERSION |\
+ FD_CONTROL_CAPABILITY_SYNC_AHEAD |\
+ FD_CONTROL_CAPABILITY_IDENTIFY |\
+ FD_CONTROL_CAPABILITY_LOGGING |\
+ FD_CONTROL_CAPABILITY_DIAGNOSTICS )
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
@@ -297,6 +303,24 @@ void fd_control_get_property_boot_version(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, boot_data.git_commit, sizeof(boot_data.git_commit));
 }
 
+void fd_control_get_property_logging(fd_binary_t *binary) {
+    fd_binary_put_uint32(binary, FD_CONTROL_LOGGING_STATE | FD_CONTROL_LOGGING_COUNT);
+    fd_binary_put_uint32(binary, fd_log_get_storage() ? FD_CONTROL_LOGGING_STORAGE : 0);
+    fd_binary_put_uint32(binary, fd_log_get_count());
+}
+
+void fd_control_set_property_logging(fd_binary_t *binary) {
+    uint32_t flags = fd_binary_get_uint32(binary);
+    if (flags & FD_CONTROL_LOGGING_STATE) {
+        uint32_t state = fd_binary_get_uint32(binary);
+        fd_log_set_storage((state & FD_CONTROL_LOGGING_STORAGE) != 0);
+    }
+    if (flags & FD_CONTROL_LOGGING_COUNT) {
+        uint32_t count = fd_binary_get_uint32(binary);
+        fd_log_set_count(count);
+    }
+}
+
 #define GET_PROPERTY_MASK\
  (FD_CONTROL_PROPERTY_VERSION |\
  FD_CONTROL_PROPERTY_HARDWARE_ID |\
@@ -308,7 +332,8 @@ void fd_control_get_property_boot_version(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_STORAGE |\
  FD_CONTROL_PROPERTY_MODE |\
  FD_CONTROL_PROPERTY_TX_POWER |\
- FD_CONTROL_PROPERTY_BOOT_VERSION)
+ FD_CONTROL_PROPERTY_BOOT_VERSION |\
+ FD_CONTROL_PROPERTY_LOGGING)
 
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -353,6 +378,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_BOOT_VERSION: {
                     fd_control_get_property_boot_version(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_LOGGING: {
+                    fd_control_get_property_logging(binary_out);
+                } break;
             }
         }
     }
@@ -380,6 +408,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_TX_POWER: {
                     fd_control_set_property_tx_power(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_LOGGING: {
+                    fd_control_set_property_logging(&binary);
                 } break;
             }
         }
@@ -537,6 +568,19 @@ void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, ui
     fd_control_send_complete(detour_source_collection);
 }
 
+void fd_control_diagnostics(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t flags = fd_binary_get_uint32(&binary);
+
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_DIAGNOSTICS);
+    fd_binary_put_uint32(binary_out, flags);
+    if (flags & FD_CONTROL_DIAGNOSTICS_BLE) {
+        fd_bluetooth_diagnostics(binary_out);
+    }
+    fd_control_send_complete(detour_source_collection);
+}
+
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis
 
 void fd_control_process_command(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -615,6 +659,10 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
 
         case FD_CONTROL_LOCK:
             command = fd_control_lock;
+            break;
+
+        case FD_CONTROL_DIAGNOSTICS:
+            command = fd_control_diagnostics;
             break;
     }
     if (command) {

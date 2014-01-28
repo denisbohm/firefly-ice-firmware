@@ -2,11 +2,17 @@
 #define FD_LOG_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 extern bool fd_log_did_log;
 
 void fd_log_initialize(void);
-void fd_log_enable_storage(bool enable);
+
+void fd_log_set_count(uint32_t count);
+uint32_t fd_log_get_count(void);
+
+bool fd_log_get_storage(void);
+void fd_log_set_storage(bool enable);
 
 void fd_log(char *message);
 void fd_log_at(char *file, int line, char *message);

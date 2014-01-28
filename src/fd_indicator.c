@@ -760,8 +760,8 @@ void fd_indicator_step(void) {
 
 void fd_indicator_initialize(void) {
     usb_initialize();
-    connection_initialize(&usb_connection, 1, 0.0f, 1.0f, 0.0f, usb_connection_show);
-    connection_initialize(&ble_connection, 3, 0.0f, 0.0f, 1.0f, ble_connection_show);
+    connection_initialize(&usb_connection, 3, 0.0f, 1.0f, 0.0f, usb_connection_show);
+    connection_initialize(&ble_connection, 1, 0.0f, 0.0f, 1.0f, ble_connection_show);
     identify_initialize();
     error_initialize();
 

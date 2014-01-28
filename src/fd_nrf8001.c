@@ -21,6 +21,10 @@ void fd_nrf8001_initialize(void) {
 #define WEAK __attribute__((weak))
 // command responses
 
+uint32_t fd_nrf8001_get_system_credits(void) {
+    return system_credits;
+}
+
 bool fd_nrf8001_has_system_credits(void) {
     return system_credits > 0;
 }
@@ -56,6 +60,10 @@ void fd_nrf8001_use_system_credits(uint32_t credits) {
     system_credits -= credits;
 
     fd_nrf8001_system_credit_change();
+}
+
+uint32_t fd_nrf8001_get_data_credits(void) {
+    return data_credits;
 }
 
 bool fd_nrf8001_has_data_credits(void) {

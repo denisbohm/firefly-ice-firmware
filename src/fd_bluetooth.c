@@ -1,3 +1,4 @@
+#include "fd_binary.h"
 #include "fd_bluetooth.h"
 #include "fd_control.h"
 #include "fd_detour.h"
@@ -179,9 +180,12 @@ fd_bluetooth_disconnect_action_t fd_bluetooth_disconnect_action;
 fd_timer_t fd_bluetooth_dtm_timer;
 
 bool fd_nrf8001_did_setup;
+bool fd_nrf8001_did_advertise;
 bool fd_nrf8001_did_connect;
 bool fd_nrf8001_did_open_pipes;
 bool fd_nrf8001_did_receive_data;
+
+uint8_t fd_blutooth_operating_mode;
 
 bool fd_bluetooth_spi_transfer(void);
 void fd_bluetooth_dtm_time(void);
@@ -215,13 +219,57 @@ void fd_bluetooth_initialize(void) {
     fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_connect;
 
     fd_nrf8001_did_setup = false;
+    fd_nrf8001_did_advertise = false;
     fd_nrf8001_did_connect = false;
     fd_nrf8001_did_open_pipes = false;
     fd_nrf8001_did_receive_data = false;
 
+    fd_blutooth_operating_mode = 0;
+
     fd_event_add_callback(FD_EVENT_NRF_RDYN | FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS | FD_EVENT_BLE_STEP, fd_bluetooth_ready);
 
     fd_timer_add(&fd_bluetooth_dtm_timer, fd_bluetooth_direct_test_mode_exit);
+}
+
+#define FD_BLUETOOTH_DID_SETUP        0x01
+#define FD_BLUETOOTH_DID_ADVERTISE    0x02
+#define FD_BLUETOOTH_DID_CONNECT      0x04
+#define FD_BLUETOOTH_DID_OPEN_PIPES   0x08
+#define FD_BLUETOOTH_DID_RECEIVE_DATA 0x10
+
+void fd_bluetooth_diagnostics(fd_binary_t *binary) {
+    fd_binary_put_uint32(binary, 42 /* length of following bytes */);
+    fd_binary_put_uint32(binary, 1 /* version */);
+    fd_binary_put_uint32(binary, fd_bluetooth_system_steps);
+    fd_binary_put_uint32(binary, fd_bluetooth_data_steps);
+    fd_binary_put_uint32(binary, fd_nrf8001_get_system_credits());
+    fd_binary_put_uint32(binary, fd_nrf8001_get_data_credits());
+    fd_binary_put_uint8(binary, fd_nrf8001_tx_power);
+    fd_binary_put_uint8(binary, fd_blutooth_operating_mode);
+    fd_binary_put_uint8(binary, fd_bluetooth_idle ? 1 : 0);
+    fd_binary_put_uint8(binary, fd_bluetooth_dtm_timer.active ? 1 : 0);
+    uint8_t did = 0;
+    if (fd_nrf8001_did_setup) {
+        did |= FD_BLUETOOTH_DID_SETUP;
+    }
+    if (fd_nrf8001_did_advertise) {
+        did |= FD_BLUETOOTH_DID_ADVERTISE;
+    }
+    if (fd_nrf8001_did_connect) {
+        did |= FD_BLUETOOTH_DID_CONNECT;
+    }
+    if (fd_nrf8001_did_open_pipes) {
+        did |= FD_BLUETOOTH_DID_OPEN_PIPES;
+    }
+    if (fd_nrf8001_did_receive_data) {
+        did |= FD_BLUETOOTH_DID_RECEIVE_DATA;
+    }
+    fd_binary_put_uint8(binary, did);
+    fd_binary_put_uint8(binary, fd_bluetooth_disconnect_action);
+    fd_binary_put_uint64(binary, fd_bluetooth_pipes_open);
+    fd_binary_put_uint16(binary, fd_nrf8001_dtm_request);
+    fd_binary_put_uint16(binary, fd_nrf8001_dtm_data);
+    fd_binary_put_uint32(binary, fd_bluetooth_detour_source_collection.bufferCount);
 }
 
 void fd_nrf8001_error(void) {
@@ -333,6 +381,7 @@ void fd_bluetooth_system_step(void) {
             uint16_t interval = 1600; // 1s (0.625ms units)
             fd_nrf8001_connect(timeout, interval);
             fd_bluetooth_step_complete(fd_nrf8001_connect_step);
+            fd_nrf8001_did_advertise = true;
         } else
         if (fd_bluetooth_system_steps & fd_nrf8001_change_timing_request_step) {
             uint16_t interval_min = 16; // 20ms (1.25ms units)
@@ -427,6 +476,7 @@ void fd_nrf8001_device_started_event(
     uint8_t data_credit_available
 ) {
     fd_bluetooth_initial_data_credits = data_credit_available;
+    fd_blutooth_operating_mode = operating_mode;
 
     switch (operating_mode) {
         case OperatingModeTest: {
@@ -500,6 +550,7 @@ void fd_nrf8001_disconnected_event(
     fd_bluetooth_data_steps = 0;
     fd_bluetooth_pipes_open = 0;
     fd_bluetooth_pipes_closed = 0;
+    fd_nrf8001_did_advertise = false;
     fd_nrf8001_did_connect = false;
     fd_nrf8001_did_open_pipes = false;
     fd_nrf8001_did_receive_data = false;

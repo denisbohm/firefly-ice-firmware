@@ -9,30 +9,44 @@
 #define FD_LOG_STORAGE_TYPE FD_STORAGE_TYPE('F', 'D', 'L', 'O')
 
 bool fd_log_did_log;
+uint32_t fd_log_count;
 bool fd_log_use_storage;
 fd_storage_area_t fd_log_storage_area;
 
 void fd_log_initialize(void) {
     fd_log_did_log = false;
+    fd_log_count = 0;
     fd_log_use_storage = false;
 }
 
-void fd_log_enable_storage(bool enable) {
+void fd_log_set_count(uint32_t count) {
+    fd_log_count = count;
+}
+
+uint32_t fd_log_get_count(void) {
+    return fd_log_count;
+}
+
+bool fd_log_get_storage(void) {
+    return fd_log_use_storage;
+}
+
+void fd_log_set_storage(bool enable) {
     fd_log_use_storage = enable;
     fd_storage_area_initialize(&fd_log_storage_area, 62, 63);
 }
 
 void fd_log_ram(char *message __attribute__((unused))) {
-    fd_log_did_log = true;
 }
 
 void fd_log_at(char *file, int line, char *message) {
+    fd_log_did_log = true;
+    ++fd_log_count;
+
     if (!fd_log_use_storage) {
         fd_log_ram(message);
         return;
     }
-
-    fd_log_did_log = true;
 
     uint8_t data[FD_STORAGE_MAX_DATA_LENGTH];
     fd_binary_t binary;

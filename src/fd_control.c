@@ -157,6 +157,17 @@ typedef struct {
 
 #define PROVISION_MAP_ADDRESS (USER_DATA_ADDRESS + 20)
 
+static void fd_control_write_user_data(uint8_t *data, uint32_t length) {
+    uint32_t *address = (uint32_t*)USER_DATA_ADDRESS;
+    uint32_t n = (length + 3) & ~0x3; // round up to multiple of 4 bytes
+    fd_interrupts_disable();
+    MSC_Init();
+    MSC_ErasePage(address);
+    MSC_WriteWord(address, data, n);
+    MSC_Deinit();
+    fd_interrupts_enable();
+}
+
 void fd_control_provision(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -165,14 +176,7 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
     uint32_t provision_data_length = fd_binary_get_uint16(&binary);
     uint8_t *provision_data = &binary.buffer[binary.get_index];
 
-    uint32_t *address = (uint32_t*)USER_DATA_ADDRESS;
-    uint32_t n = (provision_data_length + 3) & ~0x3; // round up to multiple of 4 bytes
-    fd_interrupts_disable();
-    MSC_Init();
-    MSC_ErasePage(address);
-    MSC_WriteWord(address, provision_data, n);
-    MSC_Deinit();
-    fd_interrupts_enable();
+    fd_control_write_user_data(provision_data, provision_data_length);
 
     if (options & PROVISION_OPTION_DEBUG_LOCK) {
         fd_set_debug_lock();
@@ -199,7 +203,8 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
  FD_CONTROL_CAPABILITY_SYNC_AHEAD |\
  FD_CONTROL_CAPABILITY_IDENTIFY |\
  FD_CONTROL_CAPABILITY_LOGGING |\
- FD_CONTROL_CAPABILITY_DIAGNOSTICS )
+ FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
+ FD_CONTROL_CAPABILITY_NAME )
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
@@ -219,10 +224,9 @@ void fd_control_get_property_hardware_id(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_site(fd_binary_t *binary) {
-    uint8_t *address = (uint8_t*)USER_DATA_ADDRESS;
     uint8_t *site;
     uint16_t site_length;
-    fd_map_get(address, "site", FD_MAP_TYPE_UTF8, &site, &site_length);
+    fd_map_get((uint8_t*)PROVISION_MAP_ADDRESS, "site", FD_MAP_TYPE_UTF8, &site, &site_length);
 
     fd_binary_put_uint16(binary, site_length);
     fd_binary_put_bytes(binary, site, site_length);
@@ -321,6 +325,59 @@ void fd_control_set_property_logging(fd_binary_t *binary) {
     }
 }
 
+uint32_t fd_control_get_name(uint8_t **name) {
+    uint16_t length;
+    fd_map_get((uint8_t *)PROVISION_MAP_ADDRESS, "name", FD_MAP_TYPE_UTF8, name, &length);
+    return length;
+}
+
+void fd_control_get_property_name(fd_binary_t *binary) {
+//    uint8_t *name;
+//    uint8_t length = fd_control_get_name(&name);
+    uint8_t name[20];
+    uint8_t length = fd_bluetooth_get_name(name);
+    fd_binary_put_uint8(binary, length);
+    fd_binary_put_bytes(binary, name, length);
+}
+
+typedef struct {
+    fd_provision_t base;
+    uint16_t map_entries;
+    uint8_t key_length;
+    uint8_t value_type;
+    uint16_t value_length;
+    uint16_t key_value_offset;
+    uint8_t key[4];
+    uint8_t value[20];
+} fd_provision_name_t;
+
+static void fd_control_set_name(uint8_t *data, uint32_t length) {
+    fd_provision_name_t provision;
+    provision.base.version = 1;
+    provision.base.flags = 0;
+    memset(provision.base.key, 0, FD_AES_KEY_SIZE);
+    provision.map_entries = 1;
+    provision.key_length = 4;
+    provision.value_type = FD_MAP_TYPE_UTF8;
+    provision.value_length = length;
+    provision.key_value_offset = 0;
+    memcpy(provision.key, "name", 4);
+    memcpy(provision.value, data, length);
+    fd_control_write_user_data((uint8_t *)&provision, sizeof(provision));
+
+    fd_bluetooth_set_name(data, length);
+}
+
+void fd_control_set_property_name(fd_binary_t *binary) {
+    uint8_t name[20];
+    uint8_t length = fd_binary_get_uint8(binary);
+    if (length > sizeof(name)) {
+        length = sizeof(name);
+    }
+    fd_binary_get_bytes(binary, name, length);
+    fd_control_set_name(name, length);
+}
+
 #define GET_PROPERTY_MASK\
  (FD_CONTROL_PROPERTY_VERSION |\
  FD_CONTROL_PROPERTY_HARDWARE_ID |\
@@ -333,7 +390,8 @@ void fd_control_set_property_logging(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_MODE |\
  FD_CONTROL_PROPERTY_TX_POWER |\
  FD_CONTROL_PROPERTY_BOOT_VERSION |\
- FD_CONTROL_PROPERTY_LOGGING)
+ FD_CONTROL_PROPERTY_LOGGING |\
+ FD_CONTROL_PROPERTY_NAME)
 
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -381,6 +439,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_LOGGING: {
                     fd_control_get_property_logging(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_NAME: {
+                    fd_control_get_property_name(binary_out);
+                } break;
             }
         }
     }
@@ -411,6 +472,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_LOGGING: {
                     fd_control_set_property_logging(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_NAME: {
+                    fd_control_set_property_name(&binary);
                 } break;
             }
         }

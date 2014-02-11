@@ -13,111 +13,13 @@
 #include "fd_processor.h"
 #include "fd_spi.h"
 #include "fd_timer.h"
+#include "fd_timing.h"
+
+#include "services.h"
 
 #include <em_gpio.h>
 
-#define PIPE_FIREFLY_ICE_DETOUR_TX 1
-#define PIPE_FIREFLY_ICE_DETOUR_RX_ACK 2
-
-#define NB_SETUP_MESSAGES 17
-#define SETUP_MESSAGES_CONTENT {\
-    {0x00,\
-        {\
-            0x07,0x06,0x00,0x00,0x03,0x02,0x41,0xd7,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x02,0x01,0x01,0x00,0x00,0x06,0x00,0x07,\
-            0xd0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x10,0x1c,0x01,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x14,0x03,0x90,0x01,0xff,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x10,0x38,0xff,0xff,0x02,0x58,0x00,0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x05,0x06,0x10,0x54,0x00,0x00,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0x00,0x04,0x04,0x02,0x02,0x00,0x01,0x28,0x00,0x01,0x00,0x18,0x04,0x04,0x05,0x05,0x00,\
-            0x02,0x28,0x03,0x01,0x0e,0x03,0x00,0x00,0x2a,0x04,0x14,0x07,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0x1c,0x07,0x00,0x03,0x2a,0x00,0x01,0x46,0x69,0x72,0x65,0x66,0x6c,0x79,0x04,0x04,0x05,\
-            0x05,0x00,0x04,0x28,0x03,0x01,0x02,0x05,0x00,0x01,0x2a,0x06,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0x38,0x04,0x03,0x02,0x00,0x05,0x2a,0x01,0x01,0x00,0x00,0x04,0x04,0x05,0x05,0x00,0x06,\
-            0x28,0x03,0x01,0x02,0x07,0x00,0x04,0x2a,0x06,0x04,0x09,0x08,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0x54,0x00,0x07,0x2a,0x04,0x01,0xff,0xff,0xff,0xff,0x00,0x00,0xff,0xff,0x04,0x04,0x02,\
-            0x02,0x00,0x08,0x28,0x00,0x01,0x01,0x18,0x04,0x04,0x10,0x10,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0x70,0x00,0x09,0x28,0x00,0x01,0x99,0x63,0x84,0x81,0xa6,0xb7,0xbd,0xb0,0x91,0x50,0x95,\
-            0x1b,0x01,0x00,0x0a,0x31,0x04,0x04,0x13,0x13,0x00,0x0a,0x28,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0x8c,0x03,0x01,0x18,0x0b,0x00,0x99,0x63,0x84,0x81,0xa6,0xb7,0xbd,0xb0,0x91,0x50,0x95,\
-            0x1b,0x02,0x00,0x0a,0x31,0x54,0x10,0x14,0x00,0x00,0x0b,0x00,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x1f,0x06,0x20,0xa8,0x02,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-            0x00,0x00,0x00,0x00,0x00,0x00,0x46,0x14,0x03,0x02,0x00,0x0c,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x09,0x06,0x20,0xc4,0x29,0x02,0x01,0x00,0x00,0x00,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x17,0x06,0x40,0x00,0x2a,0x00,0x01,0x00,0x00,0x04,0x00,0x03,0x00,0x00,0x00,0x02,0x02,0x00,0x12,0x04,\
-            0x00,0x0b,0x00,0x0c,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x13,0x06,0x50,0x00,0x99,0x63,0x84,0x81,0xa6,0xb7,0xbd,0xb0,0x91,0x50,0x95,0x1b,0x00,0x00,0x0a,0x31,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x09,0x06,0x60,0x00,0x00,0x00,0x00,0x00,0x00,0x00,\
-        },\
-    },\
-    {0x00,\
-        {\
-            0x06,0x06,0xf0,0x00,0x03,0x2e,0x67,\
-        },\
-    },\
-}
+#include <string.h>
 
 #define HAL_ACI_MAX_LENGTH 31
 
@@ -133,17 +35,18 @@ static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTE
 #define BIT(n) (1 << (n))
 
 #define fd_nrf8001_setup_continue_step BIT(0)
-#define fd_nrf8001_connect_step BIT(1)
-#define fd_nrf8001_change_timing_request_step BIT(2)
-#define fd_nrf8001_open_remote_pipe_step BIT(3)
-#define fd_nrf8001_close_remote_pipe_step BIT(4)
-#define fd_nrf8001_disconnect_step BIT(5)
-#define fd_nrf8001_sleep_step BIT(6)
-#define fd_nrf8001_wakeup_step BIT(7)
-#define fd_nrf8001_test_enable_step BIT(8)
-#define fd_nrf8001_test_command_step BIT(9)
-#define fd_nrf8001_test_exit_step BIT(10)
-#define fd_nrf8001_set_tx_power_step BIT(11)
+#define fd_nrf8001_set_device_name_step BIT(1)
+#define fd_nrf8001_connect_step BIT(2)
+#define fd_nrf8001_change_timing_request_step BIT(3)
+#define fd_nrf8001_open_remote_pipe_step BIT(4)
+#define fd_nrf8001_close_remote_pipe_step BIT(5)
+#define fd_nrf8001_disconnect_step BIT(6)
+#define fd_nrf8001_sleep_step BIT(7)
+#define fd_nrf8001_wakeup_step BIT(8)
+#define fd_nrf8001_test_enable_step BIT(9)
+#define fd_nrf8001_test_command_step BIT(10)
+#define fd_nrf8001_test_exit_step BIT(11)
+#define fd_nrf8001_set_tx_power_step BIT(12)
 
 #define fd_nrf8001_detour_send_data_ack_step BIT(0)
 
@@ -187,6 +90,9 @@ bool fd_nrf8001_did_receive_data;
 
 uint8_t fd_blutooth_operating_mode;
 
+uint8_t fd_bluetooth_name_bytes[PIPE_GAP_DEVICE_NAME_SET_MAX_SIZE];
+uint8_t fd_bluetooth_name_length;
+
 bool fd_bluetooth_spi_transfer(void);
 void fd_bluetooth_dtm_time(void);
 
@@ -225,6 +131,9 @@ void fd_bluetooth_initialize(void) {
     fd_nrf8001_did_receive_data = false;
 
     fd_blutooth_operating_mode = 0;
+
+    memcpy(fd_bluetooth_name_bytes, "firefly", 7);
+    fd_bluetooth_name_length = 7;
 
     fd_event_add_callback(FD_EVENT_NRF_RDYN | FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS | FD_EVENT_BLE_STEP, fd_bluetooth_ready);
 
@@ -376,6 +285,13 @@ void fd_bluetooth_system_step(void) {
         if (fd_bluetooth_system_steps & fd_nrf8001_setup_continue_step) {
             fd_nrf8001_setup_continue();
         } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_set_device_name_step) {
+            fd_nrf8001_set_local_data(PIPE_GAP_DEVICE_NAME_SET, fd_bluetooth_name_bytes, fd_bluetooth_name_length);
+            fd_bluetooth_step_complete(fd_nrf8001_set_device_name_step);
+            if (!fd_nrf8001_did_connect) {
+                fd_bluetooth_step_queue(fd_nrf8001_connect_step);
+            }
+        } else
         if (fd_bluetooth_system_steps & fd_nrf8001_connect_step) {
             uint16_t timeout = 0; // infinite advertisement - no timeout
             uint16_t interval = 1600; // 1s (0.625ms units)
@@ -459,6 +375,10 @@ bool fd_bluetooth_is_pipe_open(uint32_t service_pipe_number) {
 void fd_bluetooth_transfer(void) {
     if (fd_nrf8001_has_data_credits() && fd_bluetooth_is_pipe_open(PIPE_FIREFLY_ICE_DETOUR_TX)) {
         if (fd_detour_source_collection_get(&fd_bluetooth_detour_source_collection, fd_bluetooth_out_data)) {
+
+            // !!! timing - just for debug -denis
+            fd_timing_add(2, 0);
+
             fd_nrf8001_send_data(PIPE_FIREFLY_ICE_DETOUR_TX, fd_bluetooth_out_data, MAX_CHARACTERISTIC_SIZE);
         }
     }
@@ -486,7 +406,7 @@ void fd_nrf8001_device_started_event(
         case OperatingModeStandby: {
             fd_nrf8001_set_system_credits(1);
             fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_connect;
-            fd_bluetooth_step_queue(fd_nrf8001_connect_step);
+            fd_bluetooth_step_queue(fd_nrf8001_set_device_name_step);
         } break;
         case OperatingModeSetup: {
             fd_nrf8001_set_system_credits(1);
@@ -519,6 +439,9 @@ void fd_nrf8001_setup_continue(void) {
 
 void fd_nrf8001_setup_complete(void) {
     fd_nrf8001_did_setup = true;
+
+    // !!! assumes setup data configures tx power to 0dBm
+    fd_nrf8001_tx_power = 3;
 
     fd_bluetooth_step_complete(fd_nrf8001_setup_continue_step);
 }
@@ -572,6 +495,9 @@ void fd_nrf8001_disconnected_event(
 }
 
 void fd_nrf8001_data_credit_event(uint8_t data_credits) {
+    // !!! timing - just for debug -denis
+    fd_timing_add(1, fd_nrf8001_get_data_credits());
+
     fd_nrf8001_add_data_credits(data_credits);
 }
 
@@ -676,4 +602,21 @@ void fd_bluetooth_wake(void) {
     fd_nrf8001_set_system_credits(1);
     fd_bluetooth_idle = false;
     fd_bluetooth_step_queue(fd_nrf8001_wakeup_step);
+}
+
+void fd_bluetooth_set_name(uint8_t *name, uint32_t length) {
+    if (length > PIPE_GAP_DEVICE_NAME_SET_MAX_SIZE) {
+        length = PIPE_GAP_DEVICE_NAME_SET_MAX_SIZE;
+    }
+    memcpy(fd_bluetooth_name_bytes, name, length);
+    fd_bluetooth_name_length = length;
+
+    if (fd_blutooth_operating_mode == OperatingModeStandby) {
+        fd_bluetooth_step_queue(fd_nrf8001_set_device_name_step);
+    }
+}
+
+uint32_t fd_bluetooth_get_name(uint8_t *name) {
+    memcpy(name, fd_bluetooth_name_bytes, fd_bluetooth_name_length);
+    return fd_bluetooth_name_length;
 }

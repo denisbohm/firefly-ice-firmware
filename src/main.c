@@ -180,6 +180,11 @@ int main(void) {
     fd_nrf8001_initialize();
     fd_bluetooth_reset();
     fd_bluetooth_initialize();
+    uint8_t *name;
+    uint32_t length = fd_control_get_name(&name);
+    if (length > 0) {
+        fd_bluetooth_set_name(name, length);
+    }
 
     // initialize devices on spi0 powered bus
 //    fd_spi_on(FD_SPI_BUS_0);
@@ -191,7 +196,6 @@ int main(void) {
     fd_storage_buffer_collection_initialize();
 //    fd_log_set_storage(true);
 
-    fd_power_initialize();
     fd_led_initialize();
     fd_indicator_initialize();
 
@@ -202,6 +206,7 @@ int main(void) {
     fd_sensing_wake();
 
     fd_usb_wake();
+    fd_power_initialize();
 
 //    fd_event_add_callback(FD_EVENT_USB_STATE, fd_main_usb_state_change);
 

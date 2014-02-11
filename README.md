@@ -7,7 +7,7 @@ See http://fireflydesign.com for information on the open source Firefly Activity
 
 Copyright and License
 ---------------------
-Copyright 2013 Denis Bohm / Firefly Design
+Copyright 2013-2014 Denis Bohm / Firefly Design
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License in the LICENSE file, or at:
 

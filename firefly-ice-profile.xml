@@ -11,7 +11,6 @@
             <Uuid BaseUUID="310a00001b955091b0bdb7a681846399" BaseUUIDName="Firefly Ice Base UUID">0002</Uuid>
             <DefaultValue></DefaultValue>
             <UsePresentationFormat>0</UsePresentationFormat>
-            <UserDescription></UserDescription>
             <MaxDataLength>20</MaxDataLength>
             <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
@@ -31,9 +30,9 @@
     </Service>
     <Gapsettings>
         <Name>Firefly</Name>
-        <DeviceNameWriteLength>7</DeviceNameWriteLength>
-        <LocalPipeOnDeviceName>false</LocalPipeOnDeviceName>
-        <DeviceNameShortLength>7</DeviceNameShortLength>
+        <DeviceNameWriteLength>8</DeviceNameWriteLength>
+        <LocalPipeOnDeviceName>true</LocalPipeOnDeviceName>
+        <DeviceNameShortLength>6</DeviceNameShortLength>
         <Apperance>0000</Apperance>
         <SecurityLevel>0</SecurityLevel>
         <AuthenticationReq>0</AuthenticationReq>
@@ -59,6 +58,8 @@
         <MaximumConnectionInterval>65535</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>65535</TimeoutMultipler>
+        <AddServiceUpdateCharacteristic>false</AddServiceUpdateCharacteristic>
+        <AddServiceUpdateCharacteristicPipe>false</AddServiceUpdateCharacteristicPipe>
         <ServiceToAdvertise>
             <Uuid BaseUUID="310a00001b955091b0bdb7a681846399" BaseUUIDName="Firefly Ice Base UUID">0001</Uuid>
         </ServiceToAdvertise>

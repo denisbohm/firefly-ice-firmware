@@ -100,6 +100,8 @@
       <file file_name="src/fd_boot.h"/>
       <file file_name="src/fd_led.c"/>
       <file file_name="src/fd_led.h"/>
+      <file file_name="src/fd_timing.c"/>
+      <file file_name="src/fd_timing.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

@@ -33,8 +33,11 @@ float fd_adc_get_temperature(void) {
     return cal_temp_0 - (temp_0_read - (int32_t)adc_temperature_value) * (1.0f / TGRAD_ADCTH);
 }
 
+// correction for worst case when resistance value on top resistor is off by -1%, and bottom by +1%
+#define WORST_CASE_CORRECTION 1.02f
+
 float fd_adc_get_battery_voltage(void) {
-    return adc_battery_voltage_value * (2.0f * 2.2f / 4095.0f);
+    return adc_battery_voltage_value * (2.0f * 2.2f / 4095.0f) * WORST_CASE_CORRECTION;
 }
 
 float fd_adc_get_charge_current(void) {

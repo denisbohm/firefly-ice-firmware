@@ -134,8 +134,10 @@ void fd_detour_source_collection_initialize(fd_detour_source_collection_t *colle
 }
 
 bool fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {
+    uint32_t bufferCount = collection->bufferCount;
     while (true) {
         if ((collection->bufferCount + collection->packetSize) > collection->bufferSize) {
+            collection->bufferCount = bufferCount;
             return false;
         }
         if (!fd_detour_source_get(source, &collection->buffer[collection->bufferCount], collection->packetSize)) {

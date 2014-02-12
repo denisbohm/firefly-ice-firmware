@@ -132,7 +132,7 @@ void fd_bluetooth_initialize(void) {
 
     fd_blutooth_operating_mode = 0;
 
-    memcpy(fd_bluetooth_name_bytes, "firefly", 7);
+    memcpy(fd_bluetooth_name_bytes, "Firefly", 7);
     fd_bluetooth_name_length = 7;
 
     fd_event_add_callback(FD_EVENT_NRF_RDYN | FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS | FD_EVENT_BLE_STEP, fd_bluetooth_ready);
@@ -608,8 +608,14 @@ void fd_bluetooth_set_name(uint8_t *name, uint32_t length) {
     if (length > PIPE_GAP_DEVICE_NAME_SET_MAX_SIZE) {
         length = PIPE_GAP_DEVICE_NAME_SET_MAX_SIZE;
     }
-    memcpy(fd_bluetooth_name_bytes, name, length);
-    fd_bluetooth_name_length = length;
+
+    if (length == 0) {
+        memcpy(fd_bluetooth_name_bytes, "Firefly", 7);
+        fd_bluetooth_name_length = 7;
+    } else {
+        memcpy(fd_bluetooth_name_bytes, name, length);
+        fd_bluetooth_name_length = length;
+    }
 
     if (fd_blutooth_operating_mode == OperatingModeStandby) {
         fd_bluetooth_step_queue(fd_nrf8001_set_device_name_step);

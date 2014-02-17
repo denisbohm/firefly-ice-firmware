@@ -28,6 +28,7 @@ extern fd_time_t fd_reset_last_time;
 void fd_reset_initialize(void);
 
 bool fd_reset_retained_was_valid_on_startup(void);
+extern fd_reset_retained_t fd_reset_retained_at_initialize;
 
 void fd_reset_by(uint8_t type);
 

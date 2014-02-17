@@ -11,6 +11,7 @@
 uint32_t fd_reset_last_cause;
 fd_time_t fd_reset_last_time;
 
+fd_reset_retained_t fd_reset_retained_at_initialize;
 static bool retain_was_valid;
 
 static
@@ -49,6 +50,7 @@ void fd_reset_initialize(void) {
     RMU_ResetCauseClear();
 
     fd_reset_retained_t *retained = RETAINED;
+    memcpy(&fd_reset_retained_at_initialize, retained, sizeof(fd_reset_retained_t));
     retain_was_valid =
         (retained->magic == MAGIC) &&
         (retained->power_battery_level >= 0.0) && (retained->power_battery_level <= 1.0) &&
@@ -64,7 +66,7 @@ void fd_reset_initialize(void) {
     fd_reset_last_time = retained->rtc;
 }
 
-bool fd_retain_was_valid_on_startup(void) {
+bool fd_reset_retained_was_valid_on_startup(void) {
     return retain_was_valid;
 }
 

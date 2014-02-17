@@ -13,7 +13,6 @@
 #include "fd_processor.h"
 #include "fd_spi.h"
 #include "fd_timer.h"
-#include "fd_timing.h"
 
 #include "services.h"
 
@@ -93,6 +92,10 @@ uint8_t fd_blutooth_operating_mode;
 uint8_t fd_bluetooth_name_bytes[PIPE_GAP_DEVICE_NAME_SET_MAX_SIZE];
 uint8_t fd_bluetooth_name_length;
 
+uint16_t fd_bluetooth_connection_interval;
+uint16_t fd_bluetooth_slave_latency;
+uint16_t fd_bluetooth_supervision_timeout;
+
 bool fd_bluetooth_spi_transfer(void);
 void fd_bluetooth_dtm_time(void);
 
@@ -134,6 +137,10 @@ void fd_bluetooth_initialize(void) {
 
     memcpy(fd_bluetooth_name_bytes, "Firefly", 7);
     fd_bluetooth_name_length = 7;
+
+    fd_bluetooth_connection_interval = 0;
+    fd_bluetooth_slave_latency = 0;
+    fd_bluetooth_supervision_timeout = 0;
 
     fd_event_add_callback(FD_EVENT_NRF_RDYN | FD_EVENT_BLE_DATA_CREDITS | FD_EVENT_BLE_SYSTEM_CREDITS | FD_EVENT_BLE_STEP, fd_bluetooth_ready);
 
@@ -179,6 +186,12 @@ void fd_bluetooth_diagnostics(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, fd_nrf8001_dtm_request);
     fd_binary_put_uint16(binary, fd_nrf8001_dtm_data);
     fd_binary_put_uint32(binary, fd_bluetooth_detour_source_collection.bufferCount);
+}
+
+void fd_bluetooth_diagnostics_timing(fd_binary_t *binary) {
+    fd_binary_put_uint16(binary, fd_bluetooth_connection_interval);
+    fd_binary_put_uint16(binary, fd_bluetooth_slave_latency);
+    fd_binary_put_uint16(binary, fd_bluetooth_supervision_timeout);
 }
 
 void fd_nrf8001_error(void) {
@@ -300,10 +313,10 @@ void fd_bluetooth_system_step(void) {
             fd_nrf8001_did_advertise = true;
         } else
         if (fd_bluetooth_system_steps & fd_nrf8001_change_timing_request_step) {
-            uint16_t interval_min = 16; // 20ms (1.25ms units)
-            uint16_t interval_max = 32; // 40ms (1.25ms units)
+            uint16_t interval_min = 8; // 10ms (1.25ms units)
+            uint16_t interval_max = 16; // 20ms (1.25ms units)
             uint16_t latency = 0;
-            uint16_t timeout = 600; // 6s (10ms units)
+            uint16_t timeout = 100; // 1s (10ms units)
             fd_nrf8001_change_timing_request(interval_min, interval_max, latency, timeout);
             fd_bluetooth_step_complete(fd_nrf8001_change_timing_request_step);
         } else
@@ -373,14 +386,12 @@ bool fd_bluetooth_is_pipe_open(uint32_t service_pipe_number) {
 }
 
 void fd_bluetooth_transfer(void) {
-    if (fd_nrf8001_has_data_credits() && fd_bluetooth_is_pipe_open(PIPE_FIREFLY_ICE_DETOUR_TX)) {
-        if (fd_detour_source_collection_get(&fd_bluetooth_detour_source_collection, fd_bluetooth_out_data)) {
-
-            // !!! timing - just for debug -denis
-            fd_timing_add(2, 0);
-
-            fd_nrf8001_send_data(PIPE_FIREFLY_ICE_DETOUR_TX, fd_bluetooth_out_data, MAX_CHARACTERISTIC_SIZE);
-        }
+    while (
+        fd_bluetooth_is_pipe_open(PIPE_FIREFLY_ICE_DETOUR_TX) &&
+        fd_nrf8001_has_data_credits() &&
+        fd_detour_source_collection_get(&fd_bluetooth_detour_source_collection, fd_bluetooth_out_data)
+    ) {
+        fd_nrf8001_send_data(PIPE_FIREFLY_ICE_DETOUR_TX, fd_bluetooth_out_data, MAX_CHARACTERISTIC_SIZE);
     }
 }
 
@@ -463,6 +474,16 @@ void fd_nrf8001_connected_event(
     fd_bluetooth_step_queue(fd_nrf8001_change_timing_request_step);
 }
 
+void fd_nrf8001_timing_event(
+    uint16_t connection_interval,
+    uint16_t slave_latency,
+    uint16_t supervision_timeout
+) {
+    fd_bluetooth_connection_interval = connection_interval;
+    fd_bluetooth_slave_latency = slave_latency;
+    fd_bluetooth_supervision_timeout = supervision_timeout;
+}
+
 void fd_nrf8001_disconnected_event(
     uint8_t aci_status __attribute__((unused)),
     uint8_t btle_status __attribute__((unused))
@@ -495,9 +516,6 @@ void fd_nrf8001_disconnected_event(
 }
 
 void fd_nrf8001_data_credit_event(uint8_t data_credits) {
-    // !!! timing - just for debug -denis
-    fd_timing_add(1, fd_nrf8001_get_data_credits());
-
     fd_nrf8001_add_data_credits(data_credits);
 }
 

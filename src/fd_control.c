@@ -196,7 +196,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 28
+#define VERSION_PATCH 29
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
  FD_CONTROL_CAPABILITY_BOOT_VERSION |\
@@ -204,7 +204,8 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
  FD_CONTROL_CAPABILITY_IDENTIFY |\
  FD_CONTROL_CAPABILITY_LOGGING |\
  FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
- FD_CONTROL_CAPABILITY_NAME )
+ FD_CONTROL_CAPABILITY_NAME |\
+ FD_CONTROL_CAPABILITY_RETAINED )
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
@@ -235,6 +236,12 @@ void fd_control_get_property_site(fd_binary_t *binary) {
 void fd_control_get_property_reset(fd_binary_t *binary) {
     fd_binary_put_uint32(binary, fd_reset_last_cause);
     fd_binary_put_time64(binary, fd_reset_last_time);
+}
+
+void fd_control_get_property_retained(fd_binary_t *binary) {
+    fd_binary_put_uint8(binary, fd_reset_retained_was_valid_on_startup());
+    fd_binary_put_uint32(binary, sizeof(fd_reset_retained_at_initialize));
+    fd_binary_put_bytes(binary, (uint8_t *)&fd_reset_retained_at_initialize, sizeof(fd_reset_retained_at_initialize));
 }
 
 void fd_control_get_property_storage(fd_binary_t *binary) {
@@ -391,7 +398,8 @@ void fd_control_set_property_name(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_TX_POWER |\
  FD_CONTROL_PROPERTY_BOOT_VERSION |\
  FD_CONTROL_PROPERTY_LOGGING |\
- FD_CONTROL_PROPERTY_NAME)
+ FD_CONTROL_PROPERTY_NAME |\
+ FD_CONTROL_PROPERTY_RETAINED)
 
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -441,6 +449,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_NAME: {
                     fd_control_get_property_name(binary_out);
+                } break;
+                case FD_CONTROL_PROPERTY_RETAINED: {
+                    fd_control_get_property_retained(binary_out);
                 } break;
             }
         }
@@ -632,15 +643,20 @@ void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, ui
     fd_control_send_complete(detour_source_collection);
 }
 
+#define FD_CONTROL_DIAGNOSTICS_FLAGS (FD_CONTROL_DIAGNOSTICS_BLE | FD_CONTROL_DIAGNOSTICS_BLE_TIMING)
+
 void fd_control_diagnostics(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t flags = fd_binary_get_uint32(&binary);
 
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_DIAGNOSTICS);
-    fd_binary_put_uint32(binary_out, flags);
+    fd_binary_put_uint32(binary_out, flags & FD_CONTROL_DIAGNOSTICS_FLAGS);
     if (flags & FD_CONTROL_DIAGNOSTICS_BLE) {
         fd_bluetooth_diagnostics(binary_out);
+    }
+    if (flags & FD_CONTROL_DIAGNOSTICS_BLE_TIMING) {
+        fd_bluetooth_diagnostics_timing(binary_out);
     }
     fd_control_send_complete(detour_source_collection);
 }

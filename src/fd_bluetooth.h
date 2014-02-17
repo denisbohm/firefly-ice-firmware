@@ -30,6 +30,7 @@ extern bool fd_nrf8001_did_connect;
 extern bool fd_nrf8001_did_receive_data;
 
 void fd_bluetooth_diagnostics(fd_binary_t *binary);
+void fd_bluetooth_diagnostics_timing(fd_binary_t *binary);
 
 void fd_bluetooth_set_name(uint8_t *name, uint32_t length);
 uint32_t fd_bluetooth_get_name(uint8_t *name);

@@ -1,5 +1,4 @@
 #include "fd_nrf8001.h"
-#include "fd_timing.h"
 
 #include <string.h>
 
@@ -82,8 +81,6 @@ void fd_nrf8001_set_data_credits(uint32_t credits) {
 }
 
 void fd_nrf8001_add_data_credits(uint32_t credits) {
-    fd_timing_add(3, data_credits);
-
     data_credits += credits;
 
     if (data_credits > 2) {
@@ -95,8 +92,6 @@ void fd_nrf8001_add_data_credits(uint32_t credits) {
 }
 
 void fd_nrf8001_use_data_credits(uint32_t credits) {
-    fd_timing_add(4, data_credits);
-
     if (credits > data_credits) {
         fd_nrf8001_error();
         data_credits = 0;

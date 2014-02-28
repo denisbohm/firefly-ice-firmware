@@ -385,7 +385,7 @@ void fd_control_set_property_name(fd_binary_t *binary) {
     fd_control_set_name(name, length);
 }
 
-#define GET_PROPERTY_MASK\
+#define GET_PROPERTY_MASK \
  (FD_CONTROL_PROPERTY_VERSION |\
  FD_CONTROL_PROPERTY_HARDWARE_ID |\
  FD_CONTROL_PROPERTY_DEBUG_LOCK |\

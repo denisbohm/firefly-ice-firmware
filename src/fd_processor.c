@@ -146,7 +146,9 @@ void fd_processor_initialize(void) {
 //    GPIO_PinModeSet(HFXTAL_P_PORT_PIN, gpioModePushPull, 0);
 }
 
-void __attribute((naked)) fd_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
+void fd_delay_3x_cycles(uint32_t cycles) __attribute__((naked, used));
+
+void fd_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
     __asm(
         "    subs r0, #1\n"
         "    bne fd_delay_3x_cycles\n"

@@ -450,7 +450,7 @@ uint16_t fd_ieee754_float_to_uint16(float value) {
 float fd_ieee754_uint16_to_float(uint16_t value) {
     float fv;
     if (halfp2singles(&fv, &value, 1)) {
-        fv = __float32_infinity;
+        fv = INFINITY;
     }
     return fv;
 }

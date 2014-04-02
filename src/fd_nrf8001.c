@@ -105,6 +105,9 @@ void fd_nrf8001_use_data_credits(uint32_t credits) {
 
 void fd_nrf8001_spi_tx_clear(void) {
     fd_nrf8001_spi_tx_length = 0;
+    for (int i = 0; i < FD_NRF8001_SPI_TX_BUFFER_SIZE; ++i) {
+        fd_nrf8001_spi_tx_buffer[i] = 0;
+    }
 }
 
 static

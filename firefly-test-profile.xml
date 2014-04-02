@@ -11,7 +11,6 @@
             <Uuid>2a24</Uuid>
             <DefaultValue>nRFxxxxx</DefaultValue>
             <UsePresentationFormat>1</UsePresentationFormat>
-            <UserDescription></UserDescription>
             <MaxDataLength>20</MaxDataLength>
             <AttributeLenType>1</AttributeLenType>
             <ForceOpen>false</ForceOpen>
@@ -43,7 +42,7 @@
         <MinimumKeySize>7</MinimumKeySize>
         <MaximumKeySize>16</MaximumKeySize>
         <AdvertisingDataBondedBitmap>0</AdvertisingDataBondedBitmap>
-        <AdvertisingDataGeneralBitmap>1a</AdvertisingDataGeneralBitmap>
+        <AdvertisingDataGeneralBitmap>10</AdvertisingDataGeneralBitmap>
         <AdvertisingDataBrodcastBitmap>0</AdvertisingDataBrodcastBitmap>
         <AdvertisingDataBondedScanResponseBitmap>0</AdvertisingDataBondedScanResponseBitmap>
         <AdvertisingDataGeneralScanResponseBitmap>0</AdvertisingDataGeneralScanResponseBitmap>
@@ -59,6 +58,8 @@
         <MaximumConnectionInterval>65535</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>65535</TimeoutMultipler>
+        <AddServiceUpdateCharacteristic>false</AddServiceUpdateCharacteristic>
+        <AddServiceUpdateCharacteristicPipe>false</AddServiceUpdateCharacteristicPipe>
         <CustomAdTypes>
             <AdType index="1">
                 <Type>19</Type>

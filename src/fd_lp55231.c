@@ -31,6 +31,9 @@
 #define MISC_EN_AUTO_INCR 0x40
 #define MISC_VARIABLE_D_SEL 0x80
 
+#define RESET_REGISTER 0x3d
+#define RESET_VALUE 0xff
+
 void fd_lp55231_initialize(void) {
 }
 
@@ -65,6 +68,9 @@ void fd_lp55231_wake(void) {
 }
 
 void fd_lp55231_sleep(void) {
+    for (int i = 1; i <= 9; ++i) {
+        fd_lp55231_set_led_pwm(i, 0);
+    }
     bool result = fd_i2c1_register_write(ADDRESS, MISC, MISC_EN_AUTO_INCR);
     if (!result) {
         fd_log_assert_fail("");
@@ -76,6 +82,14 @@ void fd_lp55231_sleep(void) {
 }
 
 void fd_lp55231_power_off(void) {
+    /*
+    // !!! reset before power off, just in case we power back on before the voltage has dropped low enough for a power on reset -denis
+    bool result = fd_i2c1_register_write(ADDRESS, RESET_REGISTER, RESET_VALUE);
+    if (!result) {
+        fd_log_assert_fail("");
+    }
+    */
+
     GPIO_PinOutClear(LED_EN_PORT_PIN);
 }
 

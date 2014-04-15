@@ -758,12 +758,16 @@ void fd_indicator_step(void) {
     fd_indicator_animation_step(&error.animation);
 }
 
-void fd_indicator_initialize(void) {
+void fd_indicator_sleep(void) {
     usb_initialize();
     connection_initialize(&usb_connection, 3, 0.0f, 1.0f, 0.0f, usb_connection_show);
     connection_initialize(&ble_connection, 1, 0.0f, 0.0f, 1.0f, ble_connection_show);
     identify_initialize();
     error_initialize();
+}
+
+void fd_indicator_initialize(void) {
+    fd_indicator_sleep();
 
     fd_event_add_callback(FD_EVENT_RTC_TICK, fd_indicator_step);
 }

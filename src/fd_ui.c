@@ -58,6 +58,11 @@ void fd_ui_lock_state_callback(void) {
     fd_ui_ble_state_callback();
 }
 
+void fd_ui_update(void) {
+    fd_ui_charge_status_callback();
+    fd_ui_lock_state_callback();
+}
+
 #define JAN_1_2014 1388534400
 
 static
@@ -84,6 +89,5 @@ void fd_ui_initialize(void) {
     fd_timer_add(&error_check_timer, error_check_timer_callback);
     error_check_timer_callback();
 
-    fd_ui_charge_status_callback();
-    fd_ui_lock_state_callback();
+    fd_ui_update();
 }

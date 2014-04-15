@@ -48,8 +48,6 @@ static bool fd_led_em2_check(void) {
 }
 
 void fd_led_initialize(void) {
-    memset(&led_state, 0, sizeof(led_state));
-
     fd_timer_add(&override_timer, override_callback);
 
     TIMER_CompareSet(TIMER0, /* channel */ 1, TOP);
@@ -227,12 +225,13 @@ void fd_led_wake(void) {
 }
 
 void fd_led_sleep(void) {
+    active_leds = 0;
+    memset(&led_state, 0, sizeof(led_state));
+
     fd_timer_stop(&override_timer);
 
     fd_lp55231_sleep();
     fd_lp55231_power_off();
-
-    active_leds = 0;
 
     TIMER0->ROUTE = 0;
 

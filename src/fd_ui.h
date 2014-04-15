@@ -3,6 +3,6 @@
 
 void fd_ui_initialize(void);
 
-void fd_ui_update(float ax);
+void fd_ui_update(void);
 
 #endif

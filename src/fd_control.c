@@ -196,7 +196,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 29
+#define VERSION_PATCH 30
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
  FD_CONTROL_CAPABILITY_BOOT_VERSION |\

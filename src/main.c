@@ -44,6 +44,7 @@ static bool main_sleep_when_bluetooth_is_asleep;
 static
 void main_sleep(void) {
     fd_sensing_sleep();
+    fd_indicator_sleep();
     fd_led_sleep();
 
     fd_usb_sleep();
@@ -76,13 +77,14 @@ void main_wake(void) {
     fd_adc_wake();
     fd_rtc_wake();
     fd_lis3dh_wake();
-    fd_lp55231_power_on();
+//    fd_lp55231_power_on();
 //    fd_lp55231_wake();
 //    fd_mag3110_wake();
 //    fd_w25q16dw_wake();
 
 //    fd_led_wake();
     fd_sensing_wake();
+    fd_ui_update();
 }
 
 static

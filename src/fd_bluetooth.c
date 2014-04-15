@@ -283,9 +283,9 @@ void fd_bluetooth_system_step(void) {
             fd_nrf8001_sleep();
             fd_bluetooth_step_complete(fd_nrf8001_sleep_step);
             fd_bluetooth_idle = true;
+            fd_event_set_exclusive(FD_EVENT_BLE_STATE);
             fd_event_mask_set(
                 FD_EVENT_NRF_RDYN |
-                FD_EVENT_BLE_STATE |
                 FD_EVENT_BLE_DATA_CREDITS |
                 FD_EVENT_BLE_SYSTEM_CREDITS |
                 FD_EVENT_BLE_STEP
@@ -611,7 +611,6 @@ void fd_bluetooth_sleep(void) {
 void fd_bluetooth_wake(void) {
     fd_event_mask_clear(
         FD_EVENT_NRF_RDYN |
-        FD_EVENT_BLE_STATE |
         FD_EVENT_BLE_DATA_CREDITS |
         FD_EVENT_BLE_SYSTEM_CREDITS |
         FD_EVENT_BLE_STEP

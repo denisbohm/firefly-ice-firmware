@@ -129,6 +129,19 @@ void fd_main_usb_state_change(void) {
 }
 */
 
+#ifdef SIMULATE_INDICATOR_ERROR
+void tryit(void) {
+    fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_not_charging);
+    fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_charging);
+    // 10 to 19
+    for (int i = 0; i < 10; ++i) {
+        fd_indicator_step();
+    }
+    fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_not_charging); // sets rerun to true
+    fd_indicator_set_usb_condition(fd_indicator_usb_condition_unpowered);
+}
+#endif
+
 int main(void) {
     fd_reset_initialize();
     fd_processor_initialize();
@@ -212,8 +225,18 @@ int main(void) {
 
 //    fd_event_add_callback(FD_EVENT_USB_STATE, fd_main_usb_state_change);
 
+#ifdef SIMULATE_INDICATOR_ERROR
+    bool has_tried = false;
+#endif
     while (true) {
         fd_event_process();
+
+#ifdef SIMULATE_INDICATOR_ERROR
+        if ((fd_rtc_get_seconds() == 5) && !has_tried) {
+            has_tried = true;
+            tryit();
+        }
+#endif
 
         if (main_sleep_when_bluetooth_is_asleep && fd_bluetooth_is_asleep()) {
             main_sleep_when_bluetooth_is_asleep = false;

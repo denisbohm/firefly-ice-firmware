@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct fd_indicator_animation_s {
     bool running;
-    bool cancelling;
+    bool canceling;
     bool rerun;
     fd_indicator_animation_phase_t in;
     fd_indicator_animation_phase_t cycle;
@@ -81,7 +81,7 @@ bool fd_indicator_animation_phase_step(fd_indicator_animation_phase_t *phase, bo
 
 void fd_indicator_animation_initialize(fd_indicator_animation_t *animation) {
     animation->running = false;
-    animation->cancelling = false;
+    animation->canceling = false;
     animation->rerun = false;
     fd_indicator_animation_phase_initialize(&animation->in);
     fd_indicator_animation_phase_initialize(&animation->cycle);
@@ -92,30 +92,31 @@ void fd_indicator_animation_initialize(fd_indicator_animation_t *animation) {
 void fd_indicator_animation_run(fd_indicator_animation_t *animation) {
     if (!animation->running) {
         animation->running = true;
-        animation->cancelling = false;
+        animation->canceling = false;
         animation->rerun = false;
         fd_indicator_animation_phase_run(&animation->in);
         fd_indicator_animation_phase_run(&animation->cycle);
         fd_indicator_animation_phase_run(&animation->out);
     } else {
-        if (animation->cancelling) {
+        if (animation->canceling) {
             if (animation->cycle.done) {
                 animation->rerun = true;
             } else {
-                animation->cancelling = false;
+                animation->canceling = false;
             }
         }
     }
 }
 
 void fd_indicator_animation_cancel(fd_indicator_animation_t *animation) {
-    animation->cancelling = true;
+    animation->canceling = true;
+    animation->rerun = false;
 }
 
 void fd_indicator_animation_step(fd_indicator_animation_t *animation) {
     if (animation->running) {
         if (fd_indicator_animation_phase_step(&animation->in, true)) {
-            if (fd_indicator_animation_phase_step(&animation->cycle, animation->cancelling)) {
+            if (fd_indicator_animation_phase_step(&animation->cycle, animation->canceling)) {
                 fd_indicator_animation_phase_step(&animation->out, true);
             }
         }
@@ -389,7 +390,7 @@ void fd_indicator_set_usb_condition(fd_indicator_usb_condition_t condition) {
     }
 
     if (usb.animation.running) {
-        usb.animation.cancelling = true;
+        fd_indicator_animation_cancel(&usb.animation);
         usb.condition_current = condition;
         return;
     }
@@ -515,12 +516,12 @@ void connection_set_condition(fd_indicator_connection_t *connection, fd_indicato
     }
 
     if (connection->animation.running) {
-        connection->animation.cancelling = true;
+        fd_indicator_animation_cancel(&connection->animation);
         connection->condition_current = condition;
         return;
     }
 
-    // start usb animation
+    // start animation
     connection->condition_current = condition;
 
     connection_show(connection);
@@ -647,7 +648,7 @@ void fd_indicator_set_identify_condition(fd_indicator_identify_condition_t condi
     }
 
     if (identify.animation.running) {
-        identify.animation.cancelling = true;
+        fd_indicator_animation_cancel(&identify.animation);
         identify.condition_current = condition;
         return;
     }
@@ -737,7 +738,7 @@ void fd_indicator_set_error_condition(fd_indicator_error_condition_t condition) 
     }
 
     if (error.animation.running) {
-        error.animation.cancelling = true;
+        fd_indicator_animation_cancel(&error.animation);
         error.condition_current = condition;
         return;
     }

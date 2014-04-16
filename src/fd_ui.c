@@ -13,9 +13,32 @@
 static
 fd_timer_t error_check_timer;
 
+#ifdef SIMULATE_INDICATOR_ERROR
+typedef struct {
+    bool is_usb_powered;
+    bool is_charging;
+    fd_time_t time;
+} fd_ui_usb_t;
+
+static fd_ui_usb_t usb_events[16];
+static int usb_events_index = 0;
+#endif
+
 void fd_ui_charge_status_callback(void) {
     bool is_usb_powered = fd_usb_is_powered();
     bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
+
+#ifdef SIMULATE_INDICATOR_ERROR
+    if (usb_events_index >= 16) {
+        usb_events_index = 0;
+    }
+    fd_ui_usb_t* ui_usb = &usb_events[usb_events_index];
+    ui_usb->is_usb_powered = is_usb_powered;
+    ui_usb->is_charging = is_charging;
+    ui_usb->time = fd_rtc_get_time();
+    ++usb_events_index;
+#endif
+
     if (is_usb_powered) {
         if (is_charging) {
             fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_charging);
@@ -58,11 +81,6 @@ void fd_ui_lock_state_callback(void) {
     fd_ui_ble_state_callback();
 }
 
-void fd_ui_update(void) {
-    fd_ui_charge_status_callback();
-    fd_ui_lock_state_callback();
-}
-
 #define JAN_1_2014 1388534400
 
 static
@@ -80,6 +98,13 @@ void error_check_timer_callback(void) {
     fd_timer_start(&error_check_timer, duration);
 }
 
+void fd_ui_update(void) {
+    fd_ui_charge_status_callback();
+    fd_ui_lock_state_callback();
+
+    error_check_timer_callback();
+}
+
 void fd_ui_initialize(void) {
     fd_event_add_callback(FD_EVENT_CHG_STAT, fd_ui_charge_status_callback);
     fd_event_add_callback(FD_EVENT_USB_STATE, fd_ui_usb_state_callback);
@@ -87,7 +112,6 @@ void fd_ui_initialize(void) {
     fd_event_add_callback(FD_EVENT_LOCK_STATE, fd_ui_lock_state_callback);
 
     fd_timer_add(&error_check_timer, error_check_timer_callback);
-    error_check_timer_callback();
 
     fd_ui_update();
 }

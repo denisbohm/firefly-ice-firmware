@@ -359,7 +359,7 @@ void usb_start_animation_powered_charging(void) {
     usb.out_state.size = sizeof(fd_indicator_animation_ease_linear_out);
     usb.out_state.values = fd_indicator_animation_ease_linear_out;
 
-    usb_run(1.0f, 1.0f, 0.0f, 0.2f, 51.0f, 0.8f, 0.0f, 0.2f);
+    usb_run(1.0f, 0.0f, 0.0f, 0.2f, 51.0f, 0.8f, 0.0f, 0.2f);
 }
 
 static

@@ -16,10 +16,22 @@ static volatile bool adc_complete;
 static volatile fd_adc_channel_t adc_channel;
 static volatile uint32_t adc_event;
 
+static float fd_adc_vdd;
+
 void fd_adc_initialize(void) {
+    fd_adc_vdd = 2.5f;
+
     fd_adc_start(fd_adc_channel_temperature, false);
     fd_adc_start(fd_adc_channel_battery_voltage, false);
     fd_adc_start(fd_adc_channel_charge_current, false);
+}
+
+void fd_adc_set_vdd(float vdd) {
+    fd_adc_vdd = vdd;
+}
+
+float fd_adc_get_vdd(void) {
+    return fd_adc_vdd;
 }
 
 #define CAL_TEMP_0 ((uint8_t *)0x0FE081B2)
@@ -33,15 +45,25 @@ float fd_adc_get_temperature(void) {
     return cal_temp_0 - (temp_0_read - (int32_t)adc_temperature_value) * (1.0f / TGRAD_ADCTH);
 }
 
+#define ADCMAX 4095.0f
+#define REF_1V25 1.25f
+
 // correction for worst case when resistance value on top resistor is off by -1%, and bottom by +1%
 #define WORST_CASE_CORRECTION 1.02f
 
 float fd_adc_get_battery_voltage(void) {
-    return adc_battery_voltage_value * (2.0f * 2.2f / 4095.0f) * WORST_CASE_CORRECTION;
+    float v = adc_battery_voltage_value * fd_adc_vdd * ((2.0f / ADCMAX) * WORST_CASE_CORRECTION);
+    if (v > 4.2f) {
+        v = 4.2f;
+    }
+    return v;
 }
 
+#define CHARGE_AMPS 0.080f
+#define CHARGE_VREF 1.22f
+
 float fd_adc_get_charge_current(void) {
-    return adc_charge_current_value * (2.2f / 4095.0f) * (0.080f / 1.22f);
+    return adc_charge_current_value * (REF_1V25 / ADCMAX) * (CHARGE_AMPS / CHARGE_VREF);
 }
 
 void fd_adc_sleep(void) {
@@ -87,7 +109,6 @@ void fd_adc_start(fd_adc_channel_t channel, bool asynchronous) {
     init.prescale = ADC_PrescaleCalc(7000000, 0);
 
     ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
-    singleInit.reference = adcRefVDD;
     singleInit.acqTime = adcAcqTime256;
 
     switch (channel) {
@@ -98,10 +119,12 @@ void fd_adc_start(fd_adc_channel_t channel, bool asynchronous) {
         break;
         case fd_adc_channel_battery_voltage:
             GPIO_PinOutSet(BAT_VDIV2EN_PORT_PIN);
+            singleInit.reference = adcRefVDD;
             singleInit.input = adcSingleInpCh6;
             adc_event = FD_EVENT_ADC_BATTERY_VOLTAGE;
         break;
         case fd_adc_channel_charge_current:
+            singleInit.reference = adcRef1V25;
             singleInit.input = adcSingleInpCh7;
             adc_event = FD_EVENT_ADC_CHARGE_CURRENT;
         break;

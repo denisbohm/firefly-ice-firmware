@@ -1,3 +1,4 @@
+#include "fd_adc.h"
 #include "fd_aes.h"
 #include "fd_binary.h"
 #include "fd_bluetooth.h"
@@ -196,7 +197,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 30
+#define VERSION_PATCH 32
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
  FD_CONTROL_CAPABILITY_BOOT_VERSION |\
@@ -205,6 +206,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
  FD_CONTROL_CAPABILITY_LOGGING |\
  FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
  FD_CONTROL_CAPABILITY_NAME |\
+ FD_CONTROL_CAPABILITY_ADC_VDD |\
  FD_CONTROL_CAPABILITY_RETAINED )
 
 // !!! should come from gcc command line define
@@ -385,6 +387,14 @@ void fd_control_set_property_name(fd_binary_t *binary) {
     fd_control_set_name(name, length);
 }
 
+void fd_control_get_property_adc_vdd(fd_binary_t *binary) {
+    fd_binary_put_float16(binary, fd_adc_get_vdd());
+}
+
+void fd_control_set_property_adc_vdd(fd_binary_t *binary) {
+    fd_adc_set_vdd(fd_binary_get_float16(binary));
+}
+
 #define GET_PROPERTY_MASK \
  (FD_CONTROL_PROPERTY_VERSION |\
  FD_CONTROL_PROPERTY_HARDWARE_ID |\
@@ -453,6 +463,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_RETAINED: {
                     fd_control_get_property_retained(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_ADC_VDD: {
+                    fd_control_get_property_adc_vdd(binary_out);
+                } break;
             }
         }
     }
@@ -486,6 +499,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_NAME: {
                     fd_control_set_property_name(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_ADC_VDD: {
+                    fd_control_set_property_adc_vdd(&binary);
                 } break;
             }
         }

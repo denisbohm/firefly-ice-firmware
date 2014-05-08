@@ -201,8 +201,8 @@ bool fd_bluetooth_is_pipe_open(uint32_t service_pipe_number) {
 }
 
 void fd_bluetooth_data_step(void) {
-    while ((fd_bluetooth_data_acks > 0) && fd_nrf8001_has_data_credits() && fd_bluetooth_is_pipe_open(PIPE_DEVICE_INFORMATION_MODEL_NUMBER_STRING_TX) && (fd_send_packet_index < 10)) {
-        fd_nrf8001_send_data(PIPE_DEVICE_INFORMATION_MODEL_NUMBER_STRING_TX, fd_send_packets[fd_send_packet_index++].bytes, 20);
+    while ((fd_bluetooth_data_acks > 0) && fd_nrf8001_has_data_credits() && fd_bluetooth_is_pipe_open(PIPE_FIREFLY_TEST_SERVICE_FIREFLY_TEST_DATA_RX_ACK) && (fd_send_packet_index < 10)) {
+        fd_nrf8001_send_data_ack(PIPE_FIREFLY_TEST_SERVICE_FIREFLY_TEST_DATA_RX_ACK); // , fd_send_packets[fd_send_packet_index++].bytes, 20);
         --fd_bluetooth_data_acks;
     }
 }
@@ -325,7 +325,7 @@ void fd_nrf8001_data_received_event(
 ) {
     fd_bluetooth_did_receive_data = true;
 
-    if ((service_pipe_number != PIPE_DEVICE_INFORMATION_MODEL_NUMBER_STRING_RX) || (data_length < 20)) {
+    if ((service_pipe_number != PIPE_FIREFLY_TEST_SERVICE_FIREFLY_TEST_DATA_RX_ACK) || (data_length < 20)) {
         return;
     }
 

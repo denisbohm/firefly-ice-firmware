@@ -8,7 +8,7 @@
 
 #define USB_TIMER USB_TIMER1
 
-#define DEBUG_USB_API
+//#define DEBUG_USB_API
 
 extern int fd_usb_WriteChar(char c);
 #define USER_PUTCHAR fd_usb_WriteChar

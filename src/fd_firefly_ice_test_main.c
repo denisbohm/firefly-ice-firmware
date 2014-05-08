@@ -10,7 +10,9 @@
 #include "fd_event.h"
 #include "fd_log.h"
 
+#include <em_cmu.h>
 #include <em_gpio.h>
+#include <em_rtc.h>
 
 void halt(void) {
     *(uint32_t *)0xE000EDF0 = 0xA05F0003; // DHCSR = DBGKEY | C_HALT | C_DEBUGEN;
@@ -19,8 +21,50 @@ void halt(void) {
 extern uint32_t fd_log_get_count(void);
 extern char *fd_log_get_message(void);
 
+void fd_test_hfxo_initialize(void) {
+    CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
+    CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+    CMU_ClockEnable(cmuClock_HFPER, true);
+}
+
+void fd_test_rtc_initialize(void) {
+    CMU_ClockEnable(cmuClock_CORELE, true);
+    CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
+    CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
+    CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFXO);
+    CMU_ClockEnable(cmuClock_RTC, true);
+    CMU_ClockEnable(cmuClock_CORELE, true);
+    // output 32kHz clock (for nRF8001)
+    CMU->CTRL = (CMU->CTRL & ~_CMU_CTRL_CLKOUTSEL1_MASK) | CMU_CTRL_CLKOUTSEL1_LFXO;
+    CMU->ROUTE = CMU_ROUTE_LOCATION_LOC0 | CMU_ROUTE_CLKOUT1PEN;
+
+    RTC_CompareSet(0, 65535); // 2 s
+    RTC_CounterReset();
+    RTC_Init_TypeDef init = RTC_INIT_DEFAULT;
+    RTC_Init(&init);
+}
+
+uint32_t fd_test_rtc(void) {
+    RTC_CounterReset();
+    fd_delay_ms(100);
+    uint32_t delta = RTC_CounterGet();
+    return delta;
+}
+
 int main(void) {
     fd_processor_initialize();
+    fd_processor_wake();
+
+    fd_test_hfxo_initialize();
+
+    fd_test_rtc_initialize();
+    fd_test_rtc();
+
+    GPIO_PinOutClear(NRF_RESETN_PORT_PIN);
+    fd_delay_ms(100);
+    GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
+    fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
+    GPIO_PinInGet(NRF_RDYN_PORT_PIN);
 
     GPIO_PinOutClear(LED0_PORT_PIN);
     GPIO_PinOutSet(LED0_PORT_PIN);

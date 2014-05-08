@@ -1,6 +1,7 @@
 #include "fd_log.h"
 #include "fd_processor.h"
 
+#include <em_cmu.h>
 #include <em_gpio.h>
 #include <em_system.h>
 #include <em_usb.h>
@@ -417,6 +418,20 @@ void fd_usb_transfer(void) {
 }
 
 uint32_t fd_usb_test(uint16_t pid, uint8_t *result, uint32_t result_length) {
+    GPIO_PinOutClear(LED6_PORT_PIN);
+
+    SystemHFXOClockSet(48000000UL);
+    CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
+    CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+    CMU_ClockEnable(cmuClock_HFPER, true);
+
+    CMU_ClockEnable(cmuClock_CORELE, true);
+    CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
+    CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFXO);
+    CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFXO);
+    CMU_ClockEnable(cmuClock_RTC, true);
+    CMU_ClockEnable(cmuClock_CORELE, true);
+
     deviceDesc.idProduct = pid;
     fd_usb_initialize();
     fd_usb_wake();
@@ -432,22 +447,25 @@ uint32_t fd_usb_test(uint16_t pid, uint8_t *result, uint32_t result_length) {
         }
     }
     fd_usb_done = false;
-    GPIO_PinOutClear(LED5_PORT_PIN);
     while (!fd_usb_done) {
         fd_usb_transfer();
     }
-    GPIO_PinOutSet(LED5_PORT_PIN);
+    GPIO_PinOutClear(LED5_PORT_PIN);
+    GPIO_PinOutSet(LED6_PORT_PIN);
     return fd_usb_errors;
 }
 
 void halt(void) {
-    __asm("BKPT   #0");
+    *(uint32_t *)0xE000EDF0 = 0xA05F0003; // DHCSR = DBGKEY | C_HALT | C_DEBUGEN;
 }
 
+void (*halt_fp)(void);
+
 void main(void) {
+    halt_fp = halt;
     fd_processor_initialize();
     fd_processor_wake();
     uint8_t bytes[10];
     fd_usb_test(0x0003, bytes, sizeof(bytes));
-    halt();
+    halt_fp();
 }

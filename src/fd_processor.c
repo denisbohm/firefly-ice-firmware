@@ -84,7 +84,7 @@ void fd_processor_initialize(void) {
     GPIO_PinModeSet(gpioPortF, 12, gpioModeDisabled, 0);
 
     GPIO_PinModeSet(BAT_VDIV2EN_PORT_PIN, gpioModePushPull, 0);
-    GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeInput, 0); // analog input
+    GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeDisabled, 0); // analog input
 
     GPIO_PinModeSet(LED0_PORT_PIN, gpioModePushPull, 1);
     GPIO_PinModeSet(LED4_PORT_PIN, gpioModePushPull, 1);
@@ -156,7 +156,7 @@ void fd_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
     );
 }
 
-#define CYCLES_PER_SECOND 48000000
+#define CYCLES_PER_SECOND (48000000/2)
 
 void fd_delay_us(uint32_t us) {
     fd_delay_3x_cycles((us * CYCLES_PER_SECOND) / 3000000);

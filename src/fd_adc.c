@@ -90,6 +90,9 @@ void fd_adc_ready(void) {
             adc_charge_current_value = value;
         break;
     }
+    GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeDisabled, 0);
+    GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeDisabled, 0);
+
     adc_complete = true;
     ADC_IntClear(ADC0, ADC_IF_SINGLE);
     NVIC_ClearPendingIRQ(ADC0_IRQn);
@@ -118,12 +121,14 @@ void fd_adc_start(fd_adc_channel_t channel, bool asynchronous) {
             adc_event = FD_EVENT_ADC_TEMPERATURE;
         break;
         case fd_adc_channel_battery_voltage:
+            GPIO_PinModeSet(BAT_VDIV2_PORT_PIN, gpioModeInput, 0);
             GPIO_PinOutSet(BAT_VDIV2EN_PORT_PIN);
             singleInit.reference = adcRefVDD;
             singleInit.input = adcSingleInpCh6;
             adc_event = FD_EVENT_ADC_BATTERY_VOLTAGE;
         break;
         case fd_adc_channel_charge_current:
+            GPIO_PinModeSet(CHG_RATE_PORT_PIN, gpioModeInput, 0);
             singleInit.reference = adcRef1V25;
             singleInit.input = adcSingleInpCh7;
             adc_event = FD_EVENT_ADC_CHARGE_CURRENT;

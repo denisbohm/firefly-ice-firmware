@@ -1,7 +1,11 @@
 #include "fd_event.h"
 #include "fd_lis3dh.h"
 #include "fd_log.h"
+#include "fd_processor.h"
 #include "fd_spi.h"
+#include "fd_timer.h"
+
+#include <em_gpio.h>
 
 #include <stdint.h>
 
@@ -96,6 +100,18 @@ typedef union {
 #define SPI_ADDRESS_INCREMENT 0x40
 
 static fd_lish3dh_sample_callback_t sample_callback;
+static fd_timer_t fifo_timer;
+
+static
+void fd_lis3dh_schedule(void) {
+    // Early board revisions use pin 4 (same as radio) so we can't use interrupts for fifo
+    // and a timer is used instead.  At 25 samples per second and 32 deep fifo we check
+    // the fifo every 1s at which point it should be about 75% full. -denis
+    fd_time_t duration;
+    duration.seconds = 1;
+    duration.microseconds = 0;
+    fd_timer_start(&fifo_timer, duration);
+}
 
 void fd_lis3dh_read_fifo(void) {
     uint8_t src = fd_spi_sync_tx1_rx1(FD_SPI_BUS_1_SLAVE_LIS3DH, SPI_READ | LIS3DH_FIFO_SRC_REG);
@@ -112,6 +128,8 @@ void fd_lis3dh_read_fifo(void) {
             (*sample_callback)(out.x, out.y, out.z);
         }
     }
+
+    fd_lis3dh_schedule();
 }
 
 void fd_lis3dh_initialize(void) {
@@ -158,6 +176,8 @@ void fd_lis3dh_initialize(void) {
     );
 
     fd_event_add_callback(FD_EVENT_ACC_INT, fd_lis3dh_read_fifo);
+
+    fd_timer_add(&fifo_timer, fd_lis3dh_read_fifo);
 }
 
 void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
@@ -166,6 +186,9 @@ void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
 
 void fd_lis3dh_sleep(void) {
     fd_event_mask_set(FD_EVENT_ACC_INT);
+
+    fd_timer_stop(&fifo_timer);
+
     fd_spi_sync_tx2(
         FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,
@@ -175,6 +198,9 @@ void fd_lis3dh_sleep(void) {
 
 void fd_lis3dh_wake(void) {
     fd_event_mask_clear(FD_EVENT_ACC_INT);
+
+    fd_lis3dh_schedule();
+
     fd_spi_sync_tx2(
         FD_SPI_BUS_1_SLAVE_LIS3DH,
         LIS3DH_CTRL_REG1,

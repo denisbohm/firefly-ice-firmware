@@ -52,6 +52,8 @@ static uint8_t fd_indicator_animation_ease_single[] = {
  255,
 };
 
+static void fd_indicator_running_check(void);
+
 void fd_indicator_animation_phase_initialize(fd_indicator_animation_phase_t *phase) {
     phase->done = false;
     phase->step_fn = 0;
@@ -97,6 +99,7 @@ void fd_indicator_animation_run(fd_indicator_animation_t *animation) {
         fd_indicator_animation_phase_run(&animation->in);
         fd_indicator_animation_phase_run(&animation->cycle);
         fd_indicator_animation_phase_run(&animation->out);
+        fd_indicator_running_check();
     } else {
         if (animation->canceling) {
             if (animation->cycle.done) {
@@ -127,6 +130,9 @@ void fd_indicator_animation_step(fd_indicator_animation_t *animation) {
             }
             if (!animation->running && (animation->done_fn != 0)) {
                 (*animation->done_fn)();
+            }
+            if (!animation->running) {
+                fd_indicator_running_check();
             }
         }
     }
@@ -751,12 +757,25 @@ void fd_indicator_set_error_condition(fd_indicator_error_condition_t condition) 
 
 // indicator
 
+static bool fd_indicator_running;
+
+void fd_indicator_running_check(void) {
+    fd_indicator_running =
+        usb.animation.running |
+        usb_connection.animation.running |
+        ble_connection.animation.running |
+        identify.animation.running |
+        error.animation.running;
+}
+
 void fd_indicator_step(void) {
-    fd_indicator_animation_step(&usb.animation);
-    fd_indicator_animation_step(&usb_connection.animation);
-    fd_indicator_animation_step(&ble_connection.animation);
-    fd_indicator_animation_step(&identify.animation);
-    fd_indicator_animation_step(&error.animation);
+    if (fd_indicator_running) {
+        fd_indicator_animation_step(&usb.animation);
+        fd_indicator_animation_step(&usb_connection.animation);
+        fd_indicator_animation_step(&ble_connection.animation);
+        fd_indicator_animation_step(&identify.animation);
+        fd_indicator_animation_step(&error.animation);
+    }
 }
 
 void fd_indicator_sleep(void) {
@@ -768,6 +787,7 @@ void fd_indicator_sleep(void) {
 }
 
 void fd_indicator_initialize(void) {
+    fd_indicator_running = false;
     fd_indicator_sleep();
 
     fd_event_add_callback(FD_EVENT_RTC_TICK, fd_indicator_step);

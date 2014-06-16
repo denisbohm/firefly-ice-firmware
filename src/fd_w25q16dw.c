@@ -1,5 +1,6 @@
 #include "fd_log.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 #include "fd_spi.h"
 #include "fd_w25q16dw.h"
 
@@ -97,6 +98,8 @@ void fd_w25q16dw_erase_sector(uint32_t address) {
 void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
 //    memcpy(&simulation_buffer[address], data, length);
 
+    fd_reset_push_watchdog_context("mwp");
+
     fd_w25q16dw_wait_while_busy();
 
     uint8_t tx_bytes[] = {PAGE_PROGRAM, address >> 16, address >> 8, address};
@@ -132,6 +135,8 @@ void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
     };
     fd_spi_io(FD_SPI_BUS_0_SLAVE_W25Q16DW, &io);
     fd_spi_wait(FD_SPI_BUS_0);
+
+    fd_reset_pop_watchdog_context();
 }
 
 void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {

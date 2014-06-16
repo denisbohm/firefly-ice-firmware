@@ -16,12 +16,14 @@
 #include "fd_processor.h"
 #include "fd_reset.h"
 #include "fd_rtc.h"
+#include "fd_sensing.h"
 #include "fd_sha.h"
 #include "fd_storage.h"
 #include "fd_sync.h"
 #include "fd_system.h"
 #include "fd_update.h"
 
+#include <em_gpio.h>
 #include <em_int.h>
 #include <em_msc.h>
 
@@ -197,7 +199,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 33
+#define VERSION_PATCH 37
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
  FD_CONTROL_CAPABILITY_BOOT_VERSION |\
@@ -207,6 +209,8 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
  FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
  FD_CONTROL_CAPABILITY_NAME |\
  FD_CONTROL_CAPABILITY_ADC_VDD |\
+ FD_CONTROL_CAPABILITY_REGULATOR |\
+ FD_CONTROL_CAPABILITY_SENSING_COUNT |\
  FD_CONTROL_CAPABILITY_RETAINED )
 
 // !!! should come from gcc command line define
@@ -316,6 +320,35 @@ void fd_control_get_property_boot_version(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, boot_data.git_commit, sizeof(boot_data.git_commit));
 }
 
+void fd_control_get_property_regulator(fd_binary_t *binary) {
+    bool switching = GPIO_PinInGet(PWR_SEL_PORT_PIN) != 0;
+    fd_binary_put_uint8(binary, switching ? 1 : 0);
+}
+
+void fd_control_set_property_regulator(fd_binary_t *binary) {
+    bool switching = fd_binary_get_uint8(binary) != 0;
+    if (switching) {
+        GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
+        GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 1);
+        fd_delay_ms(1);
+        GPIO_PinModeSet(PWR_SEL_PORT_PIN, gpioModePushPull, 1);
+    } else {
+        GPIO_PinModeSet(PWR_SEL_PORT_PIN, gpioModePushPull, 0);
+        GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
+        GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
+    }
+}
+
+void fd_control_get_property_sensing_count(fd_binary_t *binary) {
+    uint32_t count = fd_sensing_get_stream_sample_count();
+    fd_binary_put_uint32(binary, count);
+}
+
+void fd_control_set_property_sensing_count(fd_binary_t *binary) {
+    uint32_t count = fd_binary_get_uint32(binary);
+    fd_sensing_set_stream_sample_count(count);
+}
+
 void fd_control_get_property_logging(fd_binary_t *binary) {
     fd_binary_put_uint32(binary, FD_CONTROL_LOGGING_STATE | FD_CONTROL_LOGGING_COUNT);
     fd_binary_put_uint32(binary, fd_log_get_storage() ? FD_CONTROL_LOGGING_STORAGE : 0);
@@ -409,7 +442,9 @@ void fd_control_set_property_adc_vdd(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_BOOT_VERSION |\
  FD_CONTROL_PROPERTY_LOGGING |\
  FD_CONTROL_PROPERTY_NAME |\
- FD_CONTROL_PROPERTY_RETAINED)
+ FD_CONTROL_PROPERTY_RETAINED |\
+ FD_CONTROL_PROPERTY_REGULATOR |\
+ FD_CONTROL_PROPERTY_SENSING_COUNT)
 
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -466,6 +501,12 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_ADC_VDD: {
                     fd_control_get_property_adc_vdd(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_REGULATOR: {
+                    fd_control_get_property_regulator(binary_out);
+                } break;
+                case FD_CONTROL_PROPERTY_SENSING_COUNT: {
+                    fd_control_get_property_sensing_count(binary_out);
+                } break;
             }
         }
     }
@@ -502,6 +543,12 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_ADC_VDD: {
                     fd_control_set_property_adc_vdd(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_REGULATOR: {
+                    fd_control_set_property_regulator(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_SENSING_COUNT: {
+                    fd_control_set_property_sensing_count(&binary);
                 } break;
             }
         }

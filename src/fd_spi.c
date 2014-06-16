@@ -120,7 +120,7 @@ void fd_spi_initialize(void) {
     init_sync = init_sync_default;
     init_sync.msbf = false;
     init_sync.clockMode = usartClockMode0;
-    init_sync.baudrate = 1000000;
+    init_sync.baudrate = 3000000;
     spi1_slaves[1].init_sync = init_sync;
     spi1_slaves[1].csn_port = gpioPortD;
     spi1_slaves[1].csn_pin = 3;
@@ -335,10 +335,8 @@ void fd_spi_io(fd_spi_device_t device, fd_spi_io_t *io) {
 void fd_spi_wait(fd_spi_bus_t bus) {
     fd_spi_t *spi = &spis[bus];
     while (spi->in_progress) {
-//        spi_rx_irq_handler(&spis[0]);
-//        spi_tx_irq_handler(&spis[0]);
-        spi_rx_irq_handler(&spis[1]);
-        spi_tx_irq_handler(&spis[1]);
+        spi_rx_irq_handler(spi);
+        spi_tx_irq_handler(spi);
     }
 }
 

@@ -1,6 +1,7 @@
 #include "fd_event.h"
 #include "fd_log.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 
 #include <em_emu.h>
 #include <em_gpio.h>
@@ -20,7 +21,7 @@ fd_event_item_t fd_event_items[ITEM_LIMIT];
 static
 uint32_t fd_event_item_count;
 
-#define CHECK_LIMIT 2
+#define CHECK_LIMIT 4
 
 static
 fd_event_em2_check_t fd_event_em2_checks[CHECK_LIMIT];
@@ -28,13 +29,11 @@ static
 uint32_t fd_event_em2_check_count;
 
 volatile uint32_t fd_event_pending;
-volatile uint32_t fd_event_mask;
 
 void fd_event_initialize(void) {
     fd_event_item_count = 0;
     fd_event_em2_check_count = 0;
     fd_event_pending = 0;
-    fd_event_mask = 0;
 
     NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
     NVIC_EnableIRQ(GPIO_EVEN_IRQn);
@@ -72,14 +71,6 @@ void fd_event_set(uint32_t events) {
     fd_event_pending |= events;
 }
 
-void fd_event_mask_set(uint32_t events) {
-    fd_event_mask |= events;
-}
-
-void fd_event_mask_clear(uint32_t events) {
-    fd_event_mask &= ~events;
-}
-
 void GPIO_EVEN_IRQHandler(void) {
     uint32_t interrupts = GPIO_IntGet() & 0x55555555;
     GPIO_IntClear(interrupts);
@@ -107,15 +98,17 @@ void GPIO_ODD_IRQHandler(void) {
 
 void fd_event_process(void) {
     fd_interrupts_disable();
-    uint32_t pending = fd_event_pending & ~fd_event_mask;
+    uint32_t pending = fd_event_pending;
     fd_event_pending = 0;
     fd_interrupts_enable();
 
     WDOG_Feed();
+    fd_reset_feed_watchdog();
 
     if (pending) {
-        for (uint32_t i = 0; i < fd_event_item_count; ++i) {
-            fd_event_item_t *item = &fd_event_items[i];
+        fd_event_item_t *item = fd_event_items;
+        fd_event_item_t *end = &fd_event_items[fd_event_item_count];
+        for (; item < end; ++item) {
             if (item->events & pending) {
                 (*item->callback)();
             }

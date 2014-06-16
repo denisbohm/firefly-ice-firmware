@@ -11,6 +11,7 @@
 #include "fd_nrf8001_dispatch.h"
 #include "fd_nrf8001_types.h"
 #include "fd_processor.h"
+#include "fd_reset.h"
 #include "fd_spi.h"
 #include "fd_timer.h"
 
@@ -218,6 +219,8 @@ bool fd_bluetooth_spi_transfer(void) {
         return false;
     }
 
+    fd_reset_push_watchdog_context("bspi");
+
     uint8_t rx_buffer[FD_NRF8001_SPI_RX_BUFFER_SIZE];
     fd_spi_transfer_t transfers[] = {
         {
@@ -240,6 +243,8 @@ bool fd_bluetooth_spi_transfer(void) {
     };
     fd_spi_io(FD_SPI_BUS_1_SLAVE_NRF8001, &io);
     fd_spi_wait(FD_SPI_BUS_1);
+
+    fd_reset_pop_watchdog_context();
 
     fd_nrf8001_spi_tx_clear();
 
@@ -284,12 +289,6 @@ void fd_bluetooth_system_step(void) {
             fd_bluetooth_step_complete(fd_nrf8001_sleep_step);
             fd_bluetooth_idle = true;
             fd_event_set_exclusive(FD_EVENT_BLE_STATE);
-            fd_event_mask_set(
-                FD_EVENT_NRF_RDYN |
-                FD_EVENT_BLE_DATA_CREDITS |
-                FD_EVENT_BLE_SYSTEM_CREDITS |
-                FD_EVENT_BLE_STEP
-            );
         } else
         if (fd_bluetooth_system_steps & fd_nrf8001_wakeup_step) {
             fd_nrf8001_wakeup();
@@ -609,13 +608,6 @@ void fd_bluetooth_sleep(void) {
 }
 
 void fd_bluetooth_wake(void) {
-    fd_event_mask_clear(
-        FD_EVENT_NRF_RDYN |
-        FD_EVENT_BLE_DATA_CREDITS |
-        FD_EVENT_BLE_SYSTEM_CREDITS |
-        FD_EVENT_BLE_STEP
-    );
-
     fd_nrf8001_set_system_credits(1);
     fd_bluetooth_idle = false;
     fd_bluetooth_step_queue(fd_nrf8001_wakeup_step);

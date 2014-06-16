@@ -129,19 +129,6 @@ void fd_main_usb_state_change(void) {
 }
 */
 
-#ifdef SIMULATE_INDICATOR_ERROR
-void tryit(void) {
-    fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_not_charging);
-    fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_charging);
-    // 10 to 19
-    for (int i = 0; i < 10; ++i) {
-        fd_indicator_step();
-    }
-    fd_indicator_set_usb_condition(fd_indicator_usb_condition_powered_not_charging); // sets rerun to true
-    fd_indicator_set_usb_condition(fd_indicator_usb_condition_unpowered);
-}
-#endif
-
 int main(void) {
     fd_reset_initialize();
     fd_processor_initialize();
@@ -151,10 +138,11 @@ int main(void) {
 #else
     CMU_ClockEnable(cmuClock_CORELE, true);
     WDOG_Init_TypeDef wdog_init = WDOG_INIT_DEFAULT;
-    wdog_init.perSel = wdogPeriod_32k;
+    wdog_init.perSel = wdogPeriod_16k;
 //    wdog_init.lock = true;
     WDOG_Init(&wdog_init);
 #endif
+    fd_reset_start_watchdog();
 
     main_mode = fd_main_mode_run;
     main_sleep_when_bluetooth_is_asleep = false;
@@ -170,9 +158,13 @@ int main(void) {
     GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
 
+    fd_reset_feed_watchdog();
+
     fd_rtc_initialize();
     fd_adc_initialize();
     fd_usb_initialize();
+
+    fd_reset_feed_watchdog();
 
     fd_i2c1_initialize();
     // initialize devices on i2c1 powered bus
@@ -182,6 +174,8 @@ int main(void) {
     fd_lp55231_power_on();
     //
     fd_mag3110_initialize();
+
+    fd_reset_feed_watchdog();
 
     fd_spi_initialize();
 
@@ -214,29 +208,23 @@ int main(void) {
     fd_led_initialize();
     fd_indicator_initialize();
 
+    fd_reset_feed_watchdog();
+
     fd_ui_initialize();
     fd_sync_initialize();
     fd_activity_initialize();
     fd_sensing_initialize();
     fd_sensing_wake();
 
+    fd_reset_feed_watchdog();
+
     fd_usb_wake();
     fd_power_initialize();
 
 //    fd_event_add_callback(FD_EVENT_USB_STATE, fd_main_usb_state_change);
 
-#ifdef SIMULATE_INDICATOR_ERROR
-    bool has_tried = false;
-#endif
     while (true) {
         fd_event_process();
-
-#ifdef SIMULATE_INDICATOR_ERROR
-        if ((fd_rtc_get_seconds() == 5) && !has_tried) {
-            has_tried = true;
-            tryit();
-        }
-#endif
 
         if (main_sleep_when_bluetooth_is_asleep && fd_bluetooth_is_asleep()) {
             main_sleep_when_bluetooth_is_asleep = false;

@@ -7,10 +7,6 @@ void fd_indicator_initialize(void);
 
 void fd_indicator_sleep(void);
 
-#ifdef SIMULATE_INDICATOR_ERROR
-void fd_indicator_step(void);
-#endif
-
 typedef enum {
     fd_indicator_usb_condition_unpowered,            // USB LEDs are off
     fd_indicator_usb_condition_powered_not_charging, // USB LEDs are steady green (eased in & out)

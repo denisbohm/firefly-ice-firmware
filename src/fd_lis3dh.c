@@ -185,8 +185,6 @@ void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
 }
 
 void fd_lis3dh_sleep(void) {
-    fd_event_mask_set(FD_EVENT_ACC_INT);
-
     fd_timer_stop(&fifo_timer);
 
     fd_spi_sync_tx2(
@@ -197,8 +195,6 @@ void fd_lis3dh_sleep(void) {
 }
 
 void fd_lis3dh_wake(void) {
-    fd_event_mask_clear(FD_EVENT_ACC_INT);
-
     fd_lis3dh_schedule();
 
     fd_spi_sync_tx2(

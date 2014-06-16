@@ -12,6 +12,7 @@
 #include "fd_binary.h"
 #include "fd_crc.h"
 #include "fd_log.h"
+#include "fd_reset.h"
 #include "fd_storage.h"
 
 #include <string.h>
@@ -68,6 +69,7 @@ void fd_storage_area_initialize(fd_storage_area_t *area, uint32_t start_sector, 
     bool wraps = fd_storage_is_page_used(area->start_page) && fd_storage_is_page_used(area->end_page - 1);
     if (wraps) {
         for (uint32_t page = area->start_page; page < area->end_page; ++page) {
+            fd_reset_feed_watchdog();
             if (!fd_storage_is_page_used(page)) {
                 if (area->free_page == INVALID_PAGE) {
                     area->free_page = page;
@@ -81,6 +83,7 @@ void fd_storage_area_initialize(fd_storage_area_t *area, uint32_t start_sector, 
         }
     } else {
         for (uint32_t page = area->start_page; page < area->end_page; ++page) {
+            fd_reset_feed_watchdog();
             if (fd_storage_is_page_used(page)) {
                 if (area->first_page == INVALID_PAGE) {
                     area->first_page = page;

@@ -2,7 +2,9 @@
 #include "fd_reset.h"
 #include "fd_rtc.h"
 
+#include <em_cmu.h>
 #include <em_rmu.h>
+#include <em_timer.h>
 
 #include <string.h>
 
@@ -66,6 +68,69 @@ void fd_reset_initialize(void) {
     fd_reset_last_time = retained->rtc;
 }
 
+void fd_reset_start_watchdog(void) {
+#ifdef DEBUG_WATCHDOG
+#warning watchdog debug is enabled
+    CMU_ClockEnable(cmuClock_TIMER2, true);
+    TIMER_CounterSet(TIMER2, 0);
+    TIMER_TopSet(TIMER2, 0xffff);
+    TIMER_Init_TypeDef init = TIMER_INIT_DEFAULT;
+    init.debugRun = false;
+    init.prescale = timerPrescale1024;
+    init.clkSel = timerClkSelHFPerClk;
+    TIMER_Init(TIMER2, &init);
+    TIMER_IntEnable(TIMER2, TIMER_IF_OF);
+    NVIC_EnableIRQ(TIMER2_IRQn);
+#endif
+}
+
+void fd_reset_feed_watchdog(void) {
+#ifdef DEBUG_WATCHDOG
+    TIMER_CounterSet(TIMER2, 0);
+#endif
+}
+
+void fd_reset_push_watchdog_context(char *context) {
+    int length = strlen(context);
+    if (length > 4) {
+        length = 4;
+    }
+    fd_reset_retained_t *retained = RETAINED;
+    memset(retained->context, 0, 4);
+    memcpy(retained->context, context, length);
+}
+
+void fd_reset_pop_watchdog_context(void) {
+    fd_reset_retained_t *retained = RETAINED;
+    memset(retained->context, 0, 4);
+}
+
+#ifdef DEBUG_WATCHDOG
+void TIMER2_IRQHandler(void) {
+    // record call stack info...  before watchdog resets...
+    __asm volatile(
+        " movw r0, #0x0818\n" // TIMER2->IFC = TIMER_IF_OF;
+        " movt r0, #0x4001\n"
+        " mov r1, #1\n"
+        " str r1, [r0]\n"
+
+        " mrs r0, msp\n" // r0 = msp
+
+        " movw r1, #0x0000\n" // r1 = retained
+        " movt r1, #0x2000\n"
+
+        " ldr r2, [r0, #24]\n" // r2 = msp[6]
+        " str r2, [r1, #20]\n" // retained->watchdog_lr = r2
+
+        " ldr r2, [r0, #28]\n" // r2 = msp[7]
+        " str r2, [r1, #24]\n" // retained->watchdog_pc = r2
+
+        " ldr r2, [r1, #36]\n" // r2 = retained->context
+        " str r2, [r1, #28]\n" // retained->watchdog_context = r2
+    );
+}
+#endif
+
 bool fd_reset_retained_was_valid_on_startup(void) {
     return retain_was_valid;
 }
@@ -76,7 +141,9 @@ void fd_reset_by(uint8_t type) {
             NVIC_SystemReset();
         } break;
         case FD_RESET_WATCHDOG: {
-            fd_delay_ms(30000);
+            fd_reset_push_watchdog_context("rwdt");
+            fd_delay_ms(120000);
+            fd_reset_pop_watchdog_context();
         } break;
         case FD_RESET_HARD_FAULT: {
             void (*null_fn)(void) = 0;

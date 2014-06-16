@@ -9,15 +9,40 @@
 
 static fd_storage_area_t fd_sensing_storage_area;
 static fd_storage_buffer_t fd_sensing_storage_buffer;
+static fd_storage_buffer_t fd_sensing_stream_storage_buffer;
 static uint32_t fd_sensing_interval;
 static fd_timer_t fd_sensing_timer;
 static fd_time_t fd_sensing_time;
 static uint32_t fd_sensing_samples;
+static uint32_t fd_sensing_stream_remaining_sample_count;
+static fd_time_t fd_sensing_stream_time;
+
+#define FD_SENSING_INTERVAL_US 40000
+
+static
+void fd_sensing_stream(int16_t x, int16_t y, int16_t z) {
+    if (fd_sensing_stream_remaining_sample_count > 0) {
+        // 8G range, 10-bit accuracy
+        uint32_t x10 = (x >> 5) & 0x03ff;
+        uint32_t y10 = (y >> 5) & 0x03ff;
+        uint32_t z10 = (z >> 5) & 0x03ff;
+        uint32_t xyz = (x10 << 20) | (y10 << 10) | z10;
+        // 25 Hz sample rate
+        fd_time_t interval;
+        interval.seconds = 0;
+        interval.microseconds = FD_SENSING_INTERVAL_US;
+        fd_sensing_stream_time = fd_time_add(fd_sensing_stream_time, interval);
+        fd_storage_buffer_add_time_series_ms_uint32(&fd_sensing_stream_storage_buffer, fd_sensing_stream_time, 40, xyz);
+        --fd_sensing_stream_remaining_sample_count;
+    }
+}
 
 static
 void fd_sensing_sample_callback(int16_t x, int16_t y, int16_t z) {
     fd_activity_accumulate(x, y, z);
     ++fd_sensing_samples;
+
+    fd_sensing_stream(x, y, z);
 }
 
 static
@@ -25,7 +50,7 @@ void fd_sensing_timer_callback(void) {
     fd_lis3dh_read_fifo();
     if (fd_sensing_samples > 0) {
         float activity = fd_activity_value(fd_sensing_interval);
-        fd_storage_buffer_add_time_series(&fd_sensing_storage_buffer, fd_sensing_time.seconds, fd_sensing_interval, activity);
+        fd_storage_buffer_add_time_series_s_float16(&fd_sensing_storage_buffer, fd_sensing_time.seconds, fd_sensing_interval, activity);
     }
 
     fd_sensing_wake();
@@ -37,10 +62,24 @@ void fd_sensing_initialize(void) {
     fd_storage_buffer_initialize(&fd_sensing_storage_buffer, &fd_sensing_storage_area, FD_STORAGE_TYPE('F', 'D', 'V', '2'));
     fd_storage_buffer_collection_push(&fd_sensing_storage_buffer);
 
+    fd_storage_buffer_initialize(&fd_sensing_stream_storage_buffer, &fd_sensing_storage_area, FD_STORAGE_TYPE('F', 'D', 'S', 'A'));
+    fd_storage_buffer_collection_push(&fd_sensing_stream_storage_buffer);
+    fd_sensing_stream_remaining_sample_count = 0;
+
     fd_lis3dh_set_sample_callback(fd_sensing_sample_callback);
 
     fd_sensing_interval = 10;
     fd_timer_add(&fd_sensing_timer, fd_sensing_timer_callback);
+}
+
+void fd_sensing_set_stream_sample_count(uint32_t count) {
+    fd_sensing_stream_remaining_sample_count = count;
+    fd_sensing_stream_time = fd_rtc_get_time();
+    fd_sensing_stream_time.microseconds = (fd_sensing_stream_time.microseconds / FD_SENSING_INTERVAL_US) * FD_SENSING_INTERVAL_US;
+}
+
+uint32_t fd_sensing_get_stream_sample_count(void) {
+    return fd_sensing_stream_remaining_sample_count;
 }
 
 void fd_sensing_wake(void) {

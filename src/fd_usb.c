@@ -375,7 +375,7 @@ bool fd_usb_is_safe_to_enter_em2(void) {
 
 static
 void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), USBD_State_TypeDef newState) {
-    fd_lock_close(fd_lock_owner_ble);
+    fd_lock_close(fd_lock_owner_usb);
 
     if (newState == USBD_STATE_CONFIGURED) {
         fd_detour_clear(&fd_usb_detour);

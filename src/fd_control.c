@@ -22,6 +22,7 @@
 #include "fd_sync.h"
 #include "fd_system.h"
 #include "fd_update.h"
+#include "fd_ui.h"
 
 #include <em_gpio.h>
 #include <em_int.h>
@@ -199,7 +200,7 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 38
+#define VERSION_PATCH 40
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
  FD_CONTROL_CAPABILITY_BOOT_VERSION |\
@@ -208,10 +209,11 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
  FD_CONTROL_CAPABILITY_LOGGING |\
  FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
  FD_CONTROL_CAPABILITY_NAME |\
+ FD_CONTROL_CAPABILITY_RETAINED |\
  FD_CONTROL_CAPABILITY_ADC_VDD |\
  FD_CONTROL_CAPABILITY_REGULATOR |\
  FD_CONTROL_CAPABILITY_SENSING_COUNT |\
- FD_CONTROL_CAPABILITY_RETAINED )
+ FD_CONTROL_CAPABILITY_INDICATE )
 
 // !!! should come from gcc command line define
 #define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
@@ -428,6 +430,16 @@ void fd_control_set_property_adc_vdd(fd_binary_t *binary) {
     fd_adc_set_vdd(fd_binary_get_float16(binary));
 }
 
+void fd_control_get_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner) {
+    bool indicate = fd_ui_get_indicate(owner);
+    fd_binary_put_uint8(binary, indicate ? 1 : 0);
+}
+
+void fd_control_set_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner) {
+    bool indicate = fd_binary_get_uint8(binary) != 0;
+    fd_ui_set_indicate(owner, indicate);
+}
+
 #define GET_PROPERTY_MASK \
  (FD_CONTROL_PROPERTY_VERSION |\
  FD_CONTROL_PROPERTY_HARDWARE_ID |\
@@ -444,7 +456,8 @@ void fd_control_set_property_adc_vdd(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_NAME |\
  FD_CONTROL_PROPERTY_RETAINED |\
  FD_CONTROL_PROPERTY_REGULATOR |\
- FD_CONTROL_PROPERTY_SENSING_COUNT)
+ FD_CONTROL_PROPERTY_SENSING_COUNT |\
+ FD_CONTROL_PROPERTY_INDICATE)
 
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -507,6 +520,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_SENSING_COUNT: {
                     fd_control_get_property_sensing_count(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_INDICATE: {
+                    fd_control_get_property_indicate(binary_out, detour_source_collection->owner);
+                } break;
             }
         }
     }
@@ -549,6 +565,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_SENSING_COUNT: {
                     fd_control_set_property_sensing_count(&binary);
+                } break;
+                case FD_CONTROL_PROPERTY_INDICATE: {
+                    fd_control_set_property_indicate(&binary, detour_source_collection->owner);
                 } break;
             }
         }
@@ -807,6 +826,9 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
         case FD_CONTROL_DIAGNOSTICS:
             command = fd_control_diagnostics;
             break;
+
+        case FD_CONTROL_SENSING_SYNTHESIZE:
+            command = fd_sensing_synthesize;
     }
     if (command) {
         (*command)(detour_source_collection, &data[1], length - 1);

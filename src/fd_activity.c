@@ -72,6 +72,10 @@ void fd_activity_accumulate(int16_t xg, int16_t yg, int16_t zg) {
     ++activity_sample_count;
 }
 
+// Scale activity value by a constant for compatibility with other meters.
+// If compatibility isn't needed the scale can be removed (set to 1.0f).
+#define SCALE (10.0f * 1.25f)
+
 float fd_activity_value(float time_interval __attribute__((unused))) {
-    return 10.0f * activity_vm / activity_sample_count;
+    return SCALE * activity_vm / activity_sample_count;
 }

@@ -56,6 +56,22 @@ void fd_sensing_timer_callback(void) {
     fd_sensing_wake();
 }
 
+void fd_sensing_synthesize(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t samples = fd_binary_get_uint32(&binary);
+    float activity = fd_binary_get_float32(&binary);
+
+    // clear any pending records out of the RAM buffer
+    fd_sensing_storage_buffer.index = 0;
+
+    uint32_t time = fd_sensing_time.seconds - samples * fd_sensing_interval;
+    for (uint32_t i = 0; i < samples; ++i) {
+        fd_storage_buffer_add_time_series_s_float16(&fd_sensing_storage_buffer, time, fd_sensing_interval, activity);
+        time += fd_sensing_interval;
+    }
+}
+
 void fd_sensing_initialize(void) {
     // sensing storage will use sectors 64-511 (sectors 0-63 are for firmware updates)
     fd_storage_area_initialize(&fd_sensing_storage_area, 64, 511);

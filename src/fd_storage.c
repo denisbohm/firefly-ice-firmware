@@ -173,7 +173,7 @@ void fd_storage_area_read_nth_page(fd_storage_area_t *area, uint32_t n, fd_stora
     if (metadata->page >= area->end_page) {
         metadata->page = area->start_page + (metadata->page - area->end_page);
     }
-    uint32_t address = area->first_page * FD_W25Q16DW_PAGE_SIZE;
+    uint32_t address = metadata->page * FD_W25Q16DW_PAGE_SIZE;
     uint8_t buffer[FD_W25Q16DW_PAGE_SIZE];
     // !!! might be better to read length and then content -denis
     fd_w25q16dw_wake();

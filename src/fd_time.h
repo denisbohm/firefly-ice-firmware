@@ -15,5 +15,6 @@ bool fd_time_gt(fd_time_t a, fd_time_t b);
 
 fd_time_t fd_time_add(fd_time_t a, fd_time_t b);
 fd_time_t fd_time_subtract(fd_time_t a, fd_time_t b);
+fd_time_t fd_time_multiply(fd_time_t t, unsigned n);
 
 #endif

@@ -102,6 +102,10 @@
       <file file_name="src/fd_led.h"/>
       <file file_name="src/fd_timing.c"/>
       <file file_name="src/fd_timing.h"/>
+      <file file_name="src/fd_recognition.c"/>
+      <file file_name="src/fd_recognition.h"/>
+      <file file_name="src/fd_math.c"/>
+      <file file_name="src/fd_math.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
@@ -405,6 +409,10 @@
       <file file_name="src/fd_led.h"/>
       <file file_name="src/fd_timing.c"/>
       <file file_name="src/fd_timing.h"/>
+      <file file_name="src/fd_math.c"/>
+      <file file_name="src/fd_math.h"/>
+      <file file_name="src/fd_recognition.c"/>
+      <file file_name="src/fd_recognition.h"/>
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>

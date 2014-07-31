@@ -17,6 +17,7 @@
 #include "fd_nrf8001.h"
 #include "fd_power.h"
 #include "fd_processor.h"
+#include "fd_recognition.h"
 #include "fd_reset.h"
 #include "fd_rtc.h"
 #include "fd_sensing.h"
@@ -215,6 +216,7 @@ int main(void) {
     fd_activity_initialize();
     fd_sensing_initialize();
     fd_sensing_wake();
+    fd_recognition_initialize();
 
     fd_reset_feed_watchdog();
 

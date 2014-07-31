@@ -1,5 +1,6 @@
 #include "fd_activity.h"
 #include "fd_lis3dh.h"
+#include "fd_math.h"
 
 #include <math.h>
 #include <stdint.h>
@@ -25,42 +26,11 @@ void fd_activity_start(void) {
     activity_vm = 0.0f;
 }
 
-#define Minus32 0x80000000
-
-// return square root of 32-bit number in 16.16 format
-// (see SLAA024)
-static
-uint32_t isqrt(uint32_t x) {
-    uint32_t h = x;
-    x = 0;
-    uint32_t y = 0;
-    for (uint32_t i = 0; i < 32; i++) {
-        x <<= 1; x++; // 4 * x + 1
-        if (y < x) {
-            x -= 2;
-        } else {
-            y -= x;
-        }
-        x++;
-        y <<= 1;
-        if (h & Minus32) {
-            y++;
-        }
-        h <<= 1;
-        y <<= 1;
-        if (h & Minus32) {
-            y++;
-        }
-        h <<= 1;
-    }
-    return x;
-}
-
 void fd_activity_accumulate(int16_t xg, int16_t yg, int16_t zg) {
     uint32_t x = xg;
     uint32_t y = yg;
     uint32_t z = zg;
-    uint32_t t = isqrt(x * x + y * y + z * z);
+    uint32_t t = fd_math_isqrt(x * x + y * y + z * z);
     float v = t * (FD_LIS3DH_SCALE / 65536.0f);
 
     float value = v - activity_acc_dc;

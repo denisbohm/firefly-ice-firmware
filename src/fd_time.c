@@ -42,3 +42,11 @@ fd_time_t fd_time_subtract(fd_time_t a, fd_time_t b) {
     }
     return a;
 }
+
+fd_time_t fd_time_multiply(fd_time_t t, unsigned n) {
+    uint64_t us = ((uint64_t)t.microseconds) * n;
+    uint64_t s = us / 1000000;
+    us = us - (s * 1000000);
+    fd_time_t r = {.seconds = s, .microseconds = us};
+    return r;
+}

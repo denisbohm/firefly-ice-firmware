@@ -8,6 +8,8 @@ void fd_sensing_initialize(void);
 void fd_sensing_wake(void);
 void fd_sensing_sleep(void);
 
+void fd_sensing_history_save(void);
+
 void fd_sensing_set_stream_sample_count(uint32_t count);
 uint32_t fd_sensing_get_stream_sample_count(void);
 

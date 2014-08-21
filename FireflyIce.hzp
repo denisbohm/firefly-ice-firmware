@@ -1,829 +1,1268 @@
 <!DOCTYPE CrossStudio_Project_File>
 <solution Name="FireflyIce" target="8" version="2">
   <project Name="FireflyIce">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fp_abi="Soft" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="0" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" arm_use_gcc_libraries="No" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch" c_only_additional_options="" c_preprocessor_definitions="USE_PROCESS_STACK;NO_DEBUG_WATCHDOG" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_standard_libraries="Yes" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_additional_options="" linker_memory_map_file="$(ProjectDir)/FireflyIce_MemoryMap.xml" linker_output_format="hex" linker_printf_enabled="Yes" linker_printf_width_precision_supported="No" linker_scanf_enabled="No" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="src/fd_processor.c"/>
-      <file file_name="src/fd_processor.h"/>
-      <file file_name="src/main.c"/>
-      <file file_name="src/fd_adc.c"/>
-      <file file_name="src/fd_adc.h"/>
-      <file file_name="src/fd_i2c1.c"/>
-      <file file_name="src/fd_i2c1.h"/>
-      <file file_name="src/fd_lis3dh.c"/>
-      <file file_name="src/fd_lis3dh.h"/>
-      <file file_name="src/fd_nrf8001.c"/>
-      <file file_name="src/fd_nrf8001.h"/>
-      <file file_name="src/fd_mag3110.c"/>
-      <file file_name="src/fd_mag3110.h"/>
-      <file file_name="src/fd_rtc.c"/>
-      <file file_name="src/fd_rtc.h"/>
-      <file file_name="src/fd_usb.c"/>
-      <file file_name="src/usbconfig.h"/>
-      <file file_name="src/fd_usb.h"/>
-      <file file_name="src/fd_nrf8001_dispatch.c"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fp_abi="Soft"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_linker_heap_size="0"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      arm_use_gcc_libraries="No"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch"
+      c_only_additional_options=""
+      c_preprocessor_definitions="USE_PROCESS_STACK;NO_DEBUG_WATCHDOG"
+      c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
+      link_include_standard_libraries="Yes"
+      link_include_startup_code="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_additional_options=""
+      linker_memory_map_file="$(ProjectDir)/FireflyIce_MemoryMap.xml"
+      linker_output_format="hex"
+      linker_printf_enabled="Yes"
+      linker_printf_width_precision_supported="No"
+      linker_scanf_enabled="No"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/main.c" />
+      <file file_name="src/fd_adc.c" />
+      <file file_name="src/fd_adc.h" />
+      <file file_name="src/fd_i2c1.c" />
+      <file file_name="src/fd_i2c1.h" />
+      <file file_name="src/fd_lis3dh.c" />
+      <file file_name="src/fd_lis3dh.h" />
+      <file file_name="src/fd_nrf8001.c" />
+      <file file_name="src/fd_nrf8001.h" />
+      <file file_name="src/fd_mag3110.c" />
+      <file file_name="src/fd_mag3110.h" />
+      <file file_name="src/fd_usb.c" />
+      <file file_name="src/usbconfig.h" />
+      <file file_name="src/fd_usb.h" />
+      <file file_name="src/fd_nrf8001_dispatch.c" />
       <file file_name="src/fd_nrf8001_callbacks.c">
-        <configuration Name="Common" arm_fp_abi="None"/>
+        <configuration Name="Common" arm_fp_abi="None" />
       </file>
-      <file file_name="src/fd_nrf8001_callbacks.h"/>
-      <file file_name="src/fd_nrf8001_types.h"/>
-      <file file_name="src/fd_nrf8001_commands.h"/>
-      <file file_name="src/fd_nrf8001_commands.c"/>
-      <file file_name="src/fd_nrf8001_dispatch.h"/>
-      <file file_name="src/fd_bluetooth.c"/>
-      <file file_name="src/fd_storage.c"/>
-      <file file_name="src/fd_storage.h"/>
-      <file file_name="src/fd_crc.c"/>
-      <file file_name="src/fd_crc.h"/>
-      <file file_name="src/fd_binary.h"/>
-      <file file_name="src/fd_binary.c"/>
-      <file file_name="src/fd_log.h"/>
-      <file file_name="src/fd_log.c"/>
-      <file file_name="src/fd_bluetooth.h"/>
-      <file file_name="src/fd_detour.c"/>
-      <file file_name="src/fd_detour.h"/>
-      <file file_name="src/fd_control.c"/>
-      <file file_name="src/fd_control.h"/>
-      <file file_name="src/fd_sync.c"/>
-      <file file_name="src/fd_sync.h"/>
-      <file file_name="src/fd_system.h"/>
-      <file file_name="src/fd_system.c"/>
-      <file file_name="src/fd_time.h"/>
-      <file file_name="src/fd_event.c"/>
-      <file file_name="src/fd_event.h"/>
-      <file file_name="src/fd_activity.c"/>
-      <file file_name="src/fd_activity.h"/>
-      <file file_name="src/fd_sensing.c"/>
-      <file file_name="src/fd_sensing.h"/>
-      <file file_name="src/fd_ui.c"/>
-      <file file_name="src/fd_ui.h"/>
-      <file file_name="src/fd_storage_buffer.h"/>
-      <file file_name="src/fd_storage_buffer.c"/>
+      <file file_name="src/fd_nrf8001_callbacks.h" />
+      <file file_name="src/fd_nrf8001_types.h" />
+      <file file_name="src/fd_nrf8001_commands.h" />
+      <file file_name="src/fd_nrf8001_commands.c" />
+      <file file_name="src/fd_nrf8001_dispatch.h" />
+      <file file_name="src/fd_bluetooth.c" />
+      <file file_name="src/fd_storage.c" />
+      <file file_name="src/fd_storage.h" />
+      <file file_name="src/fd_crc.c" />
+      <file file_name="src/fd_crc.h" />
+      <file file_name="src/fd_binary.h" />
+      <file file_name="src/fd_binary.c" />
+      <file file_name="src/fd_log.h" />
+      <file file_name="src/fd_log.c" />
+      <file file_name="src/fd_bluetooth.h" />
+      <file file_name="src/fd_detour.c" />
+      <file file_name="src/fd_detour.h" />
+      <file file_name="src/fd_control.c" />
+      <file file_name="src/fd_control.h" />
+      <file file_name="src/fd_sync.c" />
+      <file file_name="src/fd_sync.h" />
+      <file file_name="src/fd_time.h" />
+      <file file_name="src/fd_event.c" />
+      <file file_name="src/fd_event.h" />
+      <file file_name="src/fd_activity.c" />
+      <file file_name="src/fd_activity.h" />
+      <file file_name="src/fd_sensing.c" />
+      <file file_name="src/fd_sensing.h" />
+      <file file_name="src/fd_storage_buffer.h" />
+      <file file_name="src/fd_storage_buffer.c" />
       <file file_name="src/fd_w25q16dw.c">
-        <configuration Name="THUMB Flash Debug" build_exclude_from_build="Yes"/>
-        <configuration Name="THUMB Flash Release" build_exclude_from_build="Yes"/>
+        <configuration
+          Name="THUMB Flash Debug"
+          build_exclude_from_build="Yes" />
+        <configuration
+          Name="THUMB Flash Release"
+          build_exclude_from_build="Yes" />
       </file>
-      <file file_name="src/fd_w25q16dw.h"/>
-      <file file_name="src/fd_lp55231.c"/>
-      <file file_name="src/fd_lp55231.h"/>
-      <file file_name="src/fd_spi.c"/>
-      <file file_name="src/fd_spi.h"/>
-      <file file_name="src/fd_control_codes.h"/>
-      <file file_name="src/fd_map.h"/>
-      <file file_name="src/fd_map.c"/>
-      <file file_name="src/fd_power.h"/>
-      <file file_name="src/fd_power.c"/>
-      <file file_name="src/fd_indicator.h"/>
-      <file file_name="src/fd_indicator.c"/>
-      <file file_name="src/fd_update.c"/>
-      <file file_name="src/fd_update.h"/>
-      <file file_name="src/sha.h"/>
-      <file file_name="src/sha1.c"/>
-      <file file_name="src/fd_sha.h"/>
-      <file file_name="src/fd_sha.c"/>
-      <file file_name="src/fd_aes.c"/>
-      <file file_name="src/fd_aes.h"/>
-      <file file_name="src/fd_timer.h"/>
-      <file file_name="src/fd_timer.c"/>
-      <file file_name="src/fd_time.c"/>
-      <file file_name="src/fd_w25q16dw_bitbang.c"/>
-      <file file_name="src/fd_reset.c"/>
-      <file file_name="src/fd_reset.h"/>
-      <file file_name="src/fd_main.h"/>
-      <file file_name="src/fd_lock.h"/>
-      <file file_name="src/fd_lock.c"/>
-      <file file_name="src/fd_ieee754.c"/>
-      <file file_name="src/fd_ieee754.h"/>
-      <file file_name="src/fd_boot.h"/>
-      <file file_name="src/fd_led.c"/>
-      <file file_name="src/fd_led.h"/>
-      <file file_name="src/fd_timing.c"/>
-      <file file_name="src/fd_timing.h"/>
-      <file file_name="src/fd_recognition.c"/>
-      <file file_name="src/fd_recognition.h"/>
-      <file file_name="src/fd_math.c"/>
-      <file file_name="src/fd_math.h"/>
+      <file file_name="src/fd_w25q16dw.h" />
+      <file file_name="src/fd_lp55231.c" />
+      <file file_name="src/fd_lp55231.h" />
+      <file file_name="src/fd_spi.c" />
+      <file file_name="src/fd_spi.h" />
+      <file file_name="src/fd_control_codes.h" />
+      <file file_name="src/fd_map.h" />
+      <file file_name="src/fd_map.c" />
+      <file file_name="src/fd_power.h" />
+      <file file_name="src/fd_power.c" />
+      <file file_name="src/fd_indicator.h" />
+      <file file_name="src/fd_indicator.c" />
+      <file file_name="src/fd_update.c" />
+      <file file_name="src/fd_update.h" />
+      <file file_name="src/sha.h" />
+      <file file_name="src/sha1.c" />
+      <file file_name="src/fd_sha.h" />
+      <file file_name="src/fd_sha.c" />
+      <file file_name="src/fd_timer.h" />
+      <file file_name="src/fd_timer.c" />
+      <file file_name="src/fd_time.c" />
+      <file file_name="src/fd_w25q16dw_bitbang.c" />
+      <file file_name="src/fd_main.h" />
+      <file file_name="src/fd_lock.h" />
+      <file file_name="src/fd_lock.c" />
+      <file file_name="src/fd_ieee754.c" />
+      <file file_name="src/fd_ieee754.h" />
+      <file file_name="src/fd_boot.h" />
+      <file file_name="src/fd_led.c" />
+      <file file_name="src/fd_led.h" />
+      <file file_name="src/fd_timing.c" />
+      <file file_name="src/fd_timing.h" />
+      <file file_name="src/fd_recognition.c" />
+      <file file_name="src/fd_recognition.h" />
+      <file file_name="src/fd_math.c" />
+      <file file_name="src/fd_math.h" />
+      <file file_name="src/fd_pins.c" />
+      <file file_name="src/fd_hal_external_flash.h" />
+      <file file_name="src/fd_hal_external_flash.c" />
+      <file file_name="src/fd_range.h" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
+      <file file_name="src/fd_provision.h" />
+      <file file_name="src/fd_hal_accelerometer.h" />
+      <file file_name="src/fd_hal_accelerometer.c" />
+      <file file_name="src/fd_hal_rtc.c" />
+      <file file_name="src/fd_hal_rtc.h" />
+      <file file_name="src/fd_hal_reset.c" />
+      <file file_name="src/fd_hal_reset.h" />
+      <file file_name="src/fd_hal_system.c" />
+      <file file_name="src/fd_hal_system.h" />
+      <file file_name="src/fd_hal_ui.c" />
+      <file file_name="src/fd_hal_ui.h" />
+      <file file_name="src/fd_hal_usb.h" />
+      <file file_name="src/fd_hal_usb.c" />
+      <file file_name="src/fd_hal_ble.h" />
+      <file file_name="src/fd_hal_ble.c" />
+      <file file_name="src/fd_hal_aes.c" />
+      <file file_name="src/fd_hal_aes.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
-    <folder Name="System Files" file_name="">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
     <folder Name="Energy Micro Files">
       <folder Name="emlib">
-        <folder Name="src" filter="*.c;*.h;*.cpp" path="../../../development/energymicro/EM_CMSIS_3/emlib/src" recurse="No"/>
-        <folder Name="inc" filter="*.c;*.h;*.cpp" path="../../../development/energymicro/EM_CMSIS_3/emlib/inc" recurse="No"/>
+        <folder
+          Name="src"
+          exclude=""
+          filter="*.c;*.h;*.cpp"
+          path="$(EnergyMicroDir)/emlib/src"
+          recurse="No" />
+        <folder
+          Name="inc"
+          exclude=""
+          filter="*.c;*.h;*.cpp"
+          path="$(EnergyMicroDir)/emlib/inc"
+          recurse="No" />
       </folder>
       <folder Name="usb">
-        <folder Name="inc" filter="*.h" path="../energymicro/usb/inc" recurse="No"/>
-        <folder Name="src" filter="*.c;*.h;*.cpp" path="../energymicro/usb/src" recurse="No"/>
+        <folder
+          Name="inc"
+          filter="*.h"
+          path="$(EnergyMicroDir)/usb/inc"
+          recurse="No" />
+        <folder
+          Name="src"
+          filter="*.c;*.h;*.cpp"
+          path="$(EnergyMicroDir)/usb/src"
+          recurse="No" />
       </folder>
     </folder>
   </project>
-  <configuration Name="THUMB RAM Debug" inherited_configurations="THUMB;RAM;Debug"/>
-  <configuration Name="THUMB" Platform="ARM" arm_instruction_set="THUMB" arm_library_instruction_set="THUMB" c_preprocessor_definitions="__THUMB" hidden="Yes"/>
-  <configuration Name="RAM" c_preprocessor_definitions="__RAM_BUILD" hidden="Yes"/>
-  <configuration Name="Debug" c_preprocessor_definitions="DEBUG" gcc_debugging_level="Level 2" gcc_optimization_level="None" hidden="Yes"/>
-  <configuration Name="THUMB RAM Release" inherited_configurations="THUMB;RAM;Release"/>
-  <configuration Name="Release" c_preprocessor_definitions="NDEBUG;STARTUP_FROM_RESET" gcc_debugging_level="Level 2" gcc_optimization_level="None" hidden="Yes"/>
-  <configuration Name="THUMB Flash Debug" inherited_configurations="THUMB;Flash;Debug"/>
-  <configuration Name="Flash" c_preprocessor_definitions="__FLASH_BUILD" hidden="Yes"/>
-  <configuration Name="THUMB Flash Release" inherited_configurations="THUMB;Flash;Release"/>
+  <configuration
+    Name="THUMB RAM Debug"
+    inherited_configurations="THUMB;RAM;Debug" />
+  <configuration
+    Name="THUMB"
+    Platform="ARM"
+    arm_instruction_set="THUMB"
+    arm_library_instruction_set="THUMB"
+    c_preprocessor_definitions="__THUMB"
+    hidden="Yes" />
+  <configuration
+    Name="RAM"
+    c_preprocessor_definitions="__RAM_BUILD"
+    hidden="Yes" />
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 2"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+  <configuration
+    Name="THUMB RAM Release"
+    inherited_configurations="THUMB;RAM;Release" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG;STARTUP_FROM_RESET"
+    gcc_debugging_level="Level 2"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+  <configuration
+    Name="THUMB Flash Debug"
+    inherited_configurations="THUMB;Flash;Debug" />
+  <configuration
+    Name="Flash"
+    c_preprocessor_definitions="__FLASH_BUILD"
+    hidden="Yes" />
+  <configuration
+    Name="THUMB Flash Release"
+    inherited_configurations="THUMB;Flash;Release" />
   <project Name="FireflyFlash">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="1024" arm_linker_process_stack_size="0" arm_linker_stack_size="256" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(TargetsDir)/EFM32/CMSIS/Device/EnergyMicro/$(EFM32_Series)/Include;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include" link_include_standard_libraries="No" link_include_startup_code="No" linker_DebugIO_enabled="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_linker_heap_size="1024"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="256"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_user_include_directories="$(TargetsDir)/EFM32/CMSIS/Device/EnergyMicro/$(EFM32_Series)/Include;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include"
+      link_include_standard_libraries="No"
+      link_include_startup_code="No"
+      linker_DebugIO_enabled="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
     <folder Name="Source Files">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="FireflyFlash.c"/>
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="FireflyFlash.c" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
   </project>
   <project Name="FireflyRadioTest">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_library_optimization="Small" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="512" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(TargetsDir)/EFM32/CMSIS/Device/EnergyMicro/$(EFM32_Series)/Include;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/src" link_include_standard_libraries="Yes" link_include_startup_code="No" linker_DebugIO_enabled="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml" linker_printf_width_precision_supported="No" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="src/fd_nrf8001.c"/>
-      <file file_name="src/fd_nrf8001.h"/>
-      <file file_name="src/fd_nrf8001_callbacks.c"/>
-      <file file_name="src/fd_nrf8001_callbacks.h"/>
-      <file file_name="src/fd_nrf8001_commands.c"/>
-      <file file_name="src/fd_nrf8001_commands.h"/>
-      <file file_name="src/fd_nrf8001_dispatch.c"/>
-      <file file_name="src/fd_nrf8001_dispatch.h"/>
-      <file file_name="src/fd_nrf8001_types.h"/>
-      <file file_name="src/fd_binary.c"/>
-      <file file_name="src/fd_binary.h"/>
-      <file file_name="src/fd_processor.c"/>
-      <file file_name="src/fd_processor.h"/>
-      <file file_name="test/src/fd_nrf8001_test.c"/>
-      <file file_name="test/src/fd_nrf8001_test.h"/>
-      <file file_name="test/src/fd_radio_test.c"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_library_optimization="Small"
+      arm_linker_heap_size="128"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="512"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_user_include_directories="$(TargetsDir)/EFM32/CMSIS/Device/EnergyMicro/$(EFM32_Series)/Include;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/emlib/inc;$(ProjectDir)/src"
+      link_include_standard_libraries="Yes"
+      link_include_startup_code="No"
+      linker_DebugIO_enabled="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml"
+      linker_printf_width_precision_supported="No"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/fd_nrf8001.c" />
+      <file file_name="src/fd_nrf8001.h" />
+      <file file_name="src/fd_nrf8001_callbacks.c" />
+      <file file_name="src/fd_nrf8001_callbacks.h" />
+      <file file_name="src/fd_nrf8001_commands.c" />
+      <file file_name="src/fd_nrf8001_commands.h" />
+      <file file_name="src/fd_nrf8001_dispatch.c" />
+      <file file_name="src/fd_nrf8001_dispatch.h" />
+      <file file_name="src/fd_nrf8001_types.h" />
+      <file file_name="src/fd_binary.c" />
+      <file file_name="src/fd_binary.h" />
+      <file file_name="test/src/fd_nrf8001_test.c" />
+      <file file_name="test/src/fd_nrf8001_test.h" />
+      <file file_name="test/src/fd_radio_test.c" />
+      <file file_name="src/fd_hal_external_flash.c" />
+      <file file_name="src/fd_hal_external_flash.h" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
-    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="Level 1"
+      gcc_optimization_level="Level 1" />
   </project>
   <project Name="FireflyBoot">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(ProjectDir)/FireflyBoot_MemoryMap.xml" linker_output_format="hex" linker_printf_width_precision_supported="No" linker_section_placement_file="$(ProjectDir)/FireflyBoot_Placement.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(ProjectDir)/FireflyBoot_Placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="src/fd_aes.c"/>
-      <file file_name="src/fd_aes.h"/>
-      <file file_name="src/fd_processor.c"/>
-      <file file_name="src/fd_processor.h"/>
-      <file file_name="src/fd_sha.c"/>
-      <file file_name="src/fd_sha.h"/>
-      <file file_name="src/fd_w25q16dw.h"/>
-      <file file_name="src/fd_w25q16dw_bitbang.c"/>
-      <file file_name="src/sha.h"/>
-      <file file_name="src/sha1.c"/>
-      <file file_name="src/fd_boot.c"/>
-      <file file_name="src/fd_log.h"/>
-      <file file_name="src/fd_log_null.c"/>
-      <file file_name="src/fd_update.c"/>
-      <file file_name="src/fd_update.h"/>
-      <file file_name="src/fd_boot.h"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_linker_heap_size="128"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch"
+      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/CMSIS/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
+      link_include_startup_code="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(ProjectDir)/FireflyBoot_MemoryMap.xml"
+      linker_output_format="hex"
+      linker_printf_width_precision_supported="No"
+      linker_section_placement_file="$(ProjectDir)/FireflyBoot_Placement.xml"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(ProjectDir)/FireflyBoot_Placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/fd_sha.c" />
+      <file file_name="src/fd_sha.h" />
+      <file file_name="src/fd_w25q16dw.h" />
+      <file file_name="src/fd_w25q16dw_bitbang.c" />
+      <file file_name="src/sha.h" />
+      <file file_name="src/sha1.c" />
+      <file file_name="src/fd_boot.c" />
+      <file file_name="src/fd_log.h" />
+      <file file_name="src/fd_log_null.c" />
+      <file file_name="src/fd_update.c" />
+      <file file_name="src/fd_update.h" />
+      <file file_name="src/fd_boot.h" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
+      <file file_name="src/fd_hal_external_flash.c" />
+      <file file_name="src/fd_hal_external_flash.h" />
+      <file file_name="src/fd_hal_aes.c" />
+      <file file_name="src/fd_hal_aes.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
-    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="Level 1"
+      gcc_optimization_level="Level 1" />
     <folder Name="Energy Micro Files">
       <folder Name="emlib">
-        <folder Name="inc" file_name="">
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_acmp.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_adc.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_aes.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_assert.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_bitband.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_burtc.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_chip.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_cmu.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_common.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_dac.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_dbg.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_dma.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_ebi.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_emu.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_gpio.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_i2c.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_int.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_lcd.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_lesense.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_letimer.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_leuart.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_mpu.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_msc.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_opamp.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_part.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_pcnt.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_prs.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_rmu.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_rtc.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_system.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_timer.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_usart.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_vcmp.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_version.h"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/inc/em_wdog.h"/>
+        <folder Name="inc">
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_acmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_adc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_aes.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_assert.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_bitband.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_burtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_chip.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_cmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_common.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dac.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dbg.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dma.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_ebi.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_emu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_gpio.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_i2c.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_int.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lcd.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lesense.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_letimer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_leuart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_mpu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_msc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_opamp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_part.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_pcnt.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_prs.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_system.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_timer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_usart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_vcmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_version.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_wdog.h" />
         </folder>
-        <folder Name="src" file_name="">
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_acmp.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_adc.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_aes.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_assert.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_burtc.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_cmu.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_dac.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_dbg.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_dma.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_ebi.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_emu.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_gpio.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_i2c.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_int.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_lcd.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_lesense.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_letimer.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_leuart.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_mpu.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_msc.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_opamp.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_pcnt.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_prs.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_rmu.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_rtc.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_system.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_timer.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_usart.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_vcmp.c"/>
-          <file file_name="../../../development/energymicro/EM_CMSIS_3/emlib/src/em_wdog.c"/>
+        <folder Name="src">
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_acmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_adc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_aes.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_assert.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_burtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_cmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dac.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dbg.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dma.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_ebi.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_emu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_gpio.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_i2c.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_int.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lcd.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lesense.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_letimer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_leuart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_mpu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_msc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_opamp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_pcnt.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_prs.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_system.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_timer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_usart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_vcmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_wdog.c" />
         </folder>
       </folder>
     </folder>
   </project>
   <project Name="FireflyIceOnly">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="0" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch" c_preprocessor_definitions="USE_PROCESS_STACK;DEBUG_WATCHDOG" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(ProjectDir)/FireflyIceOnly_MemoryMap.xml" linker_printf_width_precision_supported="No" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="src/fd_activity.c"/>
-      <file file_name="src/fd_activity.h"/>
-      <file file_name="src/fd_adc.c"/>
-      <file file_name="src/fd_adc.h"/>
-      <file file_name="src/fd_aes.c"/>
-      <file file_name="src/fd_aes.h"/>
-      <file file_name="src/fd_binary.c"/>
-      <file file_name="src/fd_binary.h"/>
-      <file file_name="src/fd_bluetooth.c"/>
-      <file file_name="src/fd_bluetooth.h"/>
-      <file file_name="src/fd_control.c"/>
-      <file file_name="src/fd_control.h"/>
-      <file file_name="src/fd_control_codes.h"/>
-      <file file_name="src/fd_crc.c"/>
-      <file file_name="src/fd_crc.h"/>
-      <file file_name="src/fd_detour.c"/>
-      <file file_name="src/fd_detour.h"/>
-      <file file_name="src/fd_event.c"/>
-      <file file_name="src/fd_event.h"/>
-      <file file_name="src/fd_i2c1.c"/>
-      <file file_name="src/fd_i2c1.h"/>
-      <file file_name="src/fd_indicator.c"/>
-      <file file_name="src/fd_indicator.h"/>
-      <file file_name="src/fd_lis3dh.c"/>
-      <file file_name="src/fd_lis3dh.h"/>
-      <file file_name="src/fd_log.c"/>
-      <file file_name="src/fd_log.h"/>
-      <file file_name="src/fd_lp55231.c"/>
-      <file file_name="src/fd_lp55231.h"/>
-      <file file_name="src/fd_mag3110.c"/>
-      <file file_name="src/fd_mag3110.h"/>
-      <file file_name="src/fd_map.c"/>
-      <file file_name="src/fd_map.h"/>
-      <file file_name="src/fd_nrf8001.c"/>
-      <file file_name="src/fd_nrf8001.h"/>
-      <file file_name="src/fd_nrf8001_callbacks.c"/>
-      <file file_name="src/fd_nrf8001_callbacks.h"/>
-      <file file_name="src/fd_nrf8001_commands.c"/>
-      <file file_name="src/fd_nrf8001_commands.h"/>
-      <file file_name="src/fd_nrf8001_dispatch.c"/>
-      <file file_name="src/fd_nrf8001_dispatch.h"/>
-      <file file_name="src/fd_nrf8001_types.h"/>
-      <file file_name="src/fd_power.c"/>
-      <file file_name="src/fd_power.h"/>
-      <file file_name="src/fd_processor.c"/>
-      <file file_name="src/fd_processor.h"/>
-      <file file_name="src/fd_rtc.c"/>
-      <file file_name="src/fd_rtc.h"/>
-      <file file_name="src/fd_sensing.c"/>
-      <file file_name="src/fd_sensing.h"/>
-      <file file_name="src/fd_sha.c"/>
-      <file file_name="src/fd_sha.h"/>
-      <file file_name="src/fd_spi.c"/>
-      <file file_name="src/fd_spi.h"/>
-      <file file_name="src/fd_storage.c"/>
-      <file file_name="src/fd_storage.h"/>
-      <file file_name="src/fd_storage_buffer.c"/>
-      <file file_name="src/fd_storage_buffer.h"/>
-      <file file_name="src/fd_sync.c"/>
-      <file file_name="src/fd_sync.h"/>
-      <file file_name="src/fd_system.c"/>
-      <file file_name="src/fd_system.h"/>
-      <file file_name="src/fd_tca6507.c"/>
-      <file file_name="src/fd_tca6507.h"/>
-      <file file_name="src/fd_time.c"/>
-      <file file_name="src/fd_time.h"/>
-      <file file_name="src/fd_timer.c"/>
-      <file file_name="src/fd_timer.h"/>
-      <file file_name="src/fd_ui.c"/>
-      <file file_name="src/fd_ui.h"/>
-      <file file_name="src/fd_update.c"/>
-      <file file_name="src/fd_update.h"/>
-      <file file_name="src/fd_usb.c"/>
-      <file file_name="src/fd_usb.h"/>
-      <file file_name="src/fd_w25q16dw.h"/>
-      <file file_name="src/fd_w25q16dw_bitbang.c"/>
-      <file file_name="src/main.c"/>
-      <file file_name="src/services.h"/>
-      <file file_name="src/sha.h"/>
-      <file file_name="src/sha1.c"/>
-      <file file_name="src/usbconfig.h"/>
-      <file file_name="src/fd_fault.c"/>
-      <file file_name="src/fd_reset.c"/>
-      <file file_name="src/fd_reset.h"/>
-      <file file_name="src/fd_lock.c"/>
-      <file file_name="src/fd_lock.h"/>
-      <file file_name="src/fd_ieee754.c"/>
-      <file file_name="src/fd_ieee754.h"/>
-      <file file_name="src/fd_led.c"/>
-      <file file_name="src/fd_led.h"/>
-      <file file_name="src/fd_timing.c"/>
-      <file file_name="src/fd_timing.h"/>
-      <file file_name="src/fd_math.c"/>
-      <file file_name="src/fd_math.h"/>
-      <file file_name="src/fd_recognition.c"/>
-      <file file_name="src/fd_recognition.h"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_linker_heap_size="0"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch"
+      c_preprocessor_definitions="USE_PROCESS_STACK;DEBUG_WATCHDOG"
+      c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/CMSIS/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
+      link_include_startup_code="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(ProjectDir)/FireflyIceOnly_MemoryMap.xml"
+      linker_printf_width_precision_supported="No"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/fd_activity.c" />
+      <file file_name="src/fd_activity.h" />
+      <file file_name="src/fd_adc.c" />
+      <file file_name="src/fd_adc.h" />
+      <file file_name="src/fd_binary.c" />
+      <file file_name="src/fd_binary.h" />
+      <file file_name="src/fd_bluetooth.c" />
+      <file file_name="src/fd_bluetooth.h" />
+      <file file_name="src/fd_control.c" />
+      <file file_name="src/fd_control.h" />
+      <file file_name="src/fd_control_codes.h" />
+      <file file_name="src/fd_crc.c" />
+      <file file_name="src/fd_crc.h" />
+      <file file_name="src/fd_detour.c" />
+      <file file_name="src/fd_detour.h" />
+      <file file_name="src/fd_event.c" />
+      <file file_name="src/fd_event.h" />
+      <file file_name="src/fd_i2c1.c" />
+      <file file_name="src/fd_i2c1.h" />
+      <file file_name="src/fd_indicator.c" />
+      <file file_name="src/fd_indicator.h" />
+      <file file_name="src/fd_lis3dh.c" />
+      <file file_name="src/fd_lis3dh.h" />
+      <file file_name="src/fd_log.c" />
+      <file file_name="src/fd_log.h" />
+      <file file_name="src/fd_lp55231.c" />
+      <file file_name="src/fd_lp55231.h" />
+      <file file_name="src/fd_mag3110.c" />
+      <file file_name="src/fd_mag3110.h" />
+      <file file_name="src/fd_map.c" />
+      <file file_name="src/fd_map.h" />
+      <file file_name="src/fd_nrf8001.c" />
+      <file file_name="src/fd_nrf8001.h" />
+      <file file_name="src/fd_nrf8001_callbacks.c" />
+      <file file_name="src/fd_nrf8001_callbacks.h" />
+      <file file_name="src/fd_nrf8001_commands.c" />
+      <file file_name="src/fd_nrf8001_commands.h" />
+      <file file_name="src/fd_nrf8001_dispatch.c" />
+      <file file_name="src/fd_nrf8001_dispatch.h" />
+      <file file_name="src/fd_nrf8001_types.h" />
+      <file file_name="src/fd_power.c" />
+      <file file_name="src/fd_power.h" />
+      <file file_name="src/fd_sensing.c" />
+      <file file_name="src/fd_sensing.h" />
+      <file file_name="src/fd_sha.c" />
+      <file file_name="src/fd_sha.h" />
+      <file file_name="src/fd_spi.c" />
+      <file file_name="src/fd_spi.h" />
+      <file file_name="src/fd_storage.c" />
+      <file file_name="src/fd_storage.h" />
+      <file file_name="src/fd_storage_buffer.c" />
+      <file file_name="src/fd_storage_buffer.h" />
+      <file file_name="src/fd_sync.c" />
+      <file file_name="src/fd_sync.h" />
+      <file file_name="src/fd_tca6507.c" />
+      <file file_name="src/fd_tca6507.h" />
+      <file file_name="src/fd_time.c" />
+      <file file_name="src/fd_time.h" />
+      <file file_name="src/fd_timer.c" />
+      <file file_name="src/fd_timer.h" />
+      <file file_name="src/fd_update.c" />
+      <file file_name="src/fd_update.h" />
+      <file file_name="src/fd_usb.c" />
+      <file file_name="src/fd_usb.h" />
+      <file file_name="src/fd_w25q16dw.h" />
+      <file file_name="src/fd_w25q16dw_bitbang.c" />
+      <file file_name="src/main.c" />
+      <file file_name="src/services.h" />
+      <file file_name="src/sha.h" />
+      <file file_name="src/sha1.c" />
+      <file file_name="src/usbconfig.h" />
+      <file file_name="src/fd_fault.c" />
+      <file file_name="src/fd_lock.c" />
+      <file file_name="src/fd_lock.h" />
+      <file file_name="src/fd_ieee754.c" />
+      <file file_name="src/fd_ieee754.h" />
+      <file file_name="src/fd_led.c" />
+      <file file_name="src/fd_led.h" />
+      <file file_name="src/fd_timing.c" />
+      <file file_name="src/fd_timing.h" />
+      <file file_name="src/fd_math.c" />
+      <file file_name="src/fd_math.h" />
+      <file file_name="src/fd_recognition.c" />
+      <file file_name="src/fd_recognition.h" />
+      <file file_name="src/fd_pins.c" />
+      <file file_name="src/fd_hal_external_flash.c" />
+      <file file_name="src/fd_hal_external_flash.h" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
+      <file file_name="src/fd_hal_rtc.c" />
+      <file file_name="src/fd_hal_rtc.h" />
+      <file file_name="src/fd_hal_accelerometer.c" />
+      <file file_name="src/fd_hal_accelerometer.h" />
+      <file file_name="src/fd_hal_reset.c" />
+      <file file_name="src/fd_hal_reset.h" />
+      <file file_name="src/fd_hal_system.c" />
+      <file file_name="src/fd_hal_system.h" />
+      <file file_name="src/fd_hal_ui.c" />
+      <file file_name="src/fd_hal_ui.h" />
+      <file file_name="src/fd_hal_usb.c" />
+      <file file_name="src/fd_hal_usb.h" />
+      <file file_name="src/fd_hal_aes.c" />
+      <file file_name="src/fd_hal_aes.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
-    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="Level 1"
+      gcc_optimization_level="Level 1" />
     <folder Name="Energy Micro Files">
       <folder Name="emlib">
-        <folder Name="inc" file_name="">
-          <file file_name="../energymicro/emlib/inc/em_acmp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_adc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_aes.h"/>
-          <file file_name="../energymicro/emlib/inc/em_assert.h"/>
-          <file file_name="../energymicro/emlib/inc/em_bitband.h"/>
-          <file file_name="../energymicro/emlib/inc/em_burtc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_chip.h"/>
-          <file file_name="../energymicro/emlib/inc/em_cmu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_common.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dac.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dbg.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dma.h"/>
-          <file file_name="../energymicro/emlib/inc/em_ebi.h"/>
-          <file file_name="../energymicro/emlib/inc/em_emu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_gpio.h"/>
-          <file file_name="../energymicro/emlib/inc/em_i2c.h"/>
-          <file file_name="../energymicro/emlib/inc/em_int.h"/>
-          <file file_name="../energymicro/emlib/inc/em_lcd.h"/>
-          <file file_name="../energymicro/emlib/inc/em_lesense.h"/>
-          <file file_name="../energymicro/emlib/inc/em_letimer.h"/>
-          <file file_name="../energymicro/emlib/inc/em_leuart.h"/>
-          <file file_name="../energymicro/emlib/inc/em_mpu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_msc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_opamp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_part.h"/>
-          <file file_name="../energymicro/emlib/inc/em_pcnt.h"/>
-          <file file_name="../energymicro/emlib/inc/em_prs.h"/>
-          <file file_name="../energymicro/emlib/inc/em_rmu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_rtc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_system.h"/>
-          <file file_name="../energymicro/emlib/inc/em_timer.h"/>
-          <file file_name="../energymicro/emlib/inc/em_usart.h"/>
-          <file file_name="../energymicro/emlib/inc/em_vcmp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_version.h"/>
-          <file file_name="../energymicro/emlib/inc/em_wdog.h"/>
+        <folder Name="inc">
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_acmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_adc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_aes.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_assert.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_bitband.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_burtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_chip.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_cmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_common.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dac.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dbg.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dma.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_ebi.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_emu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_gpio.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_i2c.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_int.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lcd.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lesense.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_letimer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_leuart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_mpu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_msc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_opamp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_part.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_pcnt.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_prs.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_system.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_timer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_usart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_vcmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_version.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_wdog.h" />
         </folder>
-        <folder Name="src" file_name="">
-          <file file_name="../energymicro/emlib/src/em_acmp.c"/>
-          <file file_name="../energymicro/emlib/src/em_adc.c"/>
-          <file file_name="../energymicro/emlib/src/em_aes.c"/>
-          <file file_name="../energymicro/emlib/src/em_assert.c"/>
-          <file file_name="../energymicro/emlib/src/em_burtc.c"/>
-          <file file_name="../energymicro/emlib/src/em_cmu.c"/>
-          <file file_name="../energymicro/emlib/src/em_dac.c"/>
-          <file file_name="../energymicro/emlib/src/em_dbg.c"/>
-          <file file_name="../energymicro/emlib/src/em_dma.c"/>
-          <file file_name="../energymicro/emlib/src/em_ebi.c"/>
-          <file file_name="../energymicro/emlib/src/em_emu.c"/>
-          <file file_name="../energymicro/emlib/src/em_gpio.c"/>
-          <file file_name="../energymicro/emlib/src/em_i2c.c"/>
-          <file file_name="../energymicro/emlib/src/em_int.c"/>
-          <file file_name="../energymicro/emlib/src/em_lcd.c"/>
-          <file file_name="../energymicro/emlib/src/em_lesense.c"/>
-          <file file_name="../energymicro/emlib/src/em_letimer.c"/>
-          <file file_name="../energymicro/emlib/src/em_leuart.c"/>
-          <file file_name="../energymicro/emlib/src/em_mpu.c"/>
-          <file file_name="../energymicro/emlib/src/em_msc.c"/>
-          <file file_name="../energymicro/emlib/src/em_opamp.c"/>
-          <file file_name="../energymicro/emlib/src/em_pcnt.c"/>
-          <file file_name="../energymicro/emlib/src/em_prs.c"/>
-          <file file_name="../energymicro/emlib/src/em_rmu.c"/>
-          <file file_name="../energymicro/emlib/src/em_rtc.c"/>
-          <file file_name="../energymicro/emlib/src/em_system.c"/>
-          <file file_name="../energymicro/emlib/src/em_timer.c"/>
-          <file file_name="../energymicro/emlib/src/em_usart.c"/>
-          <file file_name="../energymicro/emlib/src/em_vcmp.c"/>
-          <file file_name="../energymicro/emlib/src/em_wdog.c"/>
+        <folder Name="src">
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_acmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_adc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_aes.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_assert.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_burtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_cmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dac.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dbg.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dma.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_ebi.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_emu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_gpio.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_i2c.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_int.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lcd.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lesense.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_letimer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_leuart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_mpu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_msc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_opamp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_pcnt.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_prs.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_system.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_timer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_usart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_vcmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_wdog.c" />
         </folder>
       </folder>
       <folder Name="usb">
-        <folder Name="inc" file_name="">
-          <file file_name="../energymicro/usb/inc/em_usb.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbd.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbh.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbhal.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbtypes.h"/>
+        <folder Name="inc">
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usb.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbd.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbh.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbhal.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbtypes.h" />
         </folder>
-        <folder Name="src" file_name="">
-          <file file_name="../energymicro/usb/src/em_usbd.c"/>
-          <file file_name="../energymicro/usb/src/em_usbdch9.c"/>
-          <file file_name="../energymicro/usb/src/em_usbdep.c"/>
-          <file file_name="../energymicro/usb/src/em_usbdint.c"/>
-          <file file_name="../energymicro/usb/src/em_usbh.c"/>
-          <file file_name="../energymicro/usb/src/em_usbhal.c"/>
-          <file file_name="../energymicro/usb/src/em_usbhep.c"/>
-          <file file_name="../energymicro/usb/src/em_usbhint.c"/>
-          <file file_name="../energymicro/usb/src/em_usbtimer.c"/>
+        <folder Name="src">
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbd.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbdch9.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbdep.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbdint.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbh.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbhal.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbhep.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbhint.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbtimer.c" />
         </folder>
       </folder>
     </folder>
   </project>
   <project Name="FireflyIceTest">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="src/fd_firefly_ice_test_main.c"/>
-      <file file_name="src/fd_processor.c"/>
-      <file file_name="src/fd_reset.c"/>
-      <file file_name="src/fd_adc.c"/>
-      <file file_name="src/fd_event.c"/>
-      <file file_name="src/fd_i2c1.c"/>
-      <file file_name="src/fd_lis3dh.c"/>
-      <file file_name="src/fd_log_null.c"/>
-      <file file_name="src/fd_lp55231.c"/>
-      <file file_name="src/fd_mag3110.c"/>
-      <file file_name="src/fd_spi.c"/>
-      <file file_name="src/fd_w25q16dw_bitbang.c"/>
-      <file file_name="src/fd_adc.h"/>
-      <file file_name="src/fd_event.h"/>
-      <file file_name="src/fd_i2c1.h"/>
-      <file file_name="src/fd_lis3dh.h"/>
-      <file file_name="src/fd_lp55231.h"/>
-      <file file_name="src/fd_mag3110.h"/>
-      <file file_name="src/fd_processor.h"/>
-      <file file_name="src/fd_reset.h"/>
-      <file file_name="src/fd_spi.h"/>
-      <file file_name="src/fd_w25q16dw.h"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_linker_heap_size="128"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-switch"
+      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
+      link_include_startup_code="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/fd_firefly_ice_test_main.c" />
+      <file file_name="src/fd_adc.c" />
+      <file file_name="src/fd_event.c" />
+      <file file_name="src/fd_i2c1.c" />
+      <file file_name="src/fd_lis3dh.c" />
+      <file file_name="src/fd_log_null.c" />
+      <file file_name="src/fd_lp55231.c" />
+      <file file_name="src/fd_mag3110.c" />
+      <file file_name="src/fd_spi.c" />
+      <file file_name="src/fd_w25q16dw_bitbang.c" />
+      <file file_name="src/fd_adc.h" />
+      <file file_name="src/fd_event.h" />
+      <file file_name="src/fd_i2c1.h" />
+      <file file_name="src/fd_lis3dh.h" />
+      <file file_name="src/fd_lp55231.h" />
+      <file file_name="src/fd_mag3110.h" />
+      <file file_name="src/fd_spi.h" />
+      <file file_name="src/fd_w25q16dw.h" />
+      <file file_name="src/fd_timer.c" />
+      <file file_name="src/fd_timer.h" />
+      <file file_name="src/fd_hal_external_flash.c" />
+      <file file_name="src/fd_hal_external_flash.h" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
+      <file file_name="src/fd_hal_reset.c" />
+      <file file_name="src/fd_hal_reset.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
     <folder Name="Energy Micro Files">
       <folder Name="emlib">
-        <folder Name="inc" file_name="">
-          <file file_name="../energymicro/emlib/inc/em_acmp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_adc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_aes.h"/>
-          <file file_name="../energymicro/emlib/inc/em_assert.h"/>
-          <file file_name="../energymicro/emlib/inc/em_bitband.h"/>
-          <file file_name="../energymicro/emlib/inc/em_burtc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_chip.h"/>
-          <file file_name="../energymicro/emlib/inc/em_cmu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_common.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dac.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dbg.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dma.h"/>
-          <file file_name="../energymicro/emlib/inc/em_ebi.h"/>
-          <file file_name="../energymicro/emlib/inc/em_emu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_gpio.h"/>
-          <file file_name="../energymicro/emlib/inc/em_i2c.h"/>
-          <file file_name="../energymicro/emlib/inc/em_int.h"/>
-          <file file_name="../energymicro/emlib/inc/em_lcd.h"/>
-          <file file_name="../energymicro/emlib/inc/em_lesense.h"/>
-          <file file_name="../energymicro/emlib/inc/em_letimer.h"/>
-          <file file_name="../energymicro/emlib/inc/em_leuart.h"/>
-          <file file_name="../energymicro/emlib/inc/em_mpu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_msc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_opamp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_part.h"/>
-          <file file_name="../energymicro/emlib/inc/em_pcnt.h"/>
-          <file file_name="../energymicro/emlib/inc/em_prs.h"/>
-          <file file_name="../energymicro/emlib/inc/em_rmu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_rtc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_system.h"/>
-          <file file_name="../energymicro/emlib/inc/em_timer.h"/>
-          <file file_name="../energymicro/emlib/inc/em_usart.h"/>
-          <file file_name="../energymicro/emlib/inc/em_vcmp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_version.h"/>
-          <file file_name="../energymicro/emlib/inc/em_wdog.h"/>
+        <folder Name="inc">
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_acmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_adc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_aes.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_assert.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_bitband.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_burtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_chip.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_cmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_common.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dac.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dbg.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dma.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_ebi.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_emu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_gpio.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_i2c.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_int.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lcd.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lesense.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_letimer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_leuart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_mpu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_msc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_opamp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_part.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_pcnt.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_prs.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_system.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_timer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_usart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_vcmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_version.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_wdog.h" />
         </folder>
-        <folder Name="src" file_name="">
-          <file file_name="../energymicro/emlib/src/em_acmp.c"/>
-          <file file_name="../energymicro/emlib/src/em_adc.c"/>
-          <file file_name="../energymicro/emlib/src/em_aes.c"/>
-          <file file_name="../energymicro/emlib/src/em_assert.c"/>
-          <file file_name="../energymicro/emlib/src/em_burtc.c"/>
-          <file file_name="../energymicro/emlib/src/em_cmu.c"/>
-          <file file_name="../energymicro/emlib/src/em_dac.c"/>
-          <file file_name="../energymicro/emlib/src/em_dbg.c"/>
-          <file file_name="../energymicro/emlib/src/em_dma.c"/>
-          <file file_name="../energymicro/emlib/src/em_ebi.c"/>
-          <file file_name="../energymicro/emlib/src/em_emu.c"/>
-          <file file_name="../energymicro/emlib/src/em_gpio.c"/>
-          <file file_name="../energymicro/emlib/src/em_i2c.c"/>
-          <file file_name="../energymicro/emlib/src/em_int.c"/>
-          <file file_name="../energymicro/emlib/src/em_lcd.c"/>
-          <file file_name="../energymicro/emlib/src/em_lesense.c"/>
-          <file file_name="../energymicro/emlib/src/em_letimer.c"/>
-          <file file_name="../energymicro/emlib/src/em_leuart.c"/>
-          <file file_name="../energymicro/emlib/src/em_mpu.c"/>
-          <file file_name="../energymicro/emlib/src/em_msc.c"/>
-          <file file_name="../energymicro/emlib/src/em_opamp.c"/>
-          <file file_name="../energymicro/emlib/src/em_pcnt.c"/>
-          <file file_name="../energymicro/emlib/src/em_prs.c"/>
-          <file file_name="../energymicro/emlib/src/em_rmu.c"/>
-          <file file_name="../energymicro/emlib/src/em_rtc.c"/>
-          <file file_name="../energymicro/emlib/src/em_system.c"/>
-          <file file_name="../energymicro/emlib/src/em_timer.c"/>
-          <file file_name="../energymicro/emlib/src/em_usart.c"/>
-          <file file_name="../energymicro/emlib/src/em_vcmp.c"/>
-          <file file_name="../energymicro/emlib/src/em_wdog.c"/>
+        <folder Name="src">
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_acmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_adc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_aes.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_assert.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_burtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_cmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dac.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dbg.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dma.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_ebi.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_emu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_gpio.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_i2c.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_int.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lcd.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lesense.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_letimer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_leuart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_mpu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_msc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_opamp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_pcnt.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_prs.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_system.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_timer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_usart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_vcmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_wdog.c" />
         </folder>
       </folder>
     </folder>
-    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="Level 1"
+      gcc_optimization_level="Level 1" />
   </project>
   <project Name="FireflyUsbTest">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_library_optimization="Small" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="256" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" gcc_optimization_level="Optimize For Size" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_Giant_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="test/src/fd_usb_test.c"/>
-      <file file_name="src/fd_log.h"/>
-      <file file_name="src/fd_log_null.c"/>
-      <file file_name="src/fd_processor.c">
-        <configuration Name="Common" gcc_optimization_level="Optimize For Size"/>
-      </file>
-      <file file_name="src/fd_processor.h"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_library_optimization="Small"
+      arm_linker_heap_size="128"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="256"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
+      gcc_optimization_level="Optimize For Size"
+      link_include_startup_code="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_Giant_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="test/src/fd_usb_test.c" />
+      <file file_name="src/fd_log.h" />
+      <file file_name="src/fd_log_null.c" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
-    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="Level 1"
+      gcc_optimization_level="Level 1" />
     <folder Name="Energy Micro Files">
       <folder Name="emlib">
-        <folder Name="inc" file_name="">
-          <file file_name="../energymicro/emlib/inc/em_acmp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_adc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_aes.h"/>
-          <file file_name="../energymicro/emlib/inc/em_assert.h"/>
-          <file file_name="../energymicro/emlib/inc/em_bitband.h"/>
-          <file file_name="../energymicro/emlib/inc/em_burtc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_chip.h"/>
-          <file file_name="../energymicro/emlib/inc/em_cmu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_common.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dac.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dbg.h"/>
-          <file file_name="../energymicro/emlib/inc/em_dma.h"/>
-          <file file_name="../energymicro/emlib/inc/em_ebi.h"/>
-          <file file_name="../energymicro/emlib/inc/em_emu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_gpio.h"/>
-          <file file_name="../energymicro/emlib/inc/em_i2c.h"/>
-          <file file_name="../energymicro/emlib/inc/em_idac.h"/>
-          <file file_name="../energymicro/emlib/inc/em_int.h"/>
-          <file file_name="../energymicro/emlib/inc/em_lcd.h"/>
-          <file file_name="../energymicro/emlib/inc/em_lesense.h"/>
-          <file file_name="../energymicro/emlib/inc/em_letimer.h"/>
-          <file file_name="../energymicro/emlib/inc/em_leuart.h"/>
-          <file file_name="../energymicro/emlib/inc/em_mpu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_msc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_opamp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_part.h"/>
-          <file file_name="../energymicro/emlib/inc/em_pcnt.h"/>
-          <file file_name="../energymicro/emlib/inc/em_prs.h"/>
-          <file file_name="../energymicro/emlib/inc/em_rmu.h"/>
-          <file file_name="../energymicro/emlib/inc/em_rtc.h"/>
-          <file file_name="../energymicro/emlib/inc/em_system.h"/>
-          <file file_name="../energymicro/emlib/inc/em_timer.h"/>
-          <file file_name="../energymicro/emlib/inc/em_usart.h"/>
-          <file file_name="../energymicro/emlib/inc/em_vcmp.h"/>
-          <file file_name="../energymicro/emlib/inc/em_version.h"/>
-          <file file_name="../energymicro/emlib/inc/em_wdog.h"/>
+        <folder Name="inc">
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_acmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_adc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_aes.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_assert.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_bitband.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_burtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_chip.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_cmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_common.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dac.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dbg.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_dma.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_ebi.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_emu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_gpio.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_i2c.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_idac.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_int.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lcd.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_lesense.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_letimer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_leuart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_mpu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_msc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_opamp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_part.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_pcnt.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_prs.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rmu.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_rtc.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_system.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_timer.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_usart.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_vcmp.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_version.h" />
+          <file file_name="$(EnergyMicroDir)/emlib/inc/em_wdog.h" />
         </folder>
-        <folder Name="src" file_name="">
-          <file file_name="../energymicro/emlib/src/em_acmp.c"/>
-          <file file_name="../energymicro/emlib/src/em_adc.c"/>
-          <file file_name="../energymicro/emlib/src/em_aes.c"/>
-          <file file_name="../energymicro/emlib/src/em_assert.c"/>
-          <file file_name="../energymicro/emlib/src/em_burtc.c"/>
-          <file file_name="../energymicro/emlib/src/em_cmu.c"/>
-          <file file_name="../energymicro/emlib/src/em_dac.c"/>
-          <file file_name="../energymicro/emlib/src/em_dbg.c"/>
-          <file file_name="../energymicro/emlib/src/em_dma.c"/>
-          <file file_name="../energymicro/emlib/src/em_ebi.c"/>
-          <file file_name="../energymicro/emlib/src/em_emu.c"/>
-          <file file_name="../energymicro/emlib/src/em_gpio.c"/>
-          <file file_name="../energymicro/emlib/src/em_i2c.c"/>
-          <file file_name="../energymicro/emlib/src/em_int.c"/>
-          <file file_name="../energymicro/emlib/src/em_lesense.c"/>
-          <file file_name="../energymicro/emlib/src/em_letimer.c"/>
-          <file file_name="../energymicro/emlib/src/em_leuart.c"/>
-          <file file_name="../energymicro/emlib/src/em_mpu.c"/>
-          <file file_name="../energymicro/emlib/src/em_msc.c"/>
-          <file file_name="../energymicro/emlib/src/em_opamp.c"/>
-          <file file_name="../energymicro/emlib/src/em_pcnt.c"/>
-          <file file_name="../energymicro/emlib/src/em_prs.c"/>
-          <file file_name="../energymicro/emlib/src/em_rmu.c"/>
-          <file file_name="../energymicro/emlib/src/em_rtc.c"/>
-          <file file_name="../energymicro/emlib/src/em_system.c"/>
-          <file file_name="../energymicro/emlib/src/em_timer.c"/>
-          <file file_name="../energymicro/emlib/src/em_usart.c"/>
-          <file file_name="../energymicro/emlib/src/em_vcmp.c"/>
-          <file file_name="../energymicro/emlib/src/em_wdog.c"/>
+        <folder Name="src">
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_acmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_adc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_aes.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_assert.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_burtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_cmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dac.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dbg.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_dma.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_ebi.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_emu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_gpio.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_i2c.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_int.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_lesense.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_letimer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_leuart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_mpu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_msc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_opamp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_pcnt.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_prs.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rmu.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_rtc.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_system.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_timer.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_usart.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_vcmp.c" />
+          <file file_name="$(EnergyMicroDir)/emlib/src/em_wdog.c" />
         </folder>
       </folder>
       <folder Name="usb">
-        <folder Name="inc" file_name="">
-          <file file_name="../energymicro/usb/inc/em_usb.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbd.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbh.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbhal.h"/>
-          <file file_name="../energymicro/usb/inc/em_usbtypes.h"/>
+        <folder Name="inc">
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usb.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbd.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbh.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbhal.h" />
+          <file file_name="$(EnergyMicroDir)/usb/inc/em_usbtypes.h" />
         </folder>
-        <folder Name="src" file_name="">
-          <file file_name="../energymicro/usb/src/em_usbd.c"/>
-          <file file_name="../energymicro/usb/src/em_usbdch9.c"/>
-          <file file_name="../energymicro/usb/src/em_usbdep.c"/>
-          <file file_name="../energymicro/usb/src/em_usbdint.c"/>
-          <file file_name="../energymicro/usb/src/em_usbh.c"/>
-          <file file_name="../energymicro/usb/src/em_usbhal.c"/>
-          <file file_name="../energymicro/usb/src/em_usbhep.c"/>
-          <file file_name="../energymicro/usb/src/em_usbhint.c"/>
-          <file file_name="../energymicro/usb/src/em_usbtimer.c"/>
+        <folder Name="src">
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbd.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbdch9.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbdep.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbdint.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbh.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbhal.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbhep.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbhint.c" />
+          <file file_name="$(EnergyMicroDir)/usb/src/em_usbtimer.c" />
         </folder>
       </folder>
     </folder>
   </project>
   <project Name="FireflyIceUnitTests">
-    <configuration Name="Common" Target="EFM32LG330F256" arm_architecture="v7M" arm_core_type="Cortex-M3" arm_fpu_type="None" arm_gcc_target="arm-unknown-eabi" arm_interwork="No" arm_linker_heap_size="128" arm_linker_process_stack_size="0" arm_linker_stack_size="4096" arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll" arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000" arm_target_debug_interface_type="ADIv5" arm_target_interface_type="SWD" arm_target_loader_parameter="12000000" build_intermediate_directory="$(Configuration)/$(ProjectName)" build_output_directory="$(Configuration)/$(ProjectName)" c_preprocessor_definitions="USE_PROCESS_STACK" c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/EM_CMSIS_3/emlib/inc;$(ProjectDir)/../energymicro/usb/inc" link_include_startup_code="No" linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)" linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml" macros="EFM32_Series=EFM32LG" oscillator_frequency="12MHz" project_directory="" project_type="Executable" property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml"/>
-    <configuration Name="Flash" Placement="Flash" arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_Giant_rpc.elf" arm_target_flash_loader_type="LIBMEM RPC Loader" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml" target_reset_script="FLASHReset()"/>
-    <configuration Name="RAM" Placement="RAM" linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml" target_reset_script="SRAMReset()"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc"/>
-      <file file_name="src/fd_unit_tests.c"/>
-      <file file_name="src/fd_storage_unit_tests.c"/>
-      <file file_name="src/fd_crc.c"/>
-      <file file_name="src/fd_crc.h"/>
-      <file file_name="src/fd_event.c"/>
-      <file file_name="src/fd_event.h"/>
-      <file file_name="src/fd_log.h"/>
-      <file file_name="src/fd_log_null.c"/>
-      <file file_name="src/fd_processor.c"/>
-      <file file_name="src/fd_processor.h"/>
-      <file file_name="src/fd_storage.c"/>
-      <file file_name="src/fd_storage.h"/>
-      <file file_name="src/fd_w25q16dw.h"/>
-      <file file_name="src/fd_w25q16dw_bitbang.c"/>
-      <file file_name="src/fd_usb.c"/>
-      <file file_name="src/fd_usb.h"/>
-      <file file_name="src/usbconfig.h"/>
-      <file file_name="src/fd_storage_buffer_unit_tests.c"/>
-      <file file_name="src/fd_storage_buffer.c"/>
-      <file file_name="src/fd_storage_buffer.h"/>
-      <file file_name="src/fd_binary.c"/>
-      <file file_name="src/fd_binary.h"/>
-      <file file_name="src/fd_sync_unit_tests.c"/>
-      <file file_name="src/fd_sync.c"/>
-      <file file_name="src/fd_sync.h"/>
-      <file file_name="src/fd_detour.c"/>
-      <file file_name="src/fd_detour.h"/>
-      <file file_name="src/fd_system.c"/>
-      <file file_name="src/fd_system.h"/>
-      <file file_name="src/fd_binary_unit_tests.c"/>
-      <file file_name="src/fd_ieee754.c"/>
-      <file file_name="src/fd_ieee754.h"/>
-      <file file_name="src/fd_detour_unit_tests.c"/>
-      <file file_name="src/fd_fault.c"/>
+    <configuration
+      Name="Common"
+      Target="EFM32LG330F256"
+      arm_architecture="v7M"
+      arm_core_type="Cortex-M3"
+      arm_fpu_type="None"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_interwork="No"
+      arm_linker_heap_size="128"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/EFM32/EFM32SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="EFM32LG330F256;FLASH=0x00000000:0x40000;RAM=0x20000000:0x8000"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_parameter="12000000"
+      build_intermediate_directory="$(Configuration)/$(ProjectName)"
+      build_output_directory="$(Configuration)/$(ProjectName)"
+      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
+      link_include_startup_code="No"
+      linker_additional_files="$(TargetsDir)/EFM32/lib/libefm32$(LibExt)$(LIB)"
+      linker_memory_map_file="$(TargetsDir)/EFM32/EFM32LG330F256_MemoryMap.xml"
+      macros="EFM32_Series=EFM32LG"
+      oscillator_frequency="12MHz"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/EFM32/EFM32_propertyGroups.xml" />
+    <configuration
+      Name="Flash"
+      Placement="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/EFM32/Release/Loader_Giant_rpc.elf"
+      arm_target_flash_loader_type="LIBMEM RPC Loader"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <configuration
+      Name="RAM"
+      Placement="RAM"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="SRAMReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/fd_unit_tests.c" />
+      <file file_name="src/fd_storage_unit_tests.c" />
+      <file file_name="src/fd_crc.c" />
+      <file file_name="src/fd_crc.h" />
+      <file file_name="src/fd_event.c" />
+      <file file_name="src/fd_event.h" />
+      <file file_name="src/fd_log.h" />
+      <file file_name="src/fd_log_null.c" />
+      <file file_name="src/fd_storage.c" />
+      <file file_name="src/fd_storage.h" />
+      <file file_name="src/fd_w25q16dw.h" />
+      <file file_name="src/fd_w25q16dw_bitbang.c" />
+      <file file_name="src/fd_usb.c" />
+      <file file_name="src/fd_usb.h" />
+      <file file_name="src/usbconfig.h" />
+      <file file_name="src/fd_storage_buffer_unit_tests.c" />
+      <file file_name="src/fd_storage_buffer.c" />
+      <file file_name="src/fd_storage_buffer.h" />
+      <file file_name="src/fd_binary.c" />
+      <file file_name="src/fd_binary.h" />
+      <file file_name="src/fd_sync_unit_tests.c" />
+      <file file_name="src/fd_sync.c" />
+      <file file_name="src/fd_sync.h" />
+      <file file_name="src/fd_detour.c" />
+      <file file_name="src/fd_detour.h" />
+      <file file_name="src/fd_binary_unit_tests.c" />
+      <file file_name="src/fd_ieee754.c" />
+      <file file_name="src/fd_ieee754.h" />
+      <file file_name="src/fd_detour_unit_tests.c" />
+      <file file_name="src/fd_fault.c" />
+      <file file_name="src/fd_hal_external_flash.c" />
+      <file file_name="src/fd_hal_external_flash.h" />
+      <file file_name="src/fd_hal_processor.c" />
+      <file file_name="src/fd_hal_processor.h" />
+      <file file_name="src/fd_hal_reset.c" />
+      <file file_name="src/fd_hal_reset.h" />
+      <file file_name="src/fd_hal_system.c" />
+      <file file_name="src/fd_hal_system.h" />
     </folder>
     <folder Name="CMSIS Files">
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h"/>
-      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c"/>
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/core_cm3.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.h" />
+      <file file_name="$(TargetsDir)/EFM32/include/CMSIS/system_efm32.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/source/thumb_crt0.s"/>
-      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s"/>
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/EFM32/EFM32_Startup.s" />
       <file file_name="$(TargetsDir)/EFM32/EFM32_Target.js">
-        <configuration Name="Common" file_type="Reset Script"/>
+        <configuration Name="Common" file_type="Reset Script" />
       </file>
     </folder>
-    <configuration Name="Release" c_preprocessor_definitions="NDEBUG" gcc_debugging_level="Level 1" gcc_optimization_level="Level 1"/>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="Level 1"
+      gcc_optimization_level="Level 1" />
     <folder Name="Energy Micro Files">
       <folder Name="emlib">
-        <folder Name="src" filter="*.c;*.h;*.cpp" path="../../../development/energymicro/EM_CMSIS_3/emlib/src" recurse="No"/>
-        <folder Name="inc" filter="*.c;*.h;*.cpp" path="../../../development/energymicro/EM_CMSIS_3/emlib/inc" recurse="No"/>
+        <folder
+          Name="src"
+          filter="*.c;*.h;*.cpp"
+          path="$(EnergyMicroDir)/emlib/src"
+          recurse="No" />
+        <folder
+          Name="inc"
+          filter="*.c;*.h;*.cpp"
+          path="$(EnergyMicroDir)/emlib/inc"
+          recurse="No" />
       </folder>
       <folder Name="usb">
-        <folder Name="inc" filter="*.h" path="../energymicro/usb/inc" recurse="No"/>
-        <folder Name="src" filter="*.c;*.h;*.cpp" path="../energymicro/usb/src" recurse="No"/>
+        <folder
+          Name="inc"
+          filter="*.h"
+          path="$(EnergyMicroDir)/usb/inc"
+          recurse="No" />
+        <folder
+          Name="src"
+          filter="*.c;*.h;*.cpp"
+          path="$(EnergyMicroDir)/usb/src"
+          recurse="No" />
       </folder>
     </folder>
   </project>

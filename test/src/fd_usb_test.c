@@ -1,5 +1,6 @@
+#include "fd_hal_processor.h"
 #include "fd_log.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 
 #include <em_cmu.h>
 #include <em_gpio.h>
@@ -463,8 +464,8 @@ void (*halt_fp)(void);
 
 void main(void) {
     halt_fp = halt;
-    fd_processor_initialize();
-    fd_processor_wake();
+    fd_hal_processor_initialize();
+    fd_hal_processor_wake();
     uint8_t bytes[10];
     fd_usb_test(0x0003, bytes, sizeof(bytes));
     halt_fp();

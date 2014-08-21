@@ -1,10 +1,10 @@
 #include "fd_binary.h"
 #include "fd_detour.h"
+#include "fd_hal_system.h"
 #include "fd_log.h"
 #include "fd_storage.h"
 #include "fd_storage_buffer.h"
 #include "fd_sync.h"
-#include "fd_system.h"
 #include "fd_w25q16dw.h"
 
 static

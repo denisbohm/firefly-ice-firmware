@@ -1,7 +1,8 @@
 #include "fd_i2c1.h"
+#include "fd_hal_processor.h"
 #include "fd_log.h"
 #include "fd_lp55231.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 
 #include <em_gpio.h>
 
@@ -112,7 +113,7 @@ float fd_lp55231_test_led(uint8_t led) {
     if (!result) {
         fd_log_assert_fail("");
     }
-    fd_delay_ms(5);
+    fd_hal_processor_delay_ms(5);
     uint8_t adc;
     result = fd_i2c1_register_read(ADDRESS, LED_TEST_ADC, &adc);
     if (!result) {

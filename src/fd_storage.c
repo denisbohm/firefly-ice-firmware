@@ -8,11 +8,11 @@
     4. 4-byte type.  The type of data stored in the page.
  */
 
-#include "fd_w25q16dw.h"
 #include "fd_binary.h"
 #include "fd_crc.h"
+#include "fd_hal_external_flash.h"
+#include "fd_hal_reset.h"
 #include "fd_log.h"
-#include "fd_reset.h"
 #include "fd_storage.h"
 
 #include <string.h>
@@ -50,26 +50,27 @@ void fd_storage_area_collection_push(fd_storage_area_t *storage_area) {
 }
 
 bool fd_storage_is_page_used(uint32_t page) {
-    uint32_t address = page * FD_W25Q16DW_PAGE_SIZE;
+    uint32_t address = page * FD_HAL_EXTERNAL_FLASH_PAGE_SIZE;
     uint8_t marker;
-    fd_w25q16dw_read(address, &marker, 1);
+    fd_hal_external_flash_read(address, &marker, 1);
     return marker == PAGE_USED;
 }
 
 void fd_storage_area_initialize(fd_storage_area_t *area, uint32_t start_sector, uint32_t end_sector) {
     fd_storage_area_collection_push(area);
 
-    area->start_page = start_sector * FD_W25Q16DW_PAGES_PER_SECTOR;
-    area->end_page = (end_sector + 1) * FD_W25Q16DW_PAGES_PER_SECTOR;
+    uint32_t pages_per_sector = fd_hal_external_flash_get_pages_per_sector();
+    area->start_page = start_sector * pages_per_sector;
+    area->end_page = (end_sector + 1) * pages_per_sector;
 
-    fd_w25q16dw_wake();
+    fd_hal_external_flash_wake();
 
     area->first_page = INVALID_PAGE;
     area->free_page = INVALID_PAGE;
     bool wraps = fd_storage_is_page_used(area->start_page) && fd_storage_is_page_used(area->end_page - 1);
     if (wraps) {
         for (uint32_t page = area->start_page; page < area->end_page; ++page) {
-            fd_reset_feed_watchdog();
+            fd_hal_reset_feed_watchdog();
             if (!fd_storage_is_page_used(page)) {
                 if (area->free_page == INVALID_PAGE) {
                     area->free_page = page;
@@ -83,7 +84,7 @@ void fd_storage_area_initialize(fd_storage_area_t *area, uint32_t start_sector, 
         }
     } else {
         for (uint32_t page = area->start_page; page < area->end_page; ++page) {
-            fd_reset_feed_watchdog();
+            fd_hal_reset_feed_watchdog();
             if (fd_storage_is_page_used(page)) {
                 if (area->first_page == INVALID_PAGE) {
                     area->first_page = page;
@@ -101,7 +102,7 @@ void fd_storage_area_initialize(fd_storage_area_t *area, uint32_t start_sector, 
         area->free_page = area->first_page;
     }
 
-    fd_w25q16dw_sleep();
+    fd_hal_external_flash_sleep();
 }
 
 uint32_t fd_storage_area_used_page_count(fd_storage_area_t *area) {
@@ -114,12 +115,12 @@ uint32_t fd_storage_area_used_page_count(fd_storage_area_t *area) {
 #define increment_page(page) if (++page >= area->end_page) page = area->start_page
 
 void fd_storage_free_first_page(fd_storage_area_t *area) {
-    uint32_t address = area->first_page * FD_W25Q16DW_PAGE_SIZE;
-    fd_w25q16dw_wake();
-    fd_w25q16dw_enable_write();
+    uint32_t address = area->first_page * FD_HAL_EXTERNAL_FLASH_PAGE_SIZE;
+    fd_hal_external_flash_wake();
+    fd_hal_external_flash_enable_write();
     uint8_t marker = PAGE_FREE;
-    fd_w25q16dw_write_page(address, &marker, sizeof(marker));
-    fd_w25q16dw_sleep();
+    fd_hal_external_flash_write_page(address, &marker, sizeof(marker));
+    fd_hal_external_flash_sleep();
 
     increment_page(area->first_page);
 }
@@ -129,35 +130,36 @@ void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t
         length = FD_STORAGE_MAX_DATA_LENGTH;
     }
 
-    fd_w25q16dw_wake();
+    fd_hal_external_flash_wake();
 
-    uint32_t address = area->free_page * FD_W25Q16DW_PAGE_SIZE;
+    uint32_t address = area->free_page * FD_HAL_EXTERNAL_FLASH_PAGE_SIZE;
 
-    if ((area->free_page % FD_W25Q16DW_PAGES_PER_SECTOR) == 0) {
+    uint32_t pages_per_sector = fd_hal_external_flash_get_pages_per_sector();
+    if ((area->free_page % pages_per_sector) == 0) {
         // sector erase takes 50 ms typical, so only erase if there is data present -denis
         uint8_t marker;
-        fd_w25q16dw_read(address, &marker, 1);
+        fd_hal_external_flash_read(address, &marker, 1);
         if (marker != PAGE_UNUSED) {
-            fd_w25q16dw_enable_write();
-            fd_w25q16dw_erase_sector(address);
+            fd_hal_external_flash_enable_write();
+            fd_hal_external_flash_erase_sector(address);
         }
-        if ((area->free_page < area->first_page) && (area->first_page < area->free_page + FD_W25Q16DW_PAGES_PER_SECTOR)) {
+        if ((area->free_page < area->first_page) && (area->first_page < area->free_page + pages_per_sector)) {
             // need to move first page outside this erased sector
-            area->first_page = ((area->first_page + FD_W25Q16DW_PAGES_PER_SECTOR) / FD_W25Q16DW_PAGES_PER_SECTOR) * FD_W25Q16DW_PAGES_PER_SECTOR;
+            area->first_page = ((area->first_page + pages_per_sector) / pages_per_sector) * pages_per_sector;
             if (area->first_page >= area->end_page) {
                 area->first_page = area->start_page;
             }
         }
     }
 
-    uint8_t buffer[FD_W25Q16DW_PAGE_SIZE] = {PAGE_USED, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
+    uint8_t buffer[FD_HAL_EXTERNAL_FLASH_PAGE_SIZE] = {PAGE_USED, length, 0, 0, type, type >> 8, type >> 16, type >> 24};
     memcpy(&buffer[8], data, length);
     uint16_t hash = fd_crc_16(0xffff, &buffer[4], 4 + length);
     buffer[2] = hash;
     buffer[3] = hash >> 8;
-    fd_w25q16dw_enable_write();
-    fd_w25q16dw_write_page(address, buffer, 8 + length);
-    fd_w25q16dw_sleep();
+    fd_hal_external_flash_enable_write();
+    fd_hal_external_flash_write_page(address, buffer, 8 + length);
+    fd_hal_external_flash_sleep();
     increment_page(area->free_page);
     if (area->free_page == area->first_page) {
         fd_storage_free_first_page(area);
@@ -173,12 +175,12 @@ void fd_storage_area_read_nth_page(fd_storage_area_t *area, uint32_t n, fd_stora
     if (metadata->page >= area->end_page) {
         metadata->page = area->start_page + (metadata->page - area->end_page);
     }
-    uint32_t address = metadata->page * FD_W25Q16DW_PAGE_SIZE;
-    uint8_t buffer[FD_W25Q16DW_PAGE_SIZE];
+    uint32_t address = metadata->page * FD_HAL_EXTERNAL_FLASH_PAGE_SIZE;
+    uint8_t buffer[FD_HAL_EXTERNAL_FLASH_PAGE_SIZE];
     // !!! might be better to read length and then content -denis
-    fd_w25q16dw_wake();
-    fd_w25q16dw_read(address, buffer, FD_W25Q16DW_PAGE_SIZE);
-    fd_w25q16dw_sleep();
+    fd_hal_external_flash_wake();
+    fd_hal_external_flash_read(address, buffer, FD_HAL_EXTERNAL_FLASH_PAGE_SIZE);
+    fd_hal_external_flash_sleep();
     metadata->length = buffer[1];
     if (metadata->length > length) {
         metadata->length = length;
@@ -198,12 +200,12 @@ bool fd_storage_area_read_first_page(fd_storage_area_t *area, fd_storage_metadat
     }
 
     metadata->page = area->first_page;
-    uint32_t address = area->first_page * FD_W25Q16DW_PAGE_SIZE;
-    uint8_t buffer[FD_W25Q16DW_PAGE_SIZE];
+    uint32_t address = area->first_page * FD_HAL_EXTERNAL_FLASH_PAGE_SIZE;
+    uint8_t buffer[FD_HAL_EXTERNAL_FLASH_PAGE_SIZE];
     // !!! might be better to read length and then content -denis
-    fd_w25q16dw_wake();
-    fd_w25q16dw_read(address, buffer, FD_W25Q16DW_PAGE_SIZE);
-    fd_w25q16dw_sleep();
+    fd_hal_external_flash_wake();
+    fd_hal_external_flash_read(address, buffer, FD_HAL_EXTERNAL_FLASH_PAGE_SIZE);
+    fd_hal_external_flash_sleep();
     metadata->length = buffer[1];
     if (metadata->length > length) {
         metadata->length = length;

@@ -1,7 +1,7 @@
 #include "fd_event.h"
+#include "fd_hal_processor.h"
 #include "fd_lis3dh.h"
 #include "fd_log.h"
-#include "fd_processor.h"
 #include "fd_spi.h"
 #include "fd_timer.h"
 
@@ -99,7 +99,7 @@ typedef union {
 #define SPI_READ 0x80
 #define SPI_ADDRESS_INCREMENT 0x40
 
-static fd_lish3dh_sample_callback_t sample_callback;
+static fd_hal_accelerometer_sample_callback_t sample_callback;
 static fd_timer_t fifo_timer;
 
 static
@@ -180,7 +180,7 @@ void fd_lis3dh_initialize(void) {
     fd_timer_add(&fifo_timer, fd_lis3dh_read_fifo);
 }
 
-void fd_lis3dh_set_sample_callback(fd_lish3dh_sample_callback_t callback) {
+void fd_lis3dh_set_sample_callback(fd_hal_accelerometer_sample_callback_t callback) {
     sample_callback = callback;
 }
 

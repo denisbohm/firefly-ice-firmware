@@ -1,7 +1,5 @@
-#ifndef FD_PROCESSOR
-#define FD_PROCESSOR
-
-#include <stdint.h>
+#ifndef FD_PINS_H
+#define FD_PINS_H
 
 #define BAT_VDIV2EN_PORT_PIN gpioPortF, 2
 #define BAT_VDIV2_PORT_PIN gpioPortD, 6
@@ -75,15 +73,6 @@
 #define HFXTAL_P_PORT_PIN gpioPortB, 13
 #define HFXTAL_N_PORT_PIN gpioPortB, 14
 
-void fd_processor_initialize(void);
-
-void fd_processor_sleep(void);
-void fd_processor_wake(void);
-
-void fd_delay_ms(uint32_t ms);
-void fd_delay_us(uint32_t ms);
-
-void fd_interrupts_disable(void);
-void fd_interrupts_enable(void);
+void fd_pins_events_initialize(void);
 
 #endif

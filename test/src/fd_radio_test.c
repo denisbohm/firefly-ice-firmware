@@ -1,7 +1,8 @@
+#include "fd_hal_processor.h"
 #include "fd_nrf8001.h"
 #include "fd_nrf8001_dispatch.h"
 #include "fd_nrf8001_test.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 
 #include "em_cmu.h"
 #include "em_gpio.h"
@@ -162,9 +163,9 @@ uint8_t spi_io(uint8_t data) {
 
 void fd_bluetooth_reset(void) {
     GPIO_PinOutClear(NRF_RESETN_PORT_PIN);
-    fd_delay_ms(100);
+    fd_hal_processor_delay_ms(100);
     GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
-    fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
+    fd_hal_processor_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
 }
 
 uint8_t xfers[2048];
@@ -226,7 +227,7 @@ void fd_nrf8001_spi_transfer(void) {
 void main(void) {
     xfers_index = 0;
 
-    fd_processor_initialize();
+    fd_hal_processor_initialize();
     spi_initialize();
     fd_bluetooth_reset();
     uint8_t data[10];

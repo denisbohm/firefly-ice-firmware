@@ -51,7 +51,7 @@ void fd_recognition_sensing(int16_t x, int16_t y, int16_t z) {
 
     bool match = false;
 
-    float a = fd_math_isqrt(x * x + y * y + z * z) * (FD_LIS3DH_SCALE / 65536.0f);
+    float a = fd_math_isqrt(x * x + y * y + z * z) * (FD_HAL_ACCELEROMETER_SCALE / 65536.0f);
     if (a > FD_RECOGNITION_THRESHOLD) {
         match = true;
     }

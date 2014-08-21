@@ -1,5 +1,6 @@
+#include "fd_hal_processor.h"
 #include "fd_log.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 #include "fd_storage.h"
 #include "fd_w25q16dw.h"
 
@@ -28,7 +29,7 @@ void storage_erase(void) {
 }
 
 void main(void) {
-    fd_processor_initialize();
+    fd_hal_processor_initialize();
 
     fd_binary_unit_tests();
     fd_detour_unit_tests();

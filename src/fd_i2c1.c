@@ -1,6 +1,7 @@
+#include "fd_hal_processor.h"
 #include "fd_i2c1.h"
 #include "fd_log.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 
 #include <em_cmu.h>
 #include <em_gpio.h>
@@ -38,7 +39,7 @@ void fd_i2c1_power_on(void) {
     GPIO_PinModeSet(I2C1_SCL_PORT_PIN, gpioModeWiredAnd, 1);
 
     GPIO_PinOutSet(I2C1_PWR_PORT_PIN);
-    fd_delay_ms(100); // wait for power to come up (?ms)
+    fd_hal_processor_delay_ms(100); // wait for power to come up (?ms)
 
     NVIC_ClearPendingIRQ(I2C1_IRQn);
 //    NVIC_EnableIRQ(I2C1_IRQn);

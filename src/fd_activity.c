@@ -1,5 +1,5 @@
 #include "fd_activity.h"
-#include "fd_lis3dh.h"
+#include "fd_hal_accelerometer.h"
 #include "fd_math.h"
 
 #include <math.h>
@@ -31,7 +31,7 @@ void fd_activity_accumulate(int16_t xg, int16_t yg, int16_t zg) {
     uint32_t y = yg;
     uint32_t z = zg;
     uint32_t t = fd_math_isqrt(x * x + y * y + z * z);
-    float v = t * (FD_LIS3DH_SCALE / 65536.0f);
+    float v = t * (FD_HAL_ACCELEROMETER_SCALE / 65536.0f);
 
     float value = v - activity_acc_dc;
     activity_acc_dc += value * ACTIVITY_K;

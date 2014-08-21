@@ -12,8 +12,6 @@ typedef struct {
     uint8_t git_commit[20];
 } fd_boot_data_t;
 
-#define FD_BOOT_DATA ((fd_boot_data_t *)0x6f00)
-
 #define FD_BOOT_MAGIC 0xb001da1a
 
 #endif

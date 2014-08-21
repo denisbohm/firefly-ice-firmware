@@ -1,6 +1,6 @@
 #include "fd_binary.h"
+#include "fd_hal_rtc.h"
 #include "fd_log.h"
-#include "fd_rtc.h"
 #include "fd_storage.h"
 
 #include <string.h>
@@ -51,7 +51,7 @@ void fd_log_at(char *file, int line, char *message) {
     uint8_t data[FD_STORAGE_MAX_DATA_LENGTH];
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, FD_STORAGE_MAX_DATA_LENGTH);
-    fd_binary_put_time64(&binary, fd_rtc_get_accurate_time());
+    fd_binary_put_time64(&binary, fd_hal_rtc_get_accurate_time());
     if (file != 0) {
         fd_binary_put_bytes(&binary, (uint8_t *)file, strlen(file));
         fd_binary_put_uint8(&binary, ' ');

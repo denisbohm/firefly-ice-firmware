@@ -1,8 +1,8 @@
 #include "fd_activity.h"
 #include "fd_binary.h"
-#include "fd_lis3dh.h"
+#include "fd_hal_accelerometer.h"
+#include "fd_hal_rtc.h"
 #include "fd_recognition.h"
-#include "fd_rtc.h"
 #include "fd_sensing.h"
 #include "fd_storage.h"
 #include "fd_storage_buffer.h"
@@ -32,7 +32,7 @@ static fd_time_t fd_sensing_stream_time;
 
 static
 fd_time_t fd_sensing_get_sample_time(void) {
-    fd_time_t time = fd_rtc_get_time();
+    fd_time_t time = fd_hal_rtc_get_time();
     time.microseconds = (time.microseconds / FD_SENSING_INTERVAL_US) * FD_SENSING_INTERVAL_US;
     return time;
 }
@@ -109,7 +109,7 @@ void fd_sensing_sample_callback(int16_t x, int16_t y, int16_t z) {
 
 static
 void fd_sensing_timer_callback(void) {
-    fd_lis3dh_read_fifo();
+    fd_hal_accelerometer_read_fifo();
     if (fd_sensing_samples > 0) {
         float activity = fd_activity_value(fd_sensing_interval);
         fd_storage_buffer_add_time_series_s_float16(&fd_sensing_storage_buffer, fd_sensing_time.seconds, fd_sensing_interval, activity);
@@ -146,7 +146,7 @@ void fd_sensing_initialize(void) {
     fd_storage_buffer_collection_push(&fd_sensing_stream_storage_buffer);
     fd_sensing_stream_remaining_sample_count = 0;
 
-    fd_lis3dh_set_sample_callback(fd_sensing_sample_callback);
+    fd_hal_accelerometer_set_sample_callback(fd_sensing_sample_callback);
 
     fd_sensing_interval = 10;
     fd_timer_add(&fd_sensing_timer, fd_sensing_timer_callback);
@@ -165,7 +165,7 @@ void fd_sensing_wake(void) {
     fd_sensing_samples = 0;
     fd_activity_start();
 
-    fd_time_t now = fd_rtc_get_time();
+    fd_time_t now = fd_hal_rtc_get_time();
     fd_sensing_time.microseconds = 0;
     fd_sensing_time.seconds = (now.seconds / fd_sensing_interval) * fd_sensing_interval;
     fd_time_t at;

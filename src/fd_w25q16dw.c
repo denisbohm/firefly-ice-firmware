@@ -1,6 +1,6 @@
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
 #include "fd_log.h"
-#include "fd_processor.h"
-#include "fd_reset.h"
 #include "fd_spi.h"
 #include "fd_w25q16dw.h"
 
@@ -26,7 +26,7 @@ void fd_w25q16dw_wake(void) {
     uint8_t txdata[] = {RELEASE_POWER_DOWN, 0, 0, 0};
     uint8_t device_id;
     fd_spi_sync_txn_rxn(FD_SPI_BUS_0_SLAVE_W25Q16DW, txdata, sizeof(txdata), &device_id, 1);
-    fd_delay_us(30); // tRES2
+    fd_hal_processor_delay_us(30); // tRES2
 }
 
 void fd_w25q16dw_test(void) {
@@ -98,7 +98,7 @@ void fd_w25q16dw_erase_sector(uint32_t address) {
 void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
 //    memcpy(&simulation_buffer[address], data, length);
 
-    fd_reset_push_watchdog_context("mwp");
+    fd_hal_reset_push_watchdog_context("mwp");
 
     fd_w25q16dw_wait_while_busy();
 
@@ -136,7 +136,7 @@ void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
     fd_spi_io(FD_SPI_BUS_0_SLAVE_W25Q16DW, &io);
     fd_spi_wait(FD_SPI_BUS_0);
 
-    fd_reset_pop_watchdog_context();
+    fd_hal_reset_pop_watchdog_context();
 }
 
 void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {

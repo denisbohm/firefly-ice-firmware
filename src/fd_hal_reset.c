@@ -1,19 +1,20 @@
-#include "fd_processor.h"
-#include "fd_reset.h"
-#include "fd_rtc.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
+#include "fd_hal_rtc.h"
 
 #include <em_cmu.h>
 #include <em_rmu.h>
 #include <em_timer.h>
+#include <em_wdog.h>
 
 #include <string.h>
 
 #define MAGIC 0xa610efcc
 
-uint32_t fd_reset_last_cause;
-fd_time_t fd_reset_last_time;
+uint32_t fd_hal_reset_last_cause;
+fd_time_t fd_hal_reset_last_time;
 
-fd_reset_retained_t fd_reset_retained_at_initialize;
+fd_hal_reset_retained_t fd_hal_reset_retained_at_initialize;
 static bool retain_was_valid;
 
 static
@@ -47,28 +48,38 @@ bool is_ram_retained_reset(uint32_t cause) {
     return false;
 }
 
-void fd_reset_initialize(void) {
-    fd_reset_last_cause = RMU_ResetCauseGet();
+void fd_hal_reset_initialize(void) {
+    fd_hal_reset_last_cause = RMU_ResetCauseGet();
     RMU_ResetCauseClear();
 
-    fd_reset_retained_t *retained = RETAINED;
-    memcpy(&fd_reset_retained_at_initialize, retained, sizeof(fd_reset_retained_t));
+    fd_hal_reset_retained_t *retained = RETAINED;
+    memcpy(&fd_hal_reset_retained_at_initialize, retained, sizeof(fd_hal_reset_retained_t));
     retain_was_valid =
         (retained->magic == MAGIC) &&
         (retained->power_battery_level >= 0.0) && (retained->power_battery_level <= 1.0) &&
         (retained->rtc.seconds > 1381363200) && (retained->rtc.seconds < 2328048000) &&
         (retained->rtc.microseconds < 1000000) &&
-        is_ram_retained_reset(fd_reset_last_cause);
+        is_ram_retained_reset(fd_hal_reset_last_cause);
 
     if (!retain_was_valid) {
-        memset(retained, 0, sizeof(fd_reset_retained_t));
+        memset(retained, 0, sizeof(fd_hal_reset_retained_t));
         retained->magic = MAGIC;
     }
 
-    fd_reset_last_time = retained->rtc;
+    fd_hal_reset_last_time = retained->rtc;
 }
 
-void fd_reset_start_watchdog(void) {
+void fd_hal_reset_start_watchdog(void) {
+#ifdef DEBUG
+#warning debug is defined - watchdog is not enabled
+#else
+    CMU_ClockEnable(cmuClock_CORELE, true);
+    WDOG_Init_TypeDef wdog_init = WDOG_INIT_DEFAULT;
+    wdog_init.perSel = wdogPeriod_16k;
+//    wdog_init.lock = true;
+    WDOG_Init(&wdog_init);
+#endif
+
 #ifdef DEBUG_WATCHDOG
 #warning watchdog debug is enabled
     CMU_ClockEnable(cmuClock_TIMER2, true);
@@ -84,24 +95,26 @@ void fd_reset_start_watchdog(void) {
 #endif
 }
 
-void fd_reset_feed_watchdog(void) {
+void fd_hal_reset_feed_watchdog(void) {
+    WDOG_Feed();
+
 #ifdef DEBUG_WATCHDOG
     TIMER_CounterSet(TIMER2, 0);
 #endif
 }
 
-void fd_reset_push_watchdog_context(char *context) {
+void fd_hal_reset_push_watchdog_context(char *context) {
     int length = strlen(context);
     if (length > 4) {
         length = 4;
     }
-    fd_reset_retained_t *retained = RETAINED;
+    fd_hal_reset_retained_t *retained = RETAINED;
     memset(retained->context, 0, 4);
     memcpy(retained->context, context, length);
 }
 
-void fd_reset_pop_watchdog_context(void) {
-    fd_reset_retained_t *retained = RETAINED;
+void fd_hal_reset_pop_watchdog_context(void) {
+    fd_hal_reset_retained_t *retained = RETAINED;
     memset(retained->context, 0, 4);
 }
 
@@ -131,26 +144,26 @@ void TIMER2_IRQHandler(void) {
 }
 #endif
 
-bool fd_reset_retained_was_valid_on_startup(void) {
+bool fd_hal_reset_retained_was_valid_on_startup(void) {
     return retain_was_valid;
 }
 
-void fd_reset_by(uint8_t type) {
+void fd_hal_reset_by(uint8_t type) {
     switch (type) {
-        case FD_RESET_SYSTEM_REQUEST: {
+        case FD_HAL_RESET_SYSTEM_REQUEST: {
             NVIC_SystemReset();
         } break;
-        case FD_RESET_WATCHDOG: {
-            fd_reset_push_watchdog_context("rwdt");
-            fd_delay_ms(120000);
-            fd_reset_pop_watchdog_context();
+        case FD_HAL_RESET_WATCHDOG: {
+            fd_hal_reset_push_watchdog_context("rwdt");
+            fd_hal_processor_delay_ms(120000);
+            fd_hal_reset_pop_watchdog_context();
         } break;
-        case FD_RESET_HARD_FAULT: {
+        case FD_HAL_RESET_HARD_FAULT: {
             void (*null_fn)(void) = 0;
             (*null_fn)();
         } break;
-        case FD_RESET_RETAIN: {
-            fd_reset_initialize();
+        case FD_HAL_RESET_RETAIN: {
+            fd_hal_reset_initialize();
         } break;
         default: {
         } break;

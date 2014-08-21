@@ -1,7 +1,8 @@
 #include "fd_event.h"
+#include "fd_hal_processor.h"
 #include "fd_led.h"
 #include "fd_lp55231.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 #include "fd_timer.h"
 
 #include <em_cmu.h>
@@ -24,7 +25,7 @@ static
 uint32_t active_leds;
 
 static
-fd_led_state_t led_state;
+fd_hal_ui_led_state_t led_state;
 
 static
 void fd_led_restore(void) {
@@ -258,8 +259,8 @@ void TIMER3_IRQHandler(void) {
     }
 }
 
-void fd_led_override(fd_led_state_t *state, fd_time_t duration) {
-    fd_led_state_t saved_state = led_state;
+void fd_led_override(fd_hal_ui_led_state_t *state, fd_time_t duration) {
+    fd_hal_ui_led_state_t saved_state = led_state;
 
     fd_led_set_usb(state->usb.o, state->usb.g);
     fd_led_set_d0(state->d0.r);

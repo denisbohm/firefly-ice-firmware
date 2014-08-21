@@ -1,10 +1,10 @@
-#include "fd_aes.h"
+#include "fd_hal_aes.h"
 #include "fd_sha.h"
 
 #include <em_aes.h>
 #include <em_cmu.h>
 
-void fd_aes_decrypt_start(fd_aes_decrypt_t *decrypt, const uint8_t *key, const uint8_t *iv) {
+void fd_hal_aes_decrypt_start(fd_hal_aes_decrypt_t *decrypt, const uint8_t *key, const uint8_t *iv) {
     CMU_ClockEnable(cmuClock_AES, true);
 
     const uint32_t *_key = (const uint32_t *)key;
@@ -23,7 +23,7 @@ void fd_aes_decrypt_start(fd_aes_decrypt_t *decrypt, const uint8_t *key, const u
 
 #define AES_BLOCKSIZE 16
 
-void fd_aes_decrypt_blocks(fd_aes_decrypt_t *decrypt, uint8_t *in, uint8_t *out, uint32_t length) {
+void fd_hal_aes_decrypt_blocks(fd_hal_aes_decrypt_t *decrypt, uint8_t *in, uint8_t *out, uint32_t length) {
     uint32_t *prev = decrypt->prev;
     uint32_t *_in = (uint32_t *)in;
     uint32_t *_out = (uint32_t *)out;
@@ -54,11 +54,11 @@ void fd_aes_decrypt_blocks(fd_aes_decrypt_t *decrypt, uint8_t *in, uint8_t *out,
     }
 }
 
-void fd_aes_decrypt_stop(fd_aes_decrypt_t *decrypt __attribute__((unused))) {
+void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused))) {
     CMU_ClockEnable(cmuClock_AES, false);
 }
 
-void fd_aes_hash_start(fd_aes_hash_t *hash, const uint8_t *key, const uint8_t *iv) {
+void fd_hal_aes_hash_start(fd_hal_aes_hash_t *hash, const uint8_t *key, const uint8_t *iv) {
     CMU_ClockEnable(cmuClock_AES, true);
 
     const uint32_t *_key = (const uint32_t *)key;
@@ -80,7 +80,7 @@ void fd_aes_hash_start(fd_aes_hash_t *hash, const uint8_t *key, const uint8_t *i
     hash->out_index = 0;
 }
 
-void fd_aes_hash_blocks(fd_aes_hash_t *hash, uint8_t *in, uint32_t length) {
+void fd_hal_aes_hash_blocks(fd_hal_aes_hash_t *hash, uint8_t *in, uint32_t length) {
     uint32_t *_in = (uint32_t *)in;
     uint32_t blocks = length / AES_BLOCKSIZE;
     while (blocks--) {
@@ -103,7 +103,7 @@ void fd_aes_hash_blocks(fd_aes_hash_t *hash, uint8_t *in, uint32_t length) {
     }
 }
 
-void fd_aes_hash_stop(fd_aes_hash_t *hash, uint8_t *result) {
+void fd_hal_aes_hash_stop(fd_hal_aes_hash_t *hash, uint8_t *result) {
     /* The last 20 encrypted bytes are the hash */
     for (uint32_t i = 0; i < FD_SHA_HASH_SIZE; ++i) {
         result[i] = hash->out[hash->out_index];
@@ -115,17 +115,17 @@ void fd_aes_hash_stop(fd_aes_hash_t *hash, uint8_t *result) {
     CMU_ClockEnable(cmuClock_AES, false);
 }
 
-static uint8_t defaultHashKeyBytes[FD_AES_KEY_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+static uint8_t defaultHashKeyBytes[FD_HAL_AES_KEY_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
-static uint8_t defaultHashIVBytes[FD_AES_IV_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+static uint8_t defaultHashIVBytes[FD_HAL_AES_IV_SIZE] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
-void fd_aes_hash_start_default(fd_aes_hash_t *hash) {
-    fd_aes_hash_start(hash, defaultHashKeyBytes, defaultHashIVBytes);
+void fd_hal_aes_hash_start_default(fd_hal_aes_hash_t *hash) {
+    fd_hal_aes_hash_start(hash, defaultHashKeyBytes, defaultHashIVBytes);
 }
 
-void fd_aes_hash_default(fd_aes_source_t source, uint32_t address, uint32_t length, uint8_t *result) {
-    fd_aes_hash_t hash;
-    fd_aes_hash_start_default(&hash);
+void fd_hal_aes_hash_default(fd_hal_aes_source_t source, uint32_t address, uint32_t length, uint8_t *result) {
+    fd_hal_aes_hash_t hash;
+    fd_hal_aes_hash_start_default(&hash);
     uint8_t data[AES_BLOCKSIZE];
     uint32_t remaining = length;
     while (remaining > 0) {
@@ -134,8 +134,8 @@ void fd_aes_hash_default(fd_aes_source_t source, uint32_t address, uint32_t leng
             n = remaining;
         }
         (*source)(address, data, n);
-        fd_aes_hash_blocks(&hash, data, n);
+        fd_hal_aes_hash_blocks(&hash, data, n);
         remaining -= n;
     }
-    fd_aes_hash_stop(&hash, result);
+    fd_hal_aes_hash_stop(&hash, result);
 }

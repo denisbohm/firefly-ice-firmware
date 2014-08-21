@@ -1,6 +1,8 @@
 #include "fd_boot.h"
+#include "fd_hal_external_flash.h"
+#include "fd_hal_processor.h"
 #include "fd_log.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 #include "fd_sha.h"
 #include "fd_update.h"
 #include "fd_w25q16dw.h"
@@ -23,7 +25,7 @@ static const fd_boot_data_t boot_data __attribute__ ((used, section(".boot_data"
 };
 
 bool is_metadata_valid(void) {
-    uint32_t *address = (uint32_t *)FD_UPDATE_METADATA_ADDRESS;
+    uint32_t *address = (uint32_t *)fd_hal_processor_get_firmware_update_metadata_range().address;
     return *address != 0xffffffff;
 }
 
@@ -40,8 +42,9 @@ bool is_internal_firmware_valid(void) {
     fd_update_metadata_t metadata;
     fd_update_read_metadata(&metadata);
 
+    uint32_t firmware_address = fd_hal_processor_get_firmware_range().address;
     uint8_t internal_hash[FD_SHA_HASH_SIZE];
-    fd_sha1(internal_read, FD_UPDATE_FIRMWARE_ADDRESS, metadata.length, internal_hash);
+    fd_sha1(internal_read, firmware_address, metadata.length, internal_hash);
 
     return fd_sha1_is_equal(metadata.crypt_hash, internal_hash);
 }
@@ -50,8 +53,9 @@ bool is_external_firmware_valid(void) {
     fd_update_metadata_t metadata;
     fd_update_read_metadata(&metadata);
 
+    uint32_t data_base_address = fd_hal_external_flash_get_firmware_update_range().address;
     uint8_t external_hash[FD_SHA_HASH_SIZE];
-    fd_sha1(fd_w25q16dw_read, FD_UPDATE_DATA_BASE_ADDRESS, metadata.length, external_hash);
+    fd_sha1(fd_w25q16dw_read, data_base_address, metadata.length, external_hash);
 
     return fd_sha1_is_equal(metadata.hash, external_hash);
 }
@@ -62,8 +66,8 @@ void copy_firmware(void) {
     fd_update_metadata_t metadata;
     fd_update_read_metadata(&metadata);
 
-    uint32_t external_address = FD_UPDATE_DATA_BASE_ADDRESS;
-    uint32_t internal_address = FD_UPDATE_FIRMWARE_ADDRESS;
+    uint32_t external_address = fd_hal_external_flash_get_firmware_update_range().address;
+    uint32_t internal_address = fd_hal_processor_get_firmware_range().address;
     uint32_t end = internal_address + metadata.length;
     uint8_t data[INTERNAL_PAGE_SIZE];
     while (internal_address < end) {
@@ -79,8 +83,9 @@ void copy_firmware(void) {
 }
 
 void run_firmware(void) {
-    SCB->VTOR = FD_UPDATE_FIRMWARE_ADDRESS;
-    uint32_t *vector_table = (uint32_t *)FD_UPDATE_FIRMWARE_ADDRESS;
+    uint32_t firmware_address = fd_hal_processor_get_firmware_range().address;
+    SCB->VTOR = firmware_address;
+    uint32_t *vector_table = (uint32_t *)firmware_address;
     uint32_t sp = vector_table[0];
     uint32_t pc = vector_table[1];
     __asm("msr msp, %0" : : "r" (sp));
@@ -89,7 +94,7 @@ void run_firmware(void) {
 }
 
 int main(void) {
-    fd_processor_initialize();
+    fd_hal_processor_initialize();
 
     GPIO_PinOutClear(LED0_PORT_PIN);
     GPIO_PinOutClear(LED4_PORT_PIN);
@@ -121,9 +126,9 @@ int main(void) {
 
     while (true) {
         GPIO_PinOutSet(LED0_PORT_PIN);
-        fd_delay_ms(500);
+        fd_hal_processor_delay_ms(500);
         GPIO_PinOutClear(LED0_PORT_PIN);
-        fd_delay_ms(500);
+        fd_hal_processor_delay_ms(500);
     }
 
     return 0;

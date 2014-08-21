@@ -1,9 +1,15 @@
-#include "fd_processor.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_system.h"
+#include "fd_pins.h"
+#include "fd_usb.h"
 
 #include <em_cmu.h>
+#include <em_emu.h>
 #include <em_i2c.h>
 #include <em_int.h>
 #include <em_gpio.h>
+#include <em_msc.h>
+#include <em_system.h>
 #include <em_usart.h>
 
 #include <stddef.h>
@@ -18,11 +24,11 @@ void *memset(void *s, int c, size_t n) {
 }
 */
 
-void fd_interrupts_disable(void) {
+void fd_hal_processor_interrupts_disable(void) {
     INT_Disable();
 }
 
-void fd_interrupts_enable(void) {
+void fd_hal_processor_interrupts_enable(void) {
     INT_Enable();
 }
 
@@ -42,19 +48,23 @@ void CMU_IRQHandler(void) {
 }
 */
 
-void fd_processor_sleep(void) {
+void fd_hal_processor_sleep(void) {
     CMU_ClockEnable(cmuClock_HFPER, false);
     CMU_ClockSelectSet(cmuClock_HF, cmuSelect_LFXO);
     CMU_OscillatorEnable(cmuOsc_HFRCO, false, false);
 }
 
-void fd_processor_wake(void) {
+void fd_hal_processor_wake(void) {
     CMU_OscillatorEnable(cmuOsc_HFRCO, true, true);
     CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFRCO);
     CMU_ClockEnable(cmuClock_HFPER, true);
 }
 
-void fd_processor_initialize(void) {
+void fd_hal_processor_wait(void) {
+    EMU_EnterEM2(true);
+}
+
+void fd_hal_processor_initialize(void) {
 //    CMU_HFRCOBandSet(cmuHFRCOBand_14MHz);
 
 //    CMU_ClockDivSet(cmuClock_HFPER, cmuClkDiv_1);
@@ -158,12 +168,87 @@ void fd_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
 
 #define CYCLES_PER_SECOND (48000000/2)
 
-void fd_delay_us(uint32_t us) {
+void fd_hal_processor_delay_us(uint32_t us) {
     fd_delay_3x_cycles((us * CYCLES_PER_SECOND) / 3000000);
 }
 
-void fd_delay_ms(uint32_t ms) {
+void fd_hal_processor_delay_ms(uint32_t ms) {
     while (ms--) {
         fd_delay_3x_cycles(CYCLES_PER_SECOND / 3000);
     }
+}
+
+#define LOCK_BITS_ADDRESS 0x0FE04000
+#define DEBUG_LOCK_WORD_ADDRESS (LOCK_BITS_ADDRESS + 127)
+
+bool fd_hal_processor_get_debug_lock(void) {
+    uint32_t *address = (uint32_t*)DEBUG_LOCK_WORD_ADDRESS;
+    uint32_t debug_lock = *address;
+    return (debug_lock & 0xf) != 0xf;
+}
+
+void fd_hal_processor_set_debug_lock(void) {
+    if (!fd_hal_processor_get_debug_lock()) {
+        uint32_t word = 0xfffffff0;
+        fd_hal_processor_interrupts_disable();
+        MSC_Init();
+        MSC_WriteWord((uint32_t*)DEBUG_LOCK_WORD_ADDRESS, &word, 4);
+        MSC_Deinit();
+        fd_hal_processor_interrupts_enable();
+    }
+}
+
+// 16 byte hardware id: vendor, product, version (major, minor), unique id
+void fd_hal_processor_get_hardware_id(fd_binary_t *binary) {
+    fd_binary_put_uint16(binary, fd_usb_get_vendor_id());
+    fd_binary_put_uint16(binary, fd_usb_get_product_id());
+    fd_binary_put_uint16(binary, fd_hal_system_get_hardware_major());
+    fd_binary_put_uint16(binary, fd_hal_system_get_hardware_minor());
+    fd_binary_put_uint64(binary, SYSTEM_GetUnique());
+}
+
+fd_range_t fd_hal_processor_get_boot_range(void) {
+    return fd_range_make(0x00000000, 0x00007000);
+}
+
+fd_range_t fd_hal_processor_get_crypto_range(void) {
+    return fd_range_make(0x00007000, 0x00000800);
+}
+
+fd_range_t fd_hal_processor_get_firmware_update_metadata_range(void) {
+    return fd_range_make(0x00007800, 0x00000800);
+}
+
+fd_range_t fd_hal_processor_get_firmware_range(void) {
+    return fd_range_make(0x00008000, 0x00040000 - 0x00008000);
+}
+
+fd_boot_data_t *fd_hal_processor_get_boot_data_address(void) {
+     return (fd_boot_data_t *)0x6f00;
+}
+
+#define USER_DATA_ADDRESS 0x0fe00000 // user data is 2kB
+
+uint8_t *fd_hal_processor_get_provision_map_address(void) {
+    return (uint8_t *)(USER_DATA_ADDRESS + 20);
+}
+
+void fd_hal_processor_write_user_data(uint8_t *data, uint32_t length) {
+    uint32_t *address = (uint32_t*)USER_DATA_ADDRESS;
+    uint32_t n = (length + 3) & ~0x3; // round up to multiple of 4 bytes
+    fd_hal_processor_interrupts_disable();
+    MSC_Init();
+    MSC_ErasePage(address);
+    MSC_WriteWord(address, data, n);
+    MSC_Deinit();
+    fd_hal_processor_interrupts_enable();
+}
+
+void fd_hal_processor_write_flash_data(uint32_t address, uint8_t *data, uint32_t length) {
+    fd_hal_processor_interrupts_disable();
+    MSC_Init();
+    MSC_ErasePage((void *)address);
+    MSC_WriteWord((void *)address, data, length);
+    MSC_Deinit();
+    fd_hal_processor_interrupts_enable();
 }

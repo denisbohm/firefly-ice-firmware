@@ -1,5 +1,6 @@
+#include "fd_hal_processor.h"
 #include "fd_log.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 #include "fd_w25q16dw.h"
 
 #include <em_gpio.h>
@@ -26,7 +27,7 @@ void fd_spi_power_on(void) {
     GPIO_PinOutSet(US0_CLK_PORT_PIN);
     GPIO_PinOutSet(US0_MOSI_PORT_PIN);
 
-    fd_delay_ms(10); // tPUW
+    fd_hal_processor_delay_ms(10); // tPUW
 }
 
 void fd_spi_power_off(void) {
@@ -35,7 +36,7 @@ void fd_spi_power_off(void) {
     GPIO_PinOutClear(US0_CLK_PORT_PIN);
     GPIO_PinOutClear(US0_MOSI_PORT_PIN);
 
-    fd_delay_ms(10);
+    fd_hal_processor_delay_ms(10);
 }
 
 void fd_spi_enable(void) {
@@ -101,7 +102,7 @@ void fd_w25q16dw_wake(void) {
     uint8_t txdata[] = {RELEASE_POWER_DOWN, 0, 0, 0};
     uint8_t device_id;
     fd_spi_txn_rxn(txdata, sizeof(txdata), &device_id, 1);
-    fd_delay_us(30); // tRES2
+    fd_hal_processor_delay_us(30); // tRES2
 }
 
 //#define W25Q16DW_TEST

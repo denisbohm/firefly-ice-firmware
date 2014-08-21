@@ -1,4 +1,4 @@
-#include "fd_processor.h"
+#include "fd_hal_processor.h"
 #include "fd_spi.h"
 
 #include <em_cmu.h>
@@ -151,7 +151,7 @@ void fd_spi_on(fd_spi_bus_t bus) {
     USART_Enable(spi->usart, usartEnable);
 
     if (spi->pwr_on_duration_ms) {
-        fd_delay_ms(spi->pwr_on_duration_ms);
+        fd_hal_processor_delay_ms(spi->pwr_on_duration_ms);
     }
 }
 

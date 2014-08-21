@@ -3,6 +3,8 @@
 #include "fd_control.h"
 #include "fd_detour.h"
 #include "fd_event.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
 #include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_nrf8001.h"
@@ -10,8 +12,7 @@
 #include "fd_nrf8001_commands.h"
 #include "fd_nrf8001_dispatch.h"
 #include "fd_nrf8001_types.h"
-#include "fd_processor.h"
-#include "fd_reset.h"
+#include "fd_pins.h"
 #include "fd_spi.h"
 #include "fd_timer.h"
 
@@ -209,9 +210,9 @@ void fd_nrf8001_data_credit_change(void) {
 
 void fd_bluetooth_reset(void) {
     GPIO_PinOutClear(NRF_RESETN_PORT_PIN);
-    fd_delay_ms(100);
+    fd_hal_processor_delay_ms(100);
     GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
-    fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
+    fd_hal_processor_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
 }
 
 bool fd_bluetooth_spi_transfer(void) {
@@ -219,7 +220,7 @@ bool fd_bluetooth_spi_transfer(void) {
         return false;
     }
 
-    fd_reset_push_watchdog_context("bspi");
+    fd_hal_reset_push_watchdog_context("bspi");
 
     uint8_t rx_buffer[FD_NRF8001_SPI_RX_BUFFER_SIZE];
     fd_spi_transfer_t transfers[] = {
@@ -244,7 +245,7 @@ bool fd_bluetooth_spi_transfer(void) {
     fd_spi_io(FD_SPI_BUS_1_SLAVE_NRF8001, &io);
     fd_spi_wait(FD_SPI_BUS_1);
 
-    fd_reset_pop_watchdog_context();
+    fd_hal_reset_pop_watchdog_context();
 
     fd_nrf8001_spi_tx_clear();
 

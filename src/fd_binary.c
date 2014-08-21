@@ -62,8 +62,8 @@ void fd_binary_pack_uint32(uint8_t *buffer, uint32_t value) {
 }
 
 void fd_binary_pack_uint64(uint8_t *buffer, uint64_t value) {
-    fd_binary_pack_uint32(buffer, value);
-    fd_binary_pack_uint32(&buffer[4], value >> 32);
+    fd_binary_pack_uint32(buffer, (uint32_t)value);
+    fd_binary_pack_uint32(&buffer[4], (uint32_t)(value >> 32));
 }
 
 void fd_binary_pack_float16(uint8_t *buffer, float value) {

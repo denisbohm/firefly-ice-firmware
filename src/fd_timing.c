@@ -1,4 +1,4 @@
-#include "fd_rtc.h"
+#include "fd_hal_rtc.h"
 #include "fd_timing.h"
 
 typedef struct {
@@ -17,7 +17,7 @@ void fd_timing_add(uint32_t code, uint32_t arg) {
         timing_index = 0;
     }
     fd_timing_t *timing = &timings[timing_index];
-    timing->time = fd_rtc_get_accurate_time();
+    timing->time = fd_hal_rtc_get_accurate_time();
     timing->index = timing_index;
     timing->code = code;
     timing->arg = arg;

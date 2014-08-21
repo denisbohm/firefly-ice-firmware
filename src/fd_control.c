@@ -1,35 +1,59 @@
-#include "fd_adc.h"
-#include "fd_aes.h"
 #include "fd_binary.h"
 #include "fd_bluetooth.h"
 #include "fd_boot.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_event.h"
-#include "fd_indicator.h"
-#include "fd_led.h"
+#include "fd_hal_aes.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
+#include "fd_hal_rtc.h"
+#include "fd_hal_system.h"
+#include "fd_hal_ui.h"
 #include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_main.h"
 #include "fd_map.h"
 #include "fd_power.h"
-#include "fd_processor.h"
+#include "fd_provision.h"
 #include "fd_recognition.h"
-#include "fd_reset.h"
-#include "fd_rtc.h"
 #include "fd_sensing.h"
 #include "fd_sha.h"
 #include "fd_storage.h"
 #include "fd_sync.h"
-#include "fd_system.h"
 #include "fd_update.h"
-#include "fd_ui.h"
 
+/*
 #include <em_gpio.h>
 #include <em_int.h>
 #include <em_msc.h>
+*/
 
 #include <string.h>
+
+#define VERSION_MAJOR 1
+#define VERSION_MINOR 0
+#define VERSION_PATCH 43
+
+#define VERSION_CAPABILITIES (\
+ FD_CONTROL_CAPABILITY_LOCK |\
+ FD_CONTROL_CAPABILITY_BOOT_VERSION |\
+ FD_CONTROL_CAPABILITY_SYNC_AHEAD |\
+ FD_CONTROL_CAPABILITY_IDENTIFY |\
+ FD_CONTROL_CAPABILITY_LOGGING |\
+ FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
+ FD_CONTROL_CAPABILITY_NAME |\
+ FD_CONTROL_CAPABILITY_RETAINED |\
+ FD_CONTROL_CAPABILITY_ADC_VDD |\
+ FD_CONTROL_CAPABILITY_REGULATOR |\
+ FD_CONTROL_CAPABILITY_SENSING_COUNT |\
+ FD_CONTROL_CAPABILITY_INDICATE |\
+ FD_CONTROL_CAPABILITY_RECOGNITION )
+
+// !!! should come from gcc command line define
+#define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
+
+static const uint8_t git_commit[20] = {GIT_COMMIT};
 
 typedef void (*fd_control_command_t)(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length);
 
@@ -121,58 +145,6 @@ void fd_control_ping(fd_detour_source_collection_t *detour_source_collection, ui
     fd_control_send_complete(detour_source_collection);
 }
 
-#define USER_DATA_ADDRESS 0x0fe00000
-// user data is 2kB
-
-#define LOCK_BITS_ADDRESS 0x0FE04000
-#define DEBUG_LOCK_WORD_ADDRESS (LOCK_BITS_ADDRESS + 127)
-
-bool fd_get_debug_lock(void) {
-    uint32_t *address = (uint32_t*)DEBUG_LOCK_WORD_ADDRESS;
-    uint32_t debug_lock = *address;
-    return (debug_lock & 0xf) != 0xf;
-}
-
-void fd_set_debug_lock(void) {
-    if (!fd_get_debug_lock()) {
-        uint32_t word = 0xfffffff0;
-        fd_interrupts_disable();
-        MSC_Init();
-        MSC_WriteWord((uint32_t*)DEBUG_LOCK_WORD_ADDRESS, &word, 4);
-        MSC_Deinit();
-        fd_interrupts_enable();
-    }
-}
-
-// provisioning format:
-// - uint16_t version
-// - uint16_t flags;
-// - uint8_t[16] AES key
-// - map
-
-#define PROVISION_OPTION_DEBUG_LOCK 0x00000001
-#define PROVISION_OPTION_RESET 0x00000002
-
-typedef struct {
-    uint16_t version;
-    uint16_t flags;
-    uint8_t key[FD_AES_KEY_SIZE];
-    // map follows...
-} fd_provision_t;
-
-#define PROVISION_MAP_ADDRESS (USER_DATA_ADDRESS + 20)
-
-static void fd_control_write_user_data(uint8_t *data, uint32_t length) {
-    uint32_t *address = (uint32_t*)USER_DATA_ADDRESS;
-    uint32_t n = (length + 3) & ~0x3; // round up to multiple of 4 bytes
-    fd_interrupts_disable();
-    MSC_Init();
-    MSC_ErasePage(address);
-    MSC_WriteWord(address, data, n);
-    MSC_Deinit();
-    fd_interrupts_enable();
-}
-
 void fd_control_provision(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -181,13 +153,13 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
     uint32_t provision_data_length = fd_binary_get_uint16(&binary);
     uint8_t *provision_data = &binary.buffer[binary.get_index];
 
-    fd_control_write_user_data(provision_data, provision_data_length);
+    fd_hal_processor_write_user_data(provision_data, provision_data_length);
 
-    if (options & PROVISION_OPTION_DEBUG_LOCK) {
-        fd_set_debug_lock();
+    if (options & FD_PROVISION_OPTION_DEBUG_LOCK) {
+        fd_hal_processor_set_debug_lock();
     }
-    if (options & PROVISION_OPTION_RESET) {
-        NVIC_SystemReset();
+    if (options & FD_PROVISION_OPTION_RESET) {
+        fd_hal_reset_by(FD_HAL_RESET_SYSTEM_REQUEST);
     }
 }
 
@@ -196,31 +168,8 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
     fd_binary_initialize(&binary, data, length);
 
     uint8_t type = fd_binary_get_uint8(&binary);
-    fd_reset_by(type);
+    fd_hal_reset_by(type);
 }
-
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 0
-#define VERSION_PATCH 42
-#define VERSION_CAPABILITIES (\
- FD_CONTROL_CAPABILITY_LOCK |\
- FD_CONTROL_CAPABILITY_BOOT_VERSION |\
- FD_CONTROL_CAPABILITY_SYNC_AHEAD |\
- FD_CONTROL_CAPABILITY_IDENTIFY |\
- FD_CONTROL_CAPABILITY_LOGGING |\
- FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
- FD_CONTROL_CAPABILITY_NAME |\
- FD_CONTROL_CAPABILITY_RETAINED |\
- FD_CONTROL_CAPABILITY_ADC_VDD |\
- FD_CONTROL_CAPABILITY_REGULATOR |\
- FD_CONTROL_CAPABILITY_SENSING_COUNT |\
- FD_CONTROL_CAPABILITY_INDICATE |\
- FD_CONTROL_CAPABILITY_RECOGNITION )
-
-// !!! should come from gcc command line define
-#define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
-
-static const uint8_t git_commit[20] = {GIT_COMMIT};
 
 void fd_control_get_property_version(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, VERSION_MAJOR);
@@ -231,27 +180,27 @@ void fd_control_get_property_version(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_hardware_id(fd_binary_t *binary) {
-    fd_get_hardware_id(binary);
+    fd_hal_processor_get_hardware_id(binary);
 }
 
 void fd_control_get_property_site(fd_binary_t *binary) {
     uint8_t *site;
     uint16_t site_length;
-    fd_map_get((uint8_t*)PROVISION_MAP_ADDRESS, "site", FD_MAP_TYPE_UTF8, &site, &site_length);
+    fd_map_get(fd_hal_processor_get_provision_map_address(), "site", FD_MAP_TYPE_UTF8, &site, &site_length);
 
     fd_binary_put_uint16(binary, site_length);
     fd_binary_put_bytes(binary, site, site_length);
 }
 
 void fd_control_get_property_reset(fd_binary_t *binary) {
-    fd_binary_put_uint32(binary, fd_reset_last_cause);
-    fd_binary_put_time64(binary, fd_reset_last_time);
+    fd_binary_put_uint32(binary, fd_hal_reset_last_cause);
+    fd_binary_put_time64(binary, fd_hal_reset_last_time);
 }
 
 void fd_control_get_property_retained(fd_binary_t *binary) {
-    fd_binary_put_uint8(binary, fd_reset_retained_was_valid_on_startup());
-    fd_binary_put_uint32(binary, sizeof(fd_reset_retained_at_initialize));
-    fd_binary_put_bytes(binary, (uint8_t *)&fd_reset_retained_at_initialize, sizeof(fd_reset_retained_at_initialize));
+    fd_binary_put_uint8(binary, fd_hal_reset_retained_was_valid_on_startup());
+    fd_binary_put_uint32(binary, sizeof(fd_hal_reset_retained_at_initialize));
+    fd_binary_put_bytes(binary, (uint8_t *)&fd_hal_reset_retained_at_initialize, sizeof(fd_hal_reset_retained_at_initialize));
 }
 
 void fd_control_get_property_storage(fd_binary_t *binary) {
@@ -259,21 +208,21 @@ void fd_control_get_property_storage(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_debug_lock(fd_binary_t *binary) {
-    fd_binary_put_uint8(binary, fd_get_debug_lock());
+    fd_binary_put_uint8(binary, fd_hal_processor_get_debug_lock());
 }
 
 void fd_control_set_property_debug_lock(fd_binary_t *binary __attribute__((unused))) {
-    fd_set_debug_lock();
+    fd_hal_processor_set_debug_lock();
 }
 
 void fd_control_get_property_rtc(fd_binary_t *binary) {
-    fd_time_t time = fd_rtc_get_time();
+    fd_time_t time = fd_hal_rtc_get_time();
     fd_binary_put_time64(binary, time);
 }
 
 void fd_control_set_property_rtc(fd_binary_t *binary) {
     fd_time_t time = fd_binary_get_time64(binary);
-    fd_rtc_set_time(time);
+    fd_hal_rtc_set_time(time);
 }
 
 void fd_control_get_property_power(fd_binary_t *binary) {
@@ -311,7 +260,7 @@ void fd_control_set_property_tx_power(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_boot_version(fd_binary_t *binary) {
-    fd_boot_data_t boot_data = *FD_BOOT_DATA;
+    fd_boot_data_t boot_data = *fd_hal_processor_get_boot_data_address();
     if (boot_data.magic != FD_BOOT_MAGIC) {
         memset(&boot_data, 0, sizeof(fd_boot_data_t));
         boot_data.minor = 1;
@@ -325,22 +274,13 @@ void fd_control_get_property_boot_version(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_regulator(fd_binary_t *binary) {
-    bool switching = GPIO_PinInGet(PWR_SEL_PORT_PIN) != 0;
+    bool switching = fd_hal_system_get_regulator();
     fd_binary_put_uint8(binary, switching ? 1 : 0);
 }
 
 void fd_control_set_property_regulator(fd_binary_t *binary) {
     bool switching = fd_binary_get_uint8(binary) != 0;
-    if (switching) {
-        GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
-        GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 1);
-        fd_delay_ms(1);
-        GPIO_PinModeSet(PWR_SEL_PORT_PIN, gpioModePushPull, 1);
-    } else {
-        GPIO_PinModeSet(PWR_SEL_PORT_PIN, gpioModePushPull, 0);
-        GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);
-        GPIO_PinModeSet(PWR_HIGH_PORT_PIN, gpioModePushPull, 0);
-    }
+    fd_hal_system_set_regulator(switching);
 }
 
 void fd_control_get_property_sensing_count(fd_binary_t *binary) {
@@ -373,7 +313,7 @@ void fd_control_set_property_logging(fd_binary_t *binary) {
 
 uint32_t fd_control_get_name(uint8_t **name) {
     uint16_t length;
-    fd_map_get((uint8_t *)PROVISION_MAP_ADDRESS, "name", FD_MAP_TYPE_UTF8, name, &length);
+    fd_map_get(fd_hal_processor_get_provision_map_address(), "name", FD_MAP_TYPE_UTF8, name, &length);
     return length;
 }
 
@@ -401,7 +341,7 @@ static void fd_control_set_name(uint8_t *data, uint32_t length) {
     fd_provision_name_t provision;
     provision.base.version = 1;
     provision.base.flags = 0;
-    memset(provision.base.key, 0, FD_AES_KEY_SIZE);
+    memset(provision.base.key, 0, FD_HAL_AES_KEY_SIZE);
     provision.map_entries = 1;
     provision.key_length = 4;
     provision.value_type = FD_MAP_TYPE_UTF8;
@@ -409,7 +349,7 @@ static void fd_control_set_name(uint8_t *data, uint32_t length) {
     provision.key_value_offset = 0;
     memcpy(provision.key, "name", 4);
     memcpy(provision.value, data, length);
-    fd_control_write_user_data((uint8_t *)&provision, sizeof(provision));
+    fd_hal_processor_write_user_data((uint8_t *)&provision, sizeof(provision));
 
     fd_bluetooth_set_name(data, length);
 }
@@ -424,22 +364,23 @@ void fd_control_set_property_name(fd_binary_t *binary) {
     fd_control_set_name(name, length);
 }
 
-void fd_control_get_property_adc_vdd(fd_binary_t *binary) {
-    fd_binary_put_float16(binary, fd_adc_get_vdd());
+void fd_control_get_property_adc_vdd(fd_binary_t *binary __attribute__((unused))) {
+//    fd_binary_put_float16(binary, fd_adc_get_vdd());
+    fd_binary_put_float16(binary, fd_hal_system_get_regulated_voltage());
 }
 
-void fd_control_set_property_adc_vdd(fd_binary_t *binary) {
-    fd_adc_set_vdd(fd_binary_get_float16(binary));
+void fd_control_set_property_adc_vdd(fd_binary_t *binary __attribute__((unused))) {
+//    fd_adc_set_vdd(fd_binary_get_float16(binary));
 }
 
 void fd_control_get_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner) {
-    bool indicate = fd_ui_get_indicate(owner);
+    bool indicate = fd_hal_ui_get_indicate(owner);
     fd_binary_put_uint8(binary, indicate ? 1 : 0);
 }
 
 void fd_control_set_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner) {
     bool indicate = fd_binary_get_uint8(binary) != 0;
-    fd_ui_set_indicate(owner, indicate);
+    fd_hal_ui_set_indicate(owner, indicate);
 }
 
 void fd_control_get_property_recognition(fd_binary_t *binary) {
@@ -694,7 +635,7 @@ void fd_control_disconnect(fd_detour_source_collection_t *detour_source_collecti
 }
 
 static
-void get_rgb(fd_binary_t *binary, fd_led_rgb_t *rgb) {
+void get_rgb(fd_binary_t *binary, fd_hal_ui_led_rgb_t *rgb) {
     rgb->r = fd_binary_get_uint8(binary);
     rgb->g = fd_binary_get_uint8(binary);
     rgb->b = fd_binary_get_uint8(binary);
@@ -703,7 +644,7 @@ void get_rgb(fd_binary_t *binary, fd_led_rgb_t *rgb) {
 void fd_control_led_override(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    fd_led_state_t state;
+    fd_hal_ui_led_state_t state;
     state.usb.o = fd_binary_get_uint8(&binary);
     state.usb.g = fd_binary_get_uint8(&binary);
     state.d0.r = fd_binary_get_uint8(&binary);
@@ -713,7 +654,7 @@ void fd_control_led_override(fd_detour_source_collection_t *detour_source_collec
     state.d4.r = fd_binary_get_uint8(&binary);
     fd_time_t duration = fd_binary_get_time64(&binary);
 
-    fd_led_override(&state, duration);
+    fd_hal_ui_set_led(&state, duration);
 }
 
 void fd_control_identify(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
@@ -722,9 +663,9 @@ void fd_control_identify(fd_detour_source_collection_t *detour_source_collection
     bool active = fd_binary_get_uint8(&binary) != 0;
     if (active) {
         fd_time_t duration = fd_binary_get_time64(&binary);
-        fd_indicator_set_identify_condition_active(duration);
+        fd_hal_ui_set_identify(duration);
     } else {
-        fd_indicator_set_identify_condition(fd_indicator_identify_condition_inactive);
+        fd_hal_ui_clear_identify();
     }
 }
 
@@ -858,7 +799,7 @@ void fd_control_command(void) {
         return;
     }
 
-    fd_interrupts_disable();
+    fd_hal_processor_interrupts_disable();
 
     // get the command info
     fd_control_input_t *input = &fd_control_inputs[0];
@@ -872,7 +813,7 @@ void fd_control_command(void) {
     fd_control_input_buffer_count -= length;
     memcpy(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
 
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
 
     // process it
     fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);

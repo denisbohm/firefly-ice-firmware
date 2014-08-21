@@ -1,7 +1,7 @@
 #include "fd_event.h"
-#include "fd_processor.h"
-#include "fd_reset.h"
-#include "fd_rtc.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
+#include "fd_hal_rtc.h"
 
 #include <em_cmu.h>
 #include <em_rtc.h>
@@ -10,7 +10,7 @@
 
 static volatile uint32_t rtc_countdown;
 
-void fd_rtc_initialize(void) {
+void fd_hal_rtc_initialize(void) {
     rtc_countdown = 0;
 
     CMU_ClockEnable(cmuClock_CORELE, true);
@@ -23,7 +23,7 @@ void fd_rtc_initialize(void) {
     CMU->CTRL = (CMU->CTRL & ~_CMU_CTRL_CLKOUTSEL1_MASK) | CMU_CTRL_CLKOUTSEL1_LFXO;
     CMU->ROUTE = CMU_ROUTE_LOCATION_LOC0 | CMU_ROUTE_CLKOUT1PEN;
 
-    fd_rtc_wake();
+    fd_hal_rtc_wake();
 
     RTC_IntEnable(RTC_IFC_COMP0);
     NVIC_EnableIRQ(RTC_IRQn);
@@ -31,36 +31,36 @@ void fd_rtc_initialize(void) {
     RTC_Init(&init);
 }
 
-void fd_rtc_sleep(void) {
+void fd_hal_rtc_sleep(void) {
     RTC_CompareSet(0, 65535); // 2 s
 }
 
-void fd_rtc_wake(void) {
+void fd_hal_rtc_wake(void) {
     RTC_CompareSet(0, 1023); // 31250 us
     RTC_CounterReset();
 }
 
-void fd_rtc_set_time(fd_time_t time) {
-    fd_interrupts_disable();
+void fd_hal_rtc_set_time(fd_time_t time) {
+    fd_hal_processor_interrupts_disable();
     RETAINED->rtc.seconds = time.seconds;
     RETAINED->rtc.microseconds = (time.microseconds / 31250) * 31250;
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
 }
 
-uint32_t fd_rtc_get_seconds(void) {
+uint32_t fd_hal_rtc_get_seconds(void) {
     return RETAINED->rtc.seconds;
 }
 
-fd_time_t fd_rtc_get_time(void) {
+fd_time_t fd_hal_rtc_get_time(void) {
     fd_time_t time;
-    fd_interrupts_disable();
+    fd_hal_processor_interrupts_disable();
     time.microseconds = RETAINED->rtc.microseconds;
     time.seconds = RETAINED->rtc.seconds;
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
     return time;
 }
 
-fd_time_t fd_rtc_get_accurate_time(void) {
+fd_time_t fd_hal_rtc_get_accurate_time(void) {
     fd_time_t time;
     uint32_t counter;
     while (true) {
@@ -76,16 +76,16 @@ fd_time_t fd_rtc_get_accurate_time(void) {
     return time;
 }
 
-void fd_rtc_set_countdown(uint32_t countdown) {
-    fd_interrupts_disable();
+void fd_hal_rtc_set_countdown(uint32_t countdown) {
+    fd_hal_processor_interrupts_disable();
     rtc_countdown = countdown;
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
 }
 
-uint32_t fd_rtc_get_countdown(void) {
-    fd_interrupts_disable();
+uint32_t fd_hal_rtc_get_countdown(void) {
+    fd_hal_processor_interrupts_disable();
     uint32_t countdown = rtc_countdown;
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
     return countdown;
 }
 

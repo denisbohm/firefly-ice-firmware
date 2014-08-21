@@ -1,6 +1,7 @@
 #include "fd_adc.h"
 #include "fd_event.h"
-#include "fd_processor.h"
+#include "fd_hal_processor.h"
+#include "fd_pins.h"
 
 #include <em_adc.h>
 #include <em_cmu.h>

@@ -1,6 +1,7 @@
+#include "fd_hal_processor.h"
 #include "fd_i2c1.h"
 #include "fd_log.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 
 #include <em_gpio.h>
 

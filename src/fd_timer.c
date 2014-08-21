@@ -1,7 +1,7 @@
 #include "fd_event.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_rtc.h"
 #include "fd_log.h"
-#include "fd_processor.h"
-#include "fd_rtc.h"
 #include "fd_timer.h"
 
 #define TIMERS_LIMIT 16
@@ -38,7 +38,7 @@ void fd_timer_add(fd_timer_t *timer, fd_timer_callback_t callback) {
 static
 void fd_timer_schedule_countdown(void) {
     uint32_t new_countdown = UINT32_MAX;
-    uint32_t remaining_countdown = fd_rtc_get_countdown();
+    uint32_t remaining_countdown = fd_hal_rtc_get_countdown();
     uint32_t elapsed_countdown = scheduled_countdown - remaining_countdown;
     for (uint32_t i = 0; i < timer_count; ++i) {
         fd_timer_t *timer = timers[i];
@@ -68,7 +68,7 @@ void fd_timer_schedule_countdown(void) {
         new_countdown = 5 * 32;
     }
     scheduled_countdown = new_countdown;
-    fd_rtc_set_countdown(new_countdown);
+    fd_hal_rtc_set_countdown(new_countdown);
 }
 
 static
@@ -98,7 +98,7 @@ void fd_timer_start(fd_timer_t *timer, fd_time_t duration) {
 }
 
 void fd_timer_start_next(fd_timer_t *timer, uint32_t interval) {
-    fd_time_t now = fd_rtc_get_time();
+    fd_time_t now = fd_hal_rtc_get_time();
     fd_time_t at;
     at.microseconds = 0;
     at.seconds = (now.seconds / interval) * interval + interval;

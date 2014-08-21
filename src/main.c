@@ -5,27 +5,26 @@
 #include "fd_control.h"
 #include "fd_detour.h"
 #include "fd_event.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
+#include "fd_hal_rtc.h"
+#include "fd_hal_ui.h"
 #include "fd_i2c1.h"
-#include "fd_indicator.h"
 #include "fd_lis3dh.h"
-#include "fd_led.h"
 #include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_lp55231.h"
 #include "fd_main.h"
 #include "fd_mag3110.h"
 #include "fd_nrf8001.h"
+#include "fd_pins.h"
 #include "fd_power.h"
-#include "fd_processor.h"
 #include "fd_recognition.h"
-#include "fd_reset.h"
-#include "fd_rtc.h"
 #include "fd_sensing.h"
 #include "fd_spi.h"
 #include "fd_storage_buffer.h"
 #include "fd_sync.h"
 #include "fd_timer.h"
-#include "fd_ui.h"
 #include "fd_usb.h"
 #include "fd_w25q16dw.h"
 
@@ -45,12 +44,11 @@ static bool main_sleep_when_bluetooth_is_asleep;
 static
 void main_sleep(void) {
     fd_sensing_sleep();
-    fd_indicator_sleep();
-    fd_led_sleep();
+    fd_hal_ui_sleep();
 
     fd_usb_sleep();
     fd_adc_sleep();
-    fd_rtc_sleep();
+    fd_hal_rtc_sleep();
     fd_lis3dh_sleep();
 //    fd_lp55231_sleep();
 //    fd_lp55231_power_off();
@@ -76,16 +74,15 @@ void main_wake(void) {
 
     fd_usb_wake();
     fd_adc_wake();
-    fd_rtc_wake();
+    fd_hal_rtc_wake();
     fd_lis3dh_wake();
 //    fd_lp55231_power_on();
 //    fd_lp55231_wake();
 //    fd_mag3110_wake();
 //    fd_w25q16dw_wake();
 
-//    fd_led_wake();
     fd_sensing_wake();
-    fd_ui_update();
+    fd_hal_ui_wake();
 }
 
 static
@@ -131,25 +128,17 @@ void fd_main_usb_state_change(void) {
 */
 
 int main(void) {
-    fd_reset_initialize();
-    fd_processor_initialize();
+    fd_hal_reset_initialize();
+    fd_hal_processor_initialize();
 
-#ifdef DEBUG
-#warning debug is defined - watchdog is not enabled
-#else
-    CMU_ClockEnable(cmuClock_CORELE, true);
-    WDOG_Init_TypeDef wdog_init = WDOG_INIT_DEFAULT;
-    wdog_init.perSel = wdogPeriod_16k;
-//    wdog_init.lock = true;
-    WDOG_Init(&wdog_init);
-#endif
-    fd_reset_start_watchdog();
+    fd_hal_reset_start_watchdog();
 
     main_mode = fd_main_mode_run;
     main_sleep_when_bluetooth_is_asleep = false;
 
     fd_log_initialize();
     fd_event_initialize();
+    fd_pins_events_initialize();
     fd_timer_initialize();
     fd_lock_initialize();
     fd_control_initialize();
@@ -159,13 +148,13 @@ int main(void) {
     GPIO_PinOutClear(LED5_PORT_PIN);
     GPIO_PinOutClear(LED6_PORT_PIN);
 
-    fd_reset_feed_watchdog();
+    fd_hal_reset_feed_watchdog();
 
-    fd_rtc_initialize();
+    fd_hal_rtc_initialize();
     fd_adc_initialize();
     fd_usb_initialize();
 
-    fd_reset_feed_watchdog();
+    fd_hal_reset_feed_watchdog();
 
     fd_i2c1_initialize();
     // initialize devices on i2c1 powered bus
@@ -176,7 +165,7 @@ int main(void) {
     //
     fd_mag3110_initialize();
 
-    fd_reset_feed_watchdog();
+    fd_hal_reset_feed_watchdog();
 
     fd_spi_initialize();
 
@@ -206,19 +195,16 @@ int main(void) {
     fd_storage_buffer_collection_initialize();
 //    fd_log_set_storage(true);
 
-    fd_led_initialize();
-    fd_indicator_initialize();
+    fd_hal_reset_feed_watchdog();
 
-    fd_reset_feed_watchdog();
-
-    fd_ui_initialize();
+    fd_hal_ui_initialize();
     fd_sync_initialize();
     fd_activity_initialize();
     fd_sensing_initialize();
     fd_sensing_wake();
     fd_recognition_initialize();
 
-    fd_reset_feed_watchdog();
+    fd_hal_reset_feed_watchdog();
 
     fd_usb_wake();
     fd_power_initialize();

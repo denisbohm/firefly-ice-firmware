@@ -1,10 +1,11 @@
 #include "fd_binary.h"
 #include "fd_control_codes.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_system.h"
 #include "fd_log.h"
 #include "fd_storage.h"
 #include "fd_storage_buffer.h"
 #include "fd_sync.h"
-#include "fd_system.h"
 
 #include <string.h>
 
@@ -63,7 +64,7 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     fd_binary_t binary;
     fd_binary_initialize(&binary, fd_sync_detour_buffer, COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE);
     fd_binary_put_uint8(&binary, FD_CONTROL_SYNC_DATA);
-    fd_get_hardware_id(&binary);
+    fd_hal_processor_get_hardware_id(&binary);
     fd_binary_put_uint32(&binary, metadata.page);
     fd_binary_put_uint16(&binary, metadata.length);
     fd_binary_put_uint16(&binary, metadata.hash);

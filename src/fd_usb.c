@@ -3,13 +3,15 @@
 #include "fd_event.h"
 #include "fd_lock.h"
 #include "fd_log.h"
-#include "fd_system.h"
 #include "fd_usb.h"
 
 #include <em_system.h>
 #include <em_usb.h>
 #include <em_usbtypes.h>
 #include <em_usbhal.h>
+
+#define VENDOR 0x2333
+#define PRODUCT 0x0002
 
 #define DEFAULT_POLL_TIMEOUT 1
 #define INTR_IN_EP_ADDR 0x81
@@ -230,6 +232,14 @@ void fd_usb_initialize(void) {
         iSerialNumber.name[i] = c;
         unique >>= 4;
     }
+}
+
+uint16_t fd_usb_get_vendor_id(void) {
+    return VENDOR;
+}
+
+uint16_t fd_usb_get_product_id(void) {
+    return PRODUCT;
 }
 
 bool fd_usb_is_powered(void) {

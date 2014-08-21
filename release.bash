@@ -41,4 +41,5 @@ cp "THUMB RAM Debug/FireflyRadioTest/FireflyRadioTest.elf" ../firefly-production
 cp "THUMB RAM Debug/FireflyUsbTest/FireflyUsbTest.elf" ../firefly-production-tools/FireflyTool/FireflyTool
 cp "THUMB RAM Debug/FireflyIceTest/FireflyIceTest.elf" ../firefly-production-tools/FireflyTool/FireflyTool
 
-cp "THUMB RAM Debug/FireflyFlash/FireflyFlash.elf" ../firefly-production-tools/FireflyProduction/FireflyProduction
+cp "THUMB RAM Debug/FireflyFlash/FireflyFlash.elf" ../firefly-production-tools/FireflyProduction/FireflyProduction/FireflyFlashEFM32.elf
+cp "FireflyFlashSTM32F4 THUMB Debug/FireflyFlashSTM32F4.elf" ../firefly-production-tools/FireflyProduction/FireflyProduction/

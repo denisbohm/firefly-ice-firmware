@@ -1,12 +1,10 @@
-#include "fd_adc.h"
 #include "fd_event.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
+#include "fd_hal_system.h"
+#include "fd_hal_usb.h"
 #include "fd_power.h"
-#include "fd_processor.h"
-#include "fd_reset.h"
 #include "fd_timer.h"
-#include "fd_usb.h"
-
-#include <em_gpio.h>
 
 static fd_timer_t fd_power_update_timer;
 
@@ -19,9 +17,9 @@ static fd_timer_t fd_power_update_timer;
 #define DISCHARGE_LEVEL_CHANGE_PER_INTERVAL 1.0 / (14.0 * 24.0 * 60.0);
 
 void fd_power_charge_status_callback(void) {
-    float battery_voltage = fd_adc_get_battery_voltage();
-    bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    float battery_voltage = fd_hal_system_get_battery_voltage();
+    bool is_usb_powered = fd_hal_usb_is_powered();
+    bool is_charging = fd_hal_system_is_charging();
     if (is_usb_powered && !is_charging && (battery_voltage > 4.0f)) {
         // The battery appears to be fully charged.
         if (RETAINED->power_battery_level < 1.0) {
@@ -31,22 +29,14 @@ void fd_power_charge_status_callback(void) {
 }
 
 void fd_power_update_callback(void) {
-    fd_adc_start(fd_adc_channel_temperature, true);
-}
-
-void fd_power_temperature_callback(void) {
-    fd_adc_start(fd_adc_channel_battery_voltage, true);
-}
-
-void fd_power_battery_voltage_callback(void) {
-    fd_adc_start(fd_adc_channel_charge_current, true);
+    fd_hal_system_start_conversions();
 }
 
 void fd_power_charge_current_callback(void) {
     fd_power_t power;
     fd_power_get(&power);
-    bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    bool is_usb_powered = fd_hal_usb_is_powered();
+    bool is_charging = fd_hal_system_is_charging();
     if (is_usb_powered) {
         if (is_charging) {
             RETAINED->power_battery_level += CHARGE_LEVEL_CHANGE_PER_INTERVAL;
@@ -63,7 +53,7 @@ void fd_power_charge_current_callback(void) {
         }
     }
 
-    float battery_voltage = fd_adc_get_battery_voltage();
+    float battery_voltage = fd_hal_system_get_battery_voltage();
     if (battery_voltage < 3.5f) {
         // The battery appears to be almost discharged.
         if (RETAINED->power_battery_level > 0.05) {
@@ -75,9 +65,9 @@ void fd_power_charge_current_callback(void) {
 }
 
 double fd_power_estimate_battery_level(void) {
-    float battery_voltage = fd_adc_get_battery_voltage();
-    bool is_usb_powered = fd_usb_is_powered();
-    bool is_charging = !GPIO_PinInGet(CHG_STAT_PORT_PIN);
+    float battery_voltage = fd_hal_system_get_battery_voltage();
+    bool is_usb_powered = fd_hal_usb_is_powered();
+    bool is_charging = fd_hal_system_is_charging();
     if (is_usb_powered && !is_charging && (battery_voltage > 4.0f)) {
         // The battery appears to be fully charged.
         return 1.0;
@@ -100,7 +90,7 @@ double fd_power_estimate_battery_level(void) {
 }
 
 void fd_power_initialize(void) {
-    fd_reset_retained_t *retained = RETAINED;
+    fd_hal_reset_retained_t *retained = RETAINED;
     if (retained->power_battery_level == 0) {
         // battery level is uninitialized/unknown, so make a guess... -denis
         retained->power_battery_level = fd_power_estimate_battery_level();
@@ -108,8 +98,6 @@ void fd_power_initialize(void) {
 
     fd_event_add_callback(FD_EVENT_CHG_STAT, fd_power_charge_status_callback);
 
-    fd_event_add_callback(FD_EVENT_ADC_TEMPERATURE, fd_power_temperature_callback);
-    fd_event_add_callback(FD_EVENT_ADC_BATTERY_VOLTAGE, fd_power_battery_voltage_callback);
     fd_event_add_callback(FD_EVENT_ADC_CHARGE_CURRENT, fd_power_charge_current_callback);
 
     fd_timer_add(&fd_power_update_timer, fd_power_update_callback);
@@ -118,11 +106,11 @@ void fd_power_initialize(void) {
 
 void fd_power_get(fd_power_t *power) {
     power->battery_level = RETAINED->power_battery_level;
-    power->battery_voltage = fd_adc_get_battery_voltage();
-    power->is_usb_powered = fd_usb_is_powered();
-    power->is_charging = power->is_usb_powered && !GPIO_PinInGet(CHG_STAT_PORT_PIN);
-    power->charge_current = fd_adc_get_charge_current();
-    power->temperature = fd_adc_get_temperature();
+    power->battery_voltage = fd_hal_system_get_battery_voltage();
+    power->is_usb_powered = fd_hal_usb_is_powered();
+    power->is_charging = power->is_usb_powered && fd_hal_system_is_charging();
+    power->charge_current = fd_hal_system_get_charge_current();
+    power->temperature = fd_hal_system_get_temperature();
 }
 
 void fd_power_set(float battery_level) {

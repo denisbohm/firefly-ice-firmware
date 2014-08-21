@@ -1,11 +1,7 @@
 #include "fd_event.h"
+#include "fd_hal_processor.h"
+#include "fd_hal_reset.h"
 #include "fd_log.h"
-#include "fd_processor.h"
-#include "fd_reset.h"
-
-#include <em_emu.h>
-#include <em_gpio.h>
-#include <em_wdog.h>
 
 #include <string.h>
 
@@ -34,11 +30,6 @@ void fd_event_initialize(void) {
     fd_event_item_count = 0;
     fd_event_em2_check_count = 0;
     fd_event_pending = 0;
-
-    NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
-    NVIC_EnableIRQ(GPIO_EVEN_IRQn);
-    NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
-    NVIC_EnableIRQ(GPIO_ODD_IRQn);
 }
 
 void fd_event_add_em2_check(fd_event_em2_check_t em2_check) {
@@ -62,48 +53,22 @@ void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
 }
 
 void fd_event_set_exclusive(uint32_t events) {
-    fd_interrupts_disable();
+    fd_hal_processor_interrupts_disable();
     fd_event_set(events);
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
 }
 
 void fd_event_set(uint32_t events) {
     fd_event_pending |= events;
 }
 
-void GPIO_EVEN_IRQHandler(void) {
-    uint32_t interrupts = GPIO_IntGet() & 0x55555555;
-    GPIO_IntClear(interrupts);
-    if (interrupts & (1 << MAG_INT_PIN)) { // A.10
-        fd_event_set(FD_EVENT_MAG_INT);
-    }
-    if (interrupts & (1 << NRF_RDYN_PIN)) { // D.4
-        fd_event_set(FD_EVENT_NRF_RDYN);
-    }
-    if (interrupts & (1 << I2C0_INT_PIN)) { // C.8
-        fd_event_set(FD_EVENT_I2C0_INT);
-    }
-}
-
-void GPIO_ODD_IRQHandler(void) {
-    uint32_t interrupts = GPIO_IntGet() & 0xaaaaaaaa;
-    GPIO_IntClear(interrupts);
-    if (interrupts & (1 << ACC_INT_PIN)) { // A.5
-        fd_event_set(FD_EVENT_ACC_INT);
-    }
-    if (interrupts & (1 << CHG_STAT_PIN)) { // C.9
-        fd_event_set(FD_EVENT_CHG_STAT);
-    }
-}
-
 void fd_event_process(void) {
-    fd_interrupts_disable();
+    fd_hal_processor_interrupts_disable();
     uint32_t pending = fd_event_pending;
     fd_event_pending = 0;
-    fd_interrupts_enable();
+    fd_hal_processor_interrupts_enable();
 
-    WDOG_Feed();
-    fd_reset_feed_watchdog();
+    fd_hal_reset_feed_watchdog();
 
     if (pending) {
         fd_event_item_t *item = fd_event_items;
@@ -120,7 +85,7 @@ void fd_event_process(void) {
                 return;
             }
         }
-        EMU_EnterEM2(true);
+        fd_hal_processor_wait();
     }
 }
 

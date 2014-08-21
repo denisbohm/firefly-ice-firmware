@@ -1,9 +1,10 @@
 #include "fd_adc.h"
+#include "fd_hal_processor.h"
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
 #include "fd_lp55231.h"
 #include "fd_mag3110.h"
-#include "fd_processor.h"
+#include "fd_pins.h"
 #include "fd_spi.h"
 #include "fd_w25q16dw.h"
 
@@ -46,14 +47,14 @@ void fd_test_rtc_initialize(void) {
 
 uint32_t fd_test_rtc(void) {
     RTC_CounterReset();
-    fd_delay_ms(100);
+    fd_hal_processor_delay_ms(100);
     uint32_t delta = RTC_CounterGet();
     return delta;
 }
 
 int main(void) {
-    fd_processor_initialize();
-    fd_processor_wake();
+    fd_hal_processor_initialize();
+    fd_hal_processor_wake();
 
     fd_test_hfxo_initialize();
 
@@ -61,9 +62,9 @@ int main(void) {
     fd_test_rtc();
 
     GPIO_PinOutClear(NRF_RESETN_PORT_PIN);
-    fd_delay_ms(100);
+    fd_hal_processor_delay_ms(100);
     GPIO_PinOutSet(NRF_RESETN_PORT_PIN);
-    fd_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
+    fd_hal_processor_delay_ms(100); // wait for nRF8001 to come out of reset (62ms)
     GPIO_PinInGet(NRF_RDYN_PORT_PIN);
 
     GPIO_PinOutClear(LED0_PORT_PIN);
@@ -94,7 +95,7 @@ int main(void) {
     //
     fd_mag3110_initialize();
     fd_mag3110_wake();
-    fd_delay_ms(250);
+    fd_hal_processor_delay_ms(250);
     float mx, my, mz;
     fd_mag3110_read(&mx, &my, &mz);
 

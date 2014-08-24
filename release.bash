@@ -4,7 +4,7 @@ eval `grep '^#define VERSION_' src/fd_control.c | sed -e 's/#define VERSION_\([M
 echo releasing version $major.$minor.$patch
 
 cp "THUMB Flash Release/FireflyIce/FireflyIce.hex" ../firefly-ice-api/FireflyDevice/FireflyDevice
-echo "#! {\"major\":$major, \"minor\":$minor, \"patch\":$patch}" >> ../firefly-ice-api/FireflyDevice/FireflyDevice/FireflyIce.hex
+echo "#! {\"major\":$major, \"minor\":$minor, \"patch\":$patch, \"address\":\"0x08000\", \"length\":\"0x38000\"}" >> ../firefly-ice-api/FireflyDevice/FireflyDevice/FireflyIce.hex
 
 dst=../firefly-ice-api/Windows/FireflyDevice/FDResource.cpp
 cat << EOF > $dst

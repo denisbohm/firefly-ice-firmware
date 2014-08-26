@@ -1,5 +1,6 @@
 #include <stm32f4xx.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 
 void halt(void) {
@@ -28,37 +29,34 @@ void halt(void) {
 #define FLASH_Sector_7     ((uint16_t)0x0038) /*!< Sector Number 7   */
 
 static
-uint32_t sector_for_address(uint32_t address) {
-    if (address < 0x08004000) {
-        // 0x0800 0000 to 0x0800 3FFF 16 Kbytes
-        return FLASH_Sector_0;
+bool is_sector_start(uint32_t address, uint32_t *sector) {
+    switch (address) {
+        case 0x08000000: // to 0x0800 3FFF 16 Kbytes
+            *sector = FLASH_Sector_0;
+            return true;
+        case 0x08004000: // to 0x0800 7FFF 16 Kbytes
+            *sector = FLASH_Sector_1;
+            return true;
+        case 0x08008000: // to 0x0800 BFFF 16 Kbytes
+            *sector = FLASH_Sector_2;
+            return true;
+        case 0x0800C000: // to 0x0800 FFFF 16 Kbytes
+            *sector = FLASH_Sector_3;
+            return true;
+        case 0x08010000: // to 0x0801 FFFF 64 Kbytes
+            *sector = FLASH_Sector_4;
+            return true;
+        case 0x08020000: // to 0x0803 FFFF 128 Kbytes
+            *sector = FLASH_Sector_5;
+            return true;
+        case 0x08040000: // to 0x0805 FFFF 128 Kbytes
+            *sector = FLASH_Sector_6;
+            return true;
+        case 0x08060000: // to 0x0807 FFFF 128 Kbytes
+            *sector = FLASH_Sector_7;
+            return true;
     }
-    if (address < 0x08008000) {
-        // 0x0800 4000 to 0x0800 7FFF 16 Kbytes
-        return FLASH_Sector_1;
-    }
-    if (address < 0x0800C000) {
-        // 0x0800 8000 to 0x0800 BFFF 16 Kbytes
-        return FLASH_Sector_2;
-    }
-    if (address < 0x08010000) {
-        // 0x0800 C000 to 0x0800 FFFF 16 Kbytes
-        return FLASH_Sector_3;
-    }
-    if (address < 0x08020000) {
-        // 0x0801 0000 to 0x0801 FFFF 64 Kbytes
-        return FLASH_Sector_4;
-    }
-    if (address < 0x08040000) {
-        // 0x0802 0000 to 0x0803 FFFF 128 Kbytes
-        return FLASH_Sector_5;
-    }
-    if (address < 0x08060000) {
-        // 0x0804 0000 to 0x0805 FFFF 128 Kbytes
-        return FLASH_Sector_6;
-    }
-    // 0x0806 0000 to 0x0807 FFFF 128 Kbytes
-    return FLASH_Sector_7;
+    return false;
 }
 
 void write_pages(uint32_t *address, uint32_t *data, uint32_t pages, uint32_t options) {
@@ -70,13 +68,14 @@ void write_pages(uint32_t *address, uint32_t *data, uint32_t pages, uint32_t opt
         FLASH->KEYR = FLASH_KEY2;
     }  
 
-    if (options & OPTION_ERASE_BEFORE_WRITE) {
+    uint32_t sector;
+    if ((options & OPTION_ERASE_BEFORE_WRITE) && is_sector_start((uint32_t)address, &sector)) {
         while (FLASH->SR & FLASH_FLAG_BSY);
 
         FLASH->CR &= CR_PSIZE_MASK;
         FLASH->CR |= FLASH_PSIZE_WORD;
         FLASH->CR &= SECTOR_MASK;
-        FLASH->CR |= FLASH_CR_SER | sector_for_address((uint32_t)address);
+        FLASH->CR |= FLASH_CR_SER | sector;
         FLASH->CR |= FLASH_CR_STRT;
 
         while (FLASH->SR & FLASH_FLAG_BSY);

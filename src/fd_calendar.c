@@ -32,6 +32,7 @@ int32_t ydays(int m) {
         case 11: return 334;
         case 12: return 365;
     }
+    return 0;
 }
 
 int32_t fd_calendar_to_time(fd_calendar_t calendar) {

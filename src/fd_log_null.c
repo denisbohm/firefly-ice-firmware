@@ -13,7 +13,7 @@ void fd_log_initialize(void) {
 }
 
 void fd_log_set_count(uint32_t count) {
-    fd_log_count = 0;
+    fd_log_count = count;
 }
 
 uint32_t fd_log_get_count(void) {

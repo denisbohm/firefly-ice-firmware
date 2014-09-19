@@ -23,17 +23,11 @@
 #include "fd_sync.h"
 #include "fd_update.h"
 
-/*
-#include <em_gpio.h>
-#include <em_int.h>
-#include <em_msc.h>
-*/
-
 #include <string.h>
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 45
+#define VERSION_PATCH 46
 
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
@@ -66,7 +60,6 @@ uint32_t fd_control_input_buffer_count;
 
 typedef struct {
     fd_detour_source_collection_t *detour_source_collection;
-    uint8_t *data;
     uint32_t length;
 } fd_control_input_t;
 
@@ -112,7 +105,6 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
 
     fd_control_input_t *input = &fd_control_inputs[fd_control_inputs_count];
     input->detour_source_collection = detour_source_collection;
-    input->data = &fd_control_input_buffer[fd_control_input_buffer_count];
     input->length = length;
 
     memcpy(&fd_control_input_buffer[fd_control_input_buffer_count], data, length);
@@ -749,30 +741,33 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
 }
 
 void fd_control_command(void) {
-    if (fd_control_inputs_count == 0) {
-        return;
-    }
+    int count;
+    fd_detour_source_collection_t *detour_source_collection;
+    uint32_t length;
 
     fd_hal_processor_interrupts_disable();
+    count = fd_control_inputs_count;
+    if (count > 0) {
+        // get the command info
+        fd_control_input_t *input = &fd_control_inputs[0];
+        detour_source_collection = input->detour_source_collection;
+        memcpy(fd_control_command_buffer, fd_control_input_buffer, input->length);
+        length = input->length;
 
-    // get the command info
-    fd_control_input_t *input = &fd_control_inputs[0];
-    fd_detour_source_collection_t *detour_source_collection = input->detour_source_collection;
-    memcpy(fd_control_command_buffer, input->data, input->length);
-    uint32_t length = input->length;
-
-    // remove it from the inputs
-    --fd_control_inputs_count;
-    memcpy(fd_control_inputs, &fd_control_inputs[1], sizeof(fd_control_input_t) * fd_control_inputs_count);
-    fd_control_input_buffer_count -= length;
-    memcpy(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
-
+        // remove it from the inputs
+        --fd_control_inputs_count;
+        memmove(fd_control_inputs, &fd_control_inputs[1], sizeof(fd_control_input_t) * fd_control_inputs_count);
+        fd_control_input_buffer_count -= length;
+        memmove(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
+    }
     fd_hal_processor_interrupts_enable();
 
-    // process it
-    fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
+    if (count > 0) {
+        // process it
+        fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
+    }
 
-    if (fd_control_inputs_count > 0) {
+    if (count > 1) {
         fd_event_set_exclusive(FD_EVENT_COMMAND);
     }
 }

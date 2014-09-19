@@ -154,6 +154,6 @@ bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, 
     }
     memcpy(buffer, collection->buffer, collection->packetSize);
     collection->bufferCount -= collection->packetSize;
-    memcpy(collection->buffer, &collection->buffer[collection->packetSize], collection->bufferCount);
+    memmove(collection->buffer, &collection->buffer[collection->packetSize], collection->bufferCount);
     return true;
 }

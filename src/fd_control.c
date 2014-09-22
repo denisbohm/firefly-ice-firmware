@@ -23,17 +23,11 @@
 #include "fd_sync.h"
 #include "fd_update.h"
 
-/*
-#include <em_gpio.h>
-#include <em_int.h>
-#include <em_msc.h>
-*/
-
 #include <string.h>
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 44
+#define VERSION_PATCH 46
 
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
@@ -55,8 +49,6 @@
 
 static const uint8_t git_commit[20] = {GIT_COMMIT};
 
-typedef void (*fd_control_command_t)(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length);
-
 #define COMMAND_BUFFER_SIZE 300
 
 uint8_t fd_control_command_buffer[COMMAND_BUFFER_SIZE];
@@ -68,7 +60,6 @@ uint32_t fd_control_input_buffer_count;
 
 typedef struct {
     fd_detour_source_collection_t *detour_source_collection;
-    uint8_t *data;
     uint32_t length;
 } fd_control_input_t;
 
@@ -83,7 +74,10 @@ fd_detour_source_t fd_control_detour_source;
 uint8_t fd_control_detour_buffer[DETOUR_BUFFER_SIZE];
 fd_binary_t fd_control_detour_binary;
 
+void fd_control_initialize_commands(void);
 void fd_control_command(void);
+
+fd_control_command_t fd_control_commands[256];
 
 void fd_control_initialize(void) {
     fd_detour_source_initialize(&fd_control_detour_source);
@@ -91,7 +85,14 @@ void fd_control_initialize(void) {
     fd_control_input_buffer_count = 0;
     fd_control_inputs_count = 0;
 
+    memset(fd_control_commands, 0, sizeof(fd_control_commands));
+    fd_control_initialize_commands();
+
     fd_event_add_callback(FD_EVENT_COMMAND, fd_control_command);
+}
+
+void fd_control_set_command(uint8_t code, fd_control_command_t command) {
+    fd_control_commands[code] = command;
 }
 
 void fd_control_process(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -104,7 +105,6 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
 
     fd_control_input_t *input = &fd_control_inputs[fd_control_inputs_count];
     input->detour_source_collection = detour_source_collection;
-    input->data = &fd_control_input_buffer[fd_control_input_buffer_count];
     input->length = length;
 
     memcpy(&fd_control_input_buffer[fd_control_input_buffer_count], data, length);
@@ -533,7 +533,7 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
     }
 }
 
-void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t external_address = fd_binary_get_uint32(&binary);
@@ -545,7 +545,7 @@ void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_s
     fd_control_send_complete(detour_source_collection);
 }
 
-void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t page = fd_binary_get_uint32(&binary);
@@ -556,7 +556,7 @@ void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_co
     fd_control_send_complete(detour_source_collection);
 }
 
-void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t sector_count = fd_binary_get_uint8(&binary);
@@ -591,7 +591,7 @@ void fd_control_update_write_page(fd_detour_source_collection_t *detour_source_c
     fd_update_write_page(page, page_data);
 }
 
-void fd_control_update_commit(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_update_commit(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     fd_update_metadata_t metadata;
@@ -620,7 +620,7 @@ void fd_control_radio_direct_test_mode_exit(fd_detour_source_collection_t *detou
     fd_bluetooth_direct_test_mode_exit();
 }
 
-void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
+void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *detour_source_collection, uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT);
     fd_binary_put_uint16(binary_out, fd_bluetooth_direct_test_mode_report());
     fd_control_send_complete(detour_source_collection);
@@ -702,6 +702,31 @@ void fd_control_diagnostics(fd_detour_source_collection_t *detour_source_collect
     fd_control_send_complete(detour_source_collection);
 }
 
+void fd_control_initialize_commands(void) {
+    fd_control_commands[FD_CONTROL_PING] = fd_control_ping;
+    fd_control_commands[FD_CONTROL_GET_PROPERTIES] = fd_control_get_properties;
+    fd_control_commands[FD_CONTROL_SET_PROPERTIES] = fd_control_set_properties;
+    fd_control_commands[FD_CONTROL_PROVISION] = fd_control_provision;
+    fd_control_commands[FD_CONTROL_RESET] = fd_control_reset;
+    fd_control_commands[FD_CONTROL_UPDATE_GET_EXTERNAL_HASH] = fd_control_update_get_external_hash;
+    fd_control_commands[FD_CONTROL_UPDATE_READ_PAGE] = fd_control_update_read_page;
+    fd_control_commands[FD_CONTROL_UPDATE_GET_SECTOR_HASHES] = fd_control_update_get_sector_hashes;
+    fd_control_commands[FD_CONTROL_UPDATE_ERASE_SECTORS] = fd_control_update_erase_sectors;
+    fd_control_commands[FD_CONTROL_UPDATE_WRITE_PAGE] = fd_control_update_write_page;
+    fd_control_commands[FD_CONTROL_UPDATE_COMMIT] = fd_control_update_commit;
+    fd_control_commands[FD_CONTROL_RADIO_DIRECT_TEST_MODE_ENTER] = fd_control_radio_direct_test_mode_enter;
+    fd_control_commands[FD_CONTROL_RADIO_DIRECT_TEST_MODE_EXIT] = fd_control_radio_direct_test_mode_exit;
+    fd_control_commands[FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT] = fd_control_radio_direct_test_mode_report;
+    fd_control_commands[FD_CONTROL_DISCONNECT] = fd_control_disconnect;
+    fd_control_commands[FD_CONTROL_LED_OVERRIDE] = fd_control_led_override;
+    fd_control_commands[FD_CONTROL_IDENTIFY] = fd_control_identify;
+    fd_control_commands[FD_CONTROL_SYNC_START] = fd_sync_start;
+    fd_control_commands[FD_CONTROL_SYNC_ACK] = fd_sync_ack;
+    fd_control_commands[FD_CONTROL_LOCK] = fd_control_lock;
+    fd_control_commands[FD_CONTROL_DIAGNOSTICS] = fd_control_diagnostics;
+    fd_control_commands[FD_CONTROL_SENSING_SYNTHESIZE] = fd_sensing_synthesize;
+}
+
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis
 
 void fd_control_process_command(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -709,116 +734,40 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
         return;
     }
     uint8_t code = data[0];
-    fd_control_command_t command = 0;
-    switch (code) {
-        case FD_CONTROL_PING:
-            command = fd_control_ping;
-            break;
-
-        case FD_CONTROL_GET_PROPERTIES:
-            command = fd_control_get_properties;
-            break;
-        case FD_CONTROL_SET_PROPERTIES:
-            command = fd_control_set_properties;
-            break;
-
-        case FD_CONTROL_PROVISION:
-            command = fd_control_provision;
-            break;
-        case FD_CONTROL_RESET:
-            command = fd_control_reset;
-            break;
-
-        case FD_CONTROL_UPDATE_GET_EXTERNAL_HASH:
-            command = fd_control_update_get_external_hash;
-            break;
-        case FD_CONTROL_UPDATE_READ_PAGE:
-            command = fd_control_update_read_page;
-            break;
-
-        case FD_CONTROL_UPDATE_GET_SECTOR_HASHES:
-            command = fd_control_update_get_sector_hashes;
-            break;
-        case FD_CONTROL_UPDATE_ERASE_SECTORS:
-            command = fd_control_update_erase_sectors;
-            break;
-        case FD_CONTROL_UPDATE_WRITE_PAGE:
-            command = fd_control_update_write_page;
-            break;
-        case FD_CONTROL_UPDATE_COMMIT:
-            command = fd_control_update_commit;
-            break;
-
-        case FD_CONTROL_RADIO_DIRECT_TEST_MODE_ENTER:
-            command = fd_control_radio_direct_test_mode_enter;
-            break;
-        case FD_CONTROL_RADIO_DIRECT_TEST_MODE_EXIT:
-            command = fd_control_radio_direct_test_mode_exit;
-            break;
-        case FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT:
-            command = fd_control_radio_direct_test_mode_report;
-            break;
-
-        case FD_CONTROL_DISCONNECT:
-            command = fd_control_disconnect;
-            break;
-
-        case FD_CONTROL_LED_OVERRIDE:
-            command = fd_control_led_override;
-            break;
-
-        case FD_CONTROL_IDENTIFY:
-            command = fd_control_identify;
-            break;
-
-        case FD_CONTROL_SYNC_START:
-            command = fd_sync_start;
-            break;
-        case FD_CONTROL_SYNC_ACK:
-            command = fd_sync_ack;
-            break;
-
-        case FD_CONTROL_LOCK:
-            command = fd_control_lock;
-            break;
-
-        case FD_CONTROL_DIAGNOSTICS:
-            command = fd_control_diagnostics;
-            break;
-
-        case FD_CONTROL_SENSING_SYNTHESIZE:
-            command = fd_sensing_synthesize;
-    }
+    fd_control_command_t command = fd_control_commands[code];
     if (command) {
         (*command)(detour_source_collection, &data[1], length - 1);
     }
 }
 
 void fd_control_command(void) {
-    if (fd_control_inputs_count == 0) {
-        return;
-    }
+    int count;
+    fd_detour_source_collection_t *detour_source_collection;
+    uint32_t length;
 
     fd_hal_processor_interrupts_disable();
+    count = fd_control_inputs_count;
+    if (count > 0) {
+        // get the command info
+        fd_control_input_t *input = &fd_control_inputs[0];
+        detour_source_collection = input->detour_source_collection;
+        memcpy(fd_control_command_buffer, fd_control_input_buffer, input->length);
+        length = input->length;
 
-    // get the command info
-    fd_control_input_t *input = &fd_control_inputs[0];
-    fd_detour_source_collection_t *detour_source_collection = input->detour_source_collection;
-    memcpy(fd_control_command_buffer, input->data, input->length);
-    uint32_t length = input->length;
-
-    // remove it from the inputs
-    --fd_control_inputs_count;
-    memcpy(fd_control_inputs, &fd_control_inputs[1], sizeof(fd_control_input_t) * fd_control_inputs_count);
-    fd_control_input_buffer_count -= length;
-    memcpy(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
-
+        // remove it from the inputs
+        --fd_control_inputs_count;
+        memmove(fd_control_inputs, &fd_control_inputs[1], sizeof(fd_control_input_t) * fd_control_inputs_count);
+        fd_control_input_buffer_count -= length;
+        memmove(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
+    }
     fd_hal_processor_interrupts_enable();
 
-    // process it
-    fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
+    if (count > 0) {
+        // process it
+        fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
+    }
 
-    if (fd_control_inputs_count > 0) {
+    if (count > 1) {
         fd_event_set_exclusive(FD_EVENT_COMMAND);
     }
 }

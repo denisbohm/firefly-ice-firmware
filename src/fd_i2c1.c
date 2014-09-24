@@ -77,7 +77,7 @@ bool fd_i2c1_sync_transfer(I2C_TransferSeq_TypeDef *seq) {
         }
         return true;
     }
-    fd_log_assert_fail("");
+//    fd_log_assert_fail("");
     return false;
 }
 

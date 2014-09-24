@@ -79,6 +79,7 @@ void fd_storage_buffer_clear_page(fd_storage_metadata_t *metadata) {
             }
             break;
         }
+        storage_buffer = storage_buffer->next;
     }
 }
 

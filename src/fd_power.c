@@ -30,6 +30,8 @@ void fd_power_charge_status_callback(void) {
 
 void fd_power_update_callback(void) {
     fd_hal_system_start_conversions();
+
+    fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
 }
 
 void fd_power_charge_current_callback(void) {
@@ -60,8 +62,6 @@ void fd_power_charge_current_callback(void) {
             RETAINED->power_battery_level = 0.05;
         }
     }
-
-    fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
 }
 
 double fd_power_estimate_battery_level(void) {

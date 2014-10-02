@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+void fd_hal_system_initialize(void);
+
 uint16_t fd_hal_system_get_hardware_major(void);
 uint16_t fd_hal_system_get_hardware_minor(void);
 

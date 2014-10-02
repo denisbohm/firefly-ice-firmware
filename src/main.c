@@ -8,6 +8,7 @@
 #include "fd_hal_processor.h"
 #include "fd_hal_reset.h"
 #include "fd_hal_rtc.h"
+#include "fd_hal_system.h"
 #include "fd_hal_ui.h"
 #include "fd_i2c1.h"
 #include "fd_lis3dh.h"
@@ -149,10 +150,11 @@ int main(void) {
     GPIO_PinOutClear(LED6_PORT_PIN);
 
     fd_hal_reset_feed_watchdog();
-
+    
     fd_hal_rtc_initialize();
     fd_adc_initialize();
     fd_usb_initialize();
+    fd_hal_system_initialize();
 
     fd_hal_reset_feed_watchdog();
 

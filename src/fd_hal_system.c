@@ -70,7 +70,7 @@ void fd_hal_system_charge_current_callback(void) {
     // all conversions complete
 }
 
-void fd_hal_system_init(void) {
+void fd_hal_system_initialize(void) {
     fd_event_add_callback(FD_EVENT_ADC_TEMPERATURE, fd_hal_system_temperature_callback);
     fd_event_add_callback(FD_EVENT_ADC_BATTERY_VOLTAGE, fd_hal_system_battery_voltage_callback);
     fd_event_add_callback(FD_EVENT_ADC_CHARGE_CURRENT, fd_hal_system_charge_current_callback);

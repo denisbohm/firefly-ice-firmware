@@ -63,13 +63,14 @@
 
 #include <math.h>
 #include <string.h>
+#include <stdint.h>
 
 // Macros ---------------------------------------------------------------------
 
-#define  INT16_TYPE          short
-#define UINT16_TYPE unsigned short
-#define  INT32_TYPE          long
-#define UINT32_TYPE unsigned long
+#define  INT16_TYPE int16_t
+#define UINT16_TYPE uint16_t
+#define  INT32_TYPE int32_t
+#define UINT32_TYPE uint32_t
 
 // Prototypes -----------------------------------------------------------------
 

@@ -29,7 +29,13 @@ void fd_log_set_storage(bool enable __attribute__((unused))) {
 
 void fd_log_at(char *file, int line, char *message) {
     if (!fd_log_did_log) {
-        sprintf(fd_log_message, "%s %d: %s", file, line, message);
+        char *name = strrchr(file, '/');
+        if (name == 0) {
+            name = file;
+        } else {
+            ++name;
+        }
+        sprintf(fd_log_message, "%s %d: %s", name, line, message);
     }
     fd_log_did_log = true;
     ++fd_log_count;

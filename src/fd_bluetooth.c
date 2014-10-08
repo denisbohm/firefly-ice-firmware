@@ -48,6 +48,7 @@ static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTE
 #define fd_nrf8001_test_command_step BIT(10)
 #define fd_nrf8001_test_exit_step BIT(11)
 #define fd_nrf8001_set_tx_power_step BIT(12)
+#define fd_nrf8001_radio_reset_step BIT(13)
 
 #define fd_nrf8001_detour_send_data_ack_step BIT(0)
 
@@ -102,6 +103,11 @@ bool fd_bluetooth_spi_transfer(void);
 void fd_bluetooth_dtm_time(void);
 
 void fd_bluetooth_ready(void) {
+    // !!! when entering storage mode don't try to do any spi transfers since the bus has been powered down -denis
+    if (!fd_spi_is_on(FD_SPI_BUS_1)) {
+        return;
+    }
+
     fd_bluetooth_spi_transfer();
     fd_bluetooth_step();
 }
@@ -368,6 +374,10 @@ void fd_bluetooth_system_step(void) {
         if (fd_bluetooth_system_steps & fd_nrf8001_set_tx_power_step) {
             fd_nrf8001_set_tx_power(fd_nrf8001_tx_power);
             fd_bluetooth_step_complete(fd_nrf8001_set_tx_power_step);
+        } else
+        if (fd_bluetooth_system_steps & fd_nrf8001_radio_reset_step) {
+            fd_nrf8001_radio_reset();
+            fd_bluetooth_step_complete(fd_nrf8001_radio_reset_step);
         }
     }
 }
@@ -599,12 +609,20 @@ bool fd_bluetooth_is_asleep(void) {
     return fd_bluetooth_idle;
 }
 
+void fd_nrf8001_radio_reset_error(uint8_t __attribute__((unused)) status) {
+    fd_log_assert_fail("");
+}
+
+void fd_nrf8001_radio_reset_success(void) {
+    fd_bluetooth_step_queue(fd_nrf8001_sleep_step);
+}
+
 void fd_bluetooth_sleep(void) {
     if (fd_nrf8001_did_connect) {
         fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_sleep;
         fd_bluetooth_step_queue(fd_nrf8001_disconnect_step);
     } else {
-        fd_bluetooth_system_steps = fd_nrf8001_sleep_step;
+        fd_bluetooth_step_queue(fd_nrf8001_radio_reset_step);
     }
 }
 

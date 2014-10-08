@@ -39,8 +39,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-static fd_main_mode_t main_mode;
-static bool main_sleep_when_bluetooth_is_asleep;
+static fd_main_mode_t fd_main_mode;
+static bool fd_main_sleep_when_bluetooth_is_asleep;
+static bool fd_main_was_unplugged;
 
 static
 void main_sleep(void) {
@@ -48,6 +49,8 @@ void main_sleep(void) {
     fd_hal_ui_sleep();
 
     fd_usb_sleep();
+    CMU->HFCORECLKEN0 |= (CMU_HFCORECLKEN0_USB | CMU_HFCORECLKEN0_USBC);
+
     fd_adc_sleep();
     fd_hal_rtc_sleep();
     fd_lis3dh_sleep();
@@ -88,16 +91,18 @@ void main_wake(void) {
 
 static
 void main_enter_storage_mode(void) {
-    main_mode = fd_main_mode_storage;
-    main_sleep_when_bluetooth_is_asleep = true;
+    fd_main_mode = fd_main_mode_storage;
+    fd_main_sleep_when_bluetooth_is_asleep = true;
+    fd_main_was_unplugged = false;
 
     fd_bluetooth_sleep();
 }
 
 static
 void main_enter_run_mode(void) {
-    main_mode = fd_main_mode_run;
-    main_sleep_when_bluetooth_is_asleep = false;
+    fd_main_mode = fd_main_mode_run;
+    fd_main_sleep_when_bluetooth_is_asleep = false;
+    fd_main_was_unplugged = false;
 
     main_wake();
 
@@ -105,7 +110,7 @@ void main_enter_run_mode(void) {
 }
 
 void fd_main_set_mode(fd_main_mode_t mode) {
-    if (main_mode == mode) {
+    if (fd_main_mode == mode) {
         return;
     }
     if (mode == fd_main_mode_storage) {
@@ -117,7 +122,7 @@ void fd_main_set_mode(fd_main_mode_t mode) {
 }
 
 fd_main_mode_t fd_main_get_mode(void) {
-    return main_mode;
+    return fd_main_mode;
 }
 
 /*
@@ -134,8 +139,9 @@ int main(void) {
 
     fd_hal_reset_start_watchdog();
 
-    main_mode = fd_main_mode_run;
-    main_sleep_when_bluetooth_is_asleep = false;
+    fd_main_mode = fd_main_mode_run;
+    fd_main_sleep_when_bluetooth_is_asleep = false;
+    fd_main_was_unplugged = false;
 
     fd_log_initialize();
     fd_event_initialize();
@@ -216,12 +222,20 @@ int main(void) {
     while (true) {
         fd_event_process();
 
-        if (main_sleep_when_bluetooth_is_asleep && fd_bluetooth_is_asleep()) {
-            main_sleep_when_bluetooth_is_asleep = false;
+        // go to sleep when bluetooth is asleep and usb can be put to sleep
+        if (fd_main_sleep_when_bluetooth_is_asleep && fd_bluetooth_is_asleep()) {
+            fd_main_sleep_when_bluetooth_is_asleep = false;
+            fd_main_was_unplugged = !fd_usb_is_powered();
             main_sleep();
         }
-        if ((main_mode == fd_main_mode_storage) && (USB->IF & (USB_IF_VREGOSH | USB_IF_VREGOSL))) {
-            fd_main_set_mode(fd_main_mode_run);
+        // wake up when usb was unplugged and now has been plugged in
+        if ((fd_main_mode == fd_main_mode_storage) && !fd_main_sleep_when_bluetooth_is_asleep) {
+            if (!fd_main_was_unplugged && ((USB->IF & USB_IF_VREGOSL) != 0)) {
+                fd_main_was_unplugged = true;
+            }
+            if (fd_main_was_unplugged && ((USB->IF & USB_IF_VREGOSH) != 0)) {
+                fd_main_set_mode(fd_main_mode_run);
+            }
         }
     }
 

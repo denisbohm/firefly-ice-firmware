@@ -250,12 +250,16 @@ bool fd_usb_is_connected(void) {
     return USBD_GetUsbState() == USBD_STATE_CONFIGURED;
 }
 
+extern volatile bool USBD_poweredDown;
+
 void fd_usb_wake(void) {
+    USBD_poweredDown = false;
     USBD_Init(&initstruct);
 }
 
 void fd_usb_sleep(void) {
     USBD_Stop();
+    USBD_poweredDown = true;
 }
 
 int fd_usb_WriteChar(char c) {

@@ -132,6 +132,12 @@ void fd_spi_initialize(void) {
     spi1->in_progress = false;
 }
 
+bool fd_spi_is_on(fd_spi_bus_t bus) {
+    fd_spi_t *spi = &spis[bus];
+    int bit = (spi->clock >> CMU_EN_BIT_POS) & CMU_EN_BIT_MASK;
+    return CMU->HFPERCLKEN0 & (1 << bit);
+}
+
 void fd_spi_on(fd_spi_bus_t bus) {
     fd_spi_t *spi = &spis[bus];
 

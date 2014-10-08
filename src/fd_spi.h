@@ -45,6 +45,7 @@ void fd_spi_initialize(void);
 void fd_spi_on(fd_spi_bus_t bus);
 // powers down and unroutes spi from pins
 void fd_spi_off(fd_spi_bus_t bus);
+bool fd_spi_is_on(fd_spi_bus_t bus);
 
 void fd_spi_sleep(fd_spi_bus_t bus);
 void fd_spi_wake(fd_spi_bus_t bus);

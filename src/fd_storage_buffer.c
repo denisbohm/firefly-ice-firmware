@@ -92,6 +92,10 @@ void fd_storage_buffer_initialize(fd_storage_buffer_t *storage_buffer, fd_storag
     storage_buffer->index = 0;
 }
 
+void fd_storage_buffer_erase(fd_storage_buffer_t *storage_buffer) {
+    storage_buffer->index = 0;
+}
+
 void fd_storage_buffer_flush(fd_storage_buffer_t *storage_buffer) {
     if (storage_buffer->index > 0) {
         fd_storage_area_append_page(storage_buffer->area, storage_buffer->type, storage_buffer->data, storage_buffer->index);

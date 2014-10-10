@@ -125,6 +125,18 @@ void fd_storage_free_first_page(fd_storage_area_t *area) {
     increment_page(area->first_page);
 }
 
+void fd_storage_area_free_all_pages(fd_storage_area_t *area) {
+    fd_hal_external_flash_wake();
+    fd_hal_external_flash_enable_write();
+    uint8_t marker = PAGE_FREE;
+    while (area->first_page != area->free_page) {
+        uint32_t address = area->first_page * FD_HAL_EXTERNAL_FLASH_PAGE_SIZE;
+        fd_hal_external_flash_write_page(address, &marker, sizeof(marker));
+        increment_page(area->first_page);
+    }
+    fd_hal_external_flash_sleep();
+}
+
 void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t *data, uint32_t length) {
     if (length > FD_STORAGE_MAX_DATA_LENGTH) {
         length = FD_STORAGE_MAX_DATA_LENGTH;

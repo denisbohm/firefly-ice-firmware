@@ -18,6 +18,8 @@ typedef struct fd_storage_buffer {
 
 void fd_storage_buffer_initialize(fd_storage_buffer_t *storage_buffer, fd_storage_area_t *storage_area, uint32_t type);
 
+void fd_storage_buffer_erase(fd_storage_buffer_t *storage_buffer);
+
 void fd_storage_buffer_flush(fd_storage_buffer_t *storage_buffer);
 
 void fd_storage_buffer_add(fd_storage_buffer_t *storage_buffer, uint8_t *data, uint32_t length);

@@ -38,4 +38,6 @@ bool fd_storage_area_read_first_page(fd_storage_area_t *area, fd_storage_metadat
 void fd_storage_area_read_nth_page(fd_storage_area_t *area, uint32_t n, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length);
 void fd_storage_area_erase_page(fd_storage_area_t *area, fd_storage_metadata_t *metadata);
 
+void fd_storage_area_free_all_pages(fd_storage_area_t *area);
+
 #endif

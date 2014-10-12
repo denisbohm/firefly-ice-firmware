@@ -13,6 +13,8 @@ void fd_sensing_history_save(void);
 void fd_sensing_set_stream_sample_count(uint32_t count);
 uint32_t fd_sensing_get_stream_sample_count(void);
 
+void fd_sensing_erase(void);
+
 void fd_sensing_synthesize(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length);
 
 #endif

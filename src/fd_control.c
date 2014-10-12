@@ -27,7 +27,7 @@
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 48
+#define VERSION_PATCH 49
 
 #define VERSION_CAPABILITIES (\
  FD_CONTROL_CAPABILITY_LOCK |\
@@ -153,8 +153,13 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
     uint32_t provision_data_length = fd_binary_get_uint16(&binary);
     uint8_t *provision_data = &binary.buffer[binary.get_index];
 
-    fd_hal_processor_write_user_data(provision_data, provision_data_length);
+    if (provision_data_length > 0) {
+        fd_hal_processor_write_user_data(provision_data, provision_data_length);
+    }
 
+    if (options & FD_PROVISION_OPTION_SENSING_ERASE) {
+        fd_sensing_erase();
+    }
     if (options & FD_PROVISION_OPTION_DEBUG_LOCK) {
         fd_hal_processor_set_debug_lock();
     }

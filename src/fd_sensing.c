@@ -178,3 +178,9 @@ void fd_sensing_wake(void) {
 void fd_sensing_sleep(void) {
     fd_timer_stop(&fd_sensing_timer);
 }
+
+void fd_sensing_erase(void) {
+    fd_storage_buffer_erase(&fd_sensing_storage_buffer);
+    fd_storage_buffer_erase(&fd_sensing_stream_storage_buffer);
+    fd_storage_area_free_all_pages(&fd_sensing_storage_area);
+}

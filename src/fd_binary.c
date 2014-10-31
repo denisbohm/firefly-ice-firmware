@@ -12,6 +12,10 @@ uint16_t fd_binary_unpack_uint16(uint8_t *buffer) {
     return (buffer[1] << 8) | buffer[0];
 }
 
+uint32_t fd_binary_unpack_uint24(uint8_t *buffer) {
+    return (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+}
+
 uint32_t fd_binary_unpack_uint32(uint8_t *buffer) {
     return (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
 }
@@ -52,6 +56,12 @@ void fd_binary_pack_uint8(uint8_t *buffer, uint8_t value) {
 void fd_binary_pack_uint16(uint8_t *buffer, uint16_t value) {
     buffer[0] = value;
     buffer[1] = value >> 8;
+}
+
+void fd_binary_pack_uint24(uint8_t *buffer, uint32_t value) {
+    buffer[0] = value;
+    buffer[1] = value >> 8;
+    buffer[2] = value >> 16;
 }
 
 void fd_binary_pack_uint32(uint8_t *buffer, uint32_t value) {
@@ -108,6 +118,12 @@ uint16_t fd_binary_get_uint16(fd_binary_t *binary) {
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 2;
     return fd_binary_unpack_uint16(buffer);
+}
+
+uint32_t fd_binary_get_uint24(fd_binary_t *binary) {
+    uint8_t *buffer = &binary->buffer[binary->get_index];
+    binary->get_index += 3;
+    return fd_binary_unpack_uint24(buffer);
 }
 
 uint32_t fd_binary_get_uint32(fd_binary_t *binary) {
@@ -168,6 +184,14 @@ void fd_binary_put_uint16(fd_binary_t *binary, uint16_t value) {
         uint8_t *buffer = &binary->buffer[binary->put_index];
         binary->put_index += 2;
         fd_binary_pack_uint16(buffer, value);
+    }
+}
+
+void fd_binary_put_uint24(fd_binary_t *binary, uint32_t value) {
+    if (fd_binary_put_check(binary, 3)) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 3;
+        fd_binary_pack_uint24(buffer, value);
     }
 }
 

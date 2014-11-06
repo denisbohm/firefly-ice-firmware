@@ -10,30 +10,11 @@
 #include <em_usbhal.h>
 
 #define VENDOR 0x2333
-#define PRODUCT 0x0002
+#define PRODUCT 0x0003
 
 #define DEFAULT_POLL_TIMEOUT 1
 #define INTR_IN_EP_ADDR 0x81
 #define INTR_OUT_EP_ADDR 0x01
-
-EFM32_ALIGN(4)
-USB_DeviceDescriptor_TypeDef deviceDesc __attribute__ ((aligned(4))) =
-{
-  .bLength            = USB_DEVICE_DESCSIZE,
-  .bDescriptorType    = USB_DEVICE_DESCRIPTOR,
-  .bcdUSB             = 0x0200,
-  .bDeviceClass       = 0,
-  .bDeviceSubClass    = 0,
-  .bDeviceProtocol    = 0,
-  .bMaxPacketSize0    = USB_EP0_SIZE,
-  .idVendor           = VENDOR,
-  .idProduct          = PRODUCT,
-  .bcdDevice          = 0x0000,
-  .iManufacturer      = 1,
-  .iProduct           = 2,
-  .iSerialNumber      = 3,
-  .bNumConfigurations = 1
-};
 
 EFM32_ALIGN(4)
 static const char ReportDescriptor[] __attribute__ ((aligned(4)))=
@@ -149,7 +130,7 @@ static _##_name _name __attribute__ ((aligned(4)))=       \
 }                                                               \
 EFM32_PACK_END()
 
-STATIC_STRING_DESC( iSerialNumber, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0');
+STATIC_CONST_STRING_DESC( iSerialNumber, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0');
 
 static const void * const strings[] =
 {
@@ -175,17 +156,34 @@ static const USBD_Callbacks_TypeDef callbacks =
   .sofInt          = NULL
 };
 
-static const USBD_Init_TypeDef initstruct =
-{
-  .deviceDescriptor    = &deviceDesc,
-  .configDescriptor    = configDesc,
-  .stringDescriptors   = strings,
-  .numberOfStrings     = sizeof(strings)/sizeof(void*),
-  .callbacks           = &callbacks,
-  .bufferingMultiplier = bufferingMultiplier
+EFM32_ALIGN(4)
+static const USB_DeviceDescriptor_TypeDef deviceDesc __attribute__ ((aligned(4))) = {
+    .bLength            = USB_DEVICE_DESCSIZE,
+    .bDescriptorType    = USB_DEVICE_DESCRIPTOR,
+    .bcdUSB             = 0x0200,
+    .bDeviceClass       = 0,
+    .bDeviceSubClass    = 0,
+    .bDeviceProtocol    = 0,
+    .bMaxPacketSize0    = USB_EP0_SIZE,
+    .idVendor           = VENDOR,
+    .idProduct          = PRODUCT,
+    .bcdDevice          = 0x0000,
+    .iManufacturer      = 1,
+    .iProduct           = 2,
+    .iSerialNumber      = 3,
+    .bNumConfigurations = 1,
 };
 
-static int fd_usb_errors = 0;
+static const USBD_Init_TypeDef initstruct = {
+    .deviceDescriptor    = &deviceDesc,
+    .configDescriptor    = configDesc,
+    .stringDescriptors   = strings,
+    .numberOfStrings     = sizeof(strings)/sizeof(void*),
+    .callbacks           = &callbacks,
+    .bufferingMultiplier = bufferingMultiplier,
+};
+
+static int fd_usb_errors;
 
 EFM32_ALIGN(4)
 static uint8_t fd_usb_in_data[USB_MAX_EP_SIZE];
@@ -199,9 +197,11 @@ void fd_usb_initialize(void) {
         } else {
             c = 'A' + c - 10;
         }
-        iSerialNumber.name[i] = c;
+//        iSerialNumber.name[i] = c;
         unique >>= 4;
     }
+
+    fd_usb_errors = 0;
 }
 
 bool fd_usb_is_powered(void) {
@@ -389,6 +389,7 @@ int fd_usb_read_complete(USB_Status_TypeDef status, uint32_t xferred, uint32_t r
             }
         } break;
         case FD_USB_COMMAND_DONE: {
+            fd_usb_done = true;
         } break;
     }
 
@@ -433,7 +434,7 @@ uint32_t fd_usb_test(uint16_t pid, uint8_t *result, uint32_t result_length) {
     CMU_ClockEnable(cmuClock_RTC, true);
     CMU_ClockEnable(cmuClock_CORELE, true);
 
-    deviceDesc.idProduct = pid;
+//    deviceDesc.idProduct = pid;
     fd_usb_initialize();
     fd_usb_wake();
 
@@ -466,7 +467,7 @@ void main(void) {
     halt_fp = halt;
     fd_hal_processor_initialize();
     fd_hal_processor_wake();
-    uint8_t bytes[10];
+    uint8_t bytes[1];
     fd_usb_test(0x0003, bytes, sizeof(bytes));
     halt_fp();
 }

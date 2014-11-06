@@ -6,6 +6,7 @@
 #include "fd_mag3110.h"
 #include "fd_pins.h"
 #include "fd_spi.h"
+#include "fd_timer.h"
 #include "fd_w25q16dw.h"
 
 #include "fd_event.h"
@@ -72,6 +73,7 @@ int main(void) {
 
     fd_log_initialize();
     char *message __attribute__((unused)) = fd_log_get_message();
+    fd_timer_initialize();
     fd_event_initialize();
 
     bool is_charging __attribute__ ((unused)) = !GPIO_PinInGet(CHG_STAT_PORT_PIN);

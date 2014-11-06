@@ -883,6 +883,8 @@
       <file file_name="src/fd_hal_processor.h" />
       <file file_name="src/fd_hal_reset.c" />
       <file file_name="src/fd_hal_reset.h" />
+      <file file_name="src/fd_hal_rtc.c" />
+      <file file_name="src/fd_hal_rtc.h" />
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />
@@ -996,7 +998,7 @@
       arm_target_loader_parameter="12000000"
       build_intermediate_directory="$(Configuration)/$(ProjectName)"
       build_output_directory="$(Configuration)/$(ProjectName)"
-      c_preprocessor_definitions="USE_PROCESS_STACK"
+      c_preprocessor_definitions="USE_PROCESS_STACK;STARTUP_FROM_RESET"
       c_user_include_directories="$(ProjectDir)/src;$(TargetsDir)/EFM32/include/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(TargetsDir)/EFM32/include;$(EnergyMicroDir)/EM_CMSIS_3/Device/EnergyMicro/EFM32LG/include;$(EnergyMicroDir)/emlib/inc;$(EnergyMicroDir)/usb/inc"
       gcc_optimization_level="Optimize For Size"
       link_include_startup_code="No"

@@ -202,8 +202,10 @@ void fd_hal_processor_set_debug_lock(void) {
 void fd_hal_processor_get_hardware_id(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, fd_usb_get_vendor_id());
     fd_binary_put_uint16(binary, fd_usb_get_product_id());
-    fd_binary_put_uint16(binary, fd_hal_system_get_hardware_major());
-    fd_binary_put_uint16(binary, fd_hal_system_get_hardware_minor());
+    fd_hal_system_hardware_version_t version;
+    fd_hal_system_get_hardware_version(&version);
+    fd_binary_put_uint16(binary, version.major);
+    fd_binary_put_uint16(binary, version.minor);
     fd_binary_put_uint64(binary, SYSTEM_GetUnique());
 }
 

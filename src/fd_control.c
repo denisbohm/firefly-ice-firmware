@@ -1,6 +1,5 @@
 #include "fd_binary.h"
 #include "fd_bluetooth.h"
-#include "fd_boot.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
 #include "fd_event.h"
@@ -24,30 +23,6 @@
 #include "fd_update.h"
 
 #include <string.h>
-
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 0
-#define VERSION_PATCH 49
-
-#define VERSION_CAPABILITIES (\
- FD_CONTROL_CAPABILITY_LOCK |\
- FD_CONTROL_CAPABILITY_BOOT_VERSION |\
- FD_CONTROL_CAPABILITY_SYNC_AHEAD |\
- FD_CONTROL_CAPABILITY_IDENTIFY |\
- FD_CONTROL_CAPABILITY_LOGGING |\
- FD_CONTROL_CAPABILITY_DIAGNOSTICS |\
- FD_CONTROL_CAPABILITY_NAME |\
- FD_CONTROL_CAPABILITY_RETAINED |\
- FD_CONTROL_CAPABILITY_ADC_VDD |\
- FD_CONTROL_CAPABILITY_REGULATOR |\
- FD_CONTROL_CAPABILITY_SENSING_COUNT |\
- FD_CONTROL_CAPABILITY_INDICATE |\
- FD_CONTROL_CAPABILITY_RECOGNITION )
-
-// !!! should come from gcc command line define
-#define GIT_COMMIT 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19
-
-static const uint8_t git_commit[20] = {GIT_COMMIT};
 
 #define COMMAND_BUFFER_SIZE 300
 
@@ -177,11 +152,13 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 }
 
 void fd_control_get_property_version(fd_binary_t *binary) {
-    fd_binary_put_uint16(binary, VERSION_MAJOR);
-    fd_binary_put_uint16(binary, VERSION_MINOR);
-    fd_binary_put_uint16(binary, VERSION_PATCH);
-    fd_binary_put_uint32(binary, VERSION_CAPABILITIES);
-    fd_binary_put_bytes(binary, (uint8_t *)git_commit, sizeof(git_commit));
+    fd_hal_system_firmware_version_t version;
+    fd_hal_system_get_firmware_version(&version);
+    fd_binary_put_uint16(binary, version.major);
+    fd_binary_put_uint16(binary, version.minor);
+    fd_binary_put_uint16(binary, version.patch);
+    fd_binary_put_uint32(binary, version.capabilities);
+    fd_binary_put_bytes(binary, version.commit, FD_HAL_SYSTEM_COMMIT_SIZE);
 }
 
 void fd_control_get_property_hardware_id(fd_binary_t *binary) {
@@ -265,17 +242,13 @@ void fd_control_set_property_tx_power(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_boot_version(fd_binary_t *binary) {
-    fd_boot_data_t boot_data = *fd_hal_processor_get_boot_data_address();
-    if (boot_data.magic != FD_BOOT_MAGIC) {
-        memset(&boot_data, 0, sizeof(fd_boot_data_t));
-        boot_data.minor = 1;
-    }
-
-    fd_binary_put_uint16(binary, boot_data.major);
-    fd_binary_put_uint16(binary, boot_data.minor);
-    fd_binary_put_uint16(binary, boot_data.patch);
-    fd_binary_put_uint32(binary, boot_data.capabilities);
-    fd_binary_put_bytes(binary, boot_data.git_commit, sizeof(boot_data.git_commit));
+    fd_hal_system_firmware_version_t version;
+    fd_hal_system_get_boot_version(&version);
+    fd_binary_put_uint16(binary, version.major);
+    fd_binary_put_uint16(binary, version.minor);
+    fd_binary_put_uint16(binary, version.patch);
+    fd_binary_put_uint32(binary, version.capabilities);
+    fd_binary_put_bytes(binary, version.commit, FD_HAL_SYSTEM_COMMIT_SIZE);
 }
 
 void fd_control_get_property_regulator(fd_binary_t *binary) {
@@ -392,6 +365,13 @@ void fd_control_get_property_recognition(fd_binary_t *binary) {
     fd_binary_put_uint8(binary, fd_recognition_get_enable());
 }
 
+void fd_control_get_property_hardware_version(fd_binary_t *binary) {
+    fd_hal_system_hardware_version_t version;
+    fd_hal_system_get_hardware_version(&version);
+    fd_binary_put_uint16(binary, version.major);
+    fd_binary_put_uint16(binary, version.minor);
+}
+
 void fd_control_set_property_recognition(fd_binary_t *binary) {
     bool enable = fd_binary_get_uint8(binary) != 0;
     fd_recognition_set_enable(enable);
@@ -415,7 +395,8 @@ void fd_control_set_property_recognition(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_REGULATOR |\
  FD_CONTROL_PROPERTY_SENSING_COUNT |\
  FD_CONTROL_PROPERTY_INDICATE |\
- FD_CONTROL_PROPERTY_RECOGNITION)
+ FD_CONTROL_PROPERTY_RECOGNITION |\
+ FD_CONTROL_PROPERTY_HARDWARE_VERSION)
 
 void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -483,6 +464,9 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
                 case FD_CONTROL_PROPERTY_RECOGNITION: {
                     fd_control_get_property_recognition(binary_out);
+                } break;
+                case FD_CONTROL_PROPERTY_HARDWARE_VERSION: {
+                    fd_control_get_property_hardware_version(binary_out);
                 } break;
             }
         }

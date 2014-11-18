@@ -6,10 +6,27 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define FD_HAL_SYSTEM_COMMIT_SIZE 20
+
+typedef struct {
+    uint16_t major;
+    uint16_t minor;
+    uint16_t patch;
+    uint32_t capabilities;
+    uint8_t commit[FD_HAL_SYSTEM_COMMIT_SIZE];
+} fd_hal_system_firmware_version_t;
+
+typedef struct {
+    uint16_t major;
+    uint16_t minor;
+} fd_hal_system_hardware_version_t;
+
 void fd_hal_system_initialize(void);
 
-uint16_t fd_hal_system_get_hardware_major(void);
-uint16_t fd_hal_system_get_hardware_minor(void);
+void fd_hal_system_get_firmware_version(fd_hal_system_firmware_version_t *version);
+void fd_hal_system_get_boot_version(fd_hal_system_firmware_version_t *version);
+
+void fd_hal_system_get_hardware_version(fd_hal_system_hardware_version_t *version);
 
 void fd_hal_system_set_regulator(bool switching);
 bool fd_hal_system_get_regulator(void);

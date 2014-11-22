@@ -1,6 +1,6 @@
 #!/bin/bash
 
-eval `grep '^#define VERSION_' src/fd_control.c | sed -e 's/#define VERSION_\([MP][^ ]*\) \(.*\)/\1=\2/' | tr '[:upper:]' '[:lower:]'`
+eval `grep '^#define FIRMWARE_' src/fd_hal_system.c | sed -e 's/#define FIRMWARE_\([MP][^ ]*\) \(.*\)/\1=\2/' | tr '[:upper:]' '[:lower:]'`
 echo releasing version $major.$minor.$patch
 
 cp "THUMB Flash Release/FireflyIce/FireflyIce.hex" ../firefly-ice-api/FireflyDevice/FireflyDevice
@@ -43,3 +43,4 @@ cp "THUMB RAM Debug/FireflyIceTest/FireflyIceTest.elf" ../firefly-production-too
 
 cp "THUMB RAM Debug/FireflyFlash/FireflyFlash.elf" ../firefly-production-tools/FireflyProduction/FireflyProduction/FireflyFlashEFM32.elf
 cp "FireflyFlashSTM32F4 THUMB Debug/FireflyFlashSTM32F4.elf" ../firefly-production-tools/FireflyProduction/FireflyProduction/
+cp "FireflyFlashNRF51 THUMB Debug/FireflyFlashNRF51.elf" ../firefly-production-tools/FireflyProduction/FireflyProduction/

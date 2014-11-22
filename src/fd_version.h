@@ -1,6 +1,8 @@
 #ifndef FD_VERSION_H
 #define FD_VERSION_H
 
+#include "fd_sha.h"
+
 #include <stdint.h>
 
 #define FD_VERSION_METADATA_MAGIC 0xb001da1a

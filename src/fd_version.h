@@ -3,6 +3,7 @@
 
 #include "fd_sha.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define FD_VERSION_METADATA_MAGIC 0xb001da1a
@@ -32,5 +33,7 @@ typedef struct {
     uint16_t major;
     uint16_t minor;
 } fd_version_hardware_t;
+
+bool fd_version_is_equal(fd_version_t a, fd_version_t b);
 
 #endif

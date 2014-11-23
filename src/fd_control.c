@@ -522,32 +522,33 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
     }
 }
 
-void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_update_get_external_hash_impl(
+    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
+    uint8_t area = 0;
+    if (withArea) {
+        fd_binary_get_uint8(&binary);
+    }
     uint32_t external_address = fd_binary_get_uint32(&binary);
     uint32_t external_length = fd_binary_get_uint32(&binary);
     uint8_t hash[FD_SHA_HASH_SIZE];
-    fd_update_get_external_hash(external_address, external_length, hash);
+    fd_update_get_external_hash(area, external_address, external_length, hash);
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_GET_EXTERNAL_HASH);
     fd_binary_put_bytes(binary_out, hash, FD_SHA_HASH_SIZE);
     fd_control_send_complete(detour_source_collection);
 }
 
-void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_update_get_sector_hashes_impl(
+    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint32_t page = fd_binary_get_uint32(&binary);
-    uint8_t page_data[256];
-    fd_update_read_page(page, page_data);
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_READ_PAGE);
-    fd_binary_put_bytes(binary_out, page_data, 256);
-    fd_control_send_complete(detour_source_collection);
-}
-
-void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, data, length);
+    uint8_t area = 0;
+    if (withArea) {
+        fd_binary_get_uint8(&binary);
+    }
     uint32_t sector_count = fd_binary_get_uint8(&binary);
 
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_GET_SECTOR_HASHES);
@@ -555,34 +556,69 @@ void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_s
     for (uint32_t i = 0; i < sector_count; ++i) {
         uint8_t hash[FD_SHA_HASH_SIZE];
         uint32_t sector = fd_binary_get_uint16(&binary);
-        fd_update_get_sector_hash(sector, hash);
+        fd_update_get_sector_hash(area, sector, hash);
         fd_binary_put_uint16(binary_out, sector);
         fd_binary_put_bytes(binary_out, hash, FD_SHA_HASH_SIZE);
     }
     fd_control_send_complete(detour_source_collection);
 }
 
-void fd_control_update_erase_sectors(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_update_erase_sectors_impl(
+    fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length, bool withArea
+) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
+    uint8_t area = 0;
+    if (withArea) {
+        fd_binary_get_uint8(&binary);
+    }
     uint32_t sector_count = fd_binary_get_uint8(&binary);
     for (uint32_t i = 0; i < sector_count; ++i) {
         uint32_t sector = fd_binary_get_uint16(&binary);
-        fd_update_erase_sector(sector);
+        fd_update_erase_sector(area, sector);
     }
 }
 
-void fd_control_update_write_page(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_update_write_page_impl(
+    fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length, bool withArea
+) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
+    uint8_t area = 0;
+    if (withArea) {
+        fd_binary_get_uint8(&binary);
+    }
     uint32_t page = fd_binary_get_uint16(&binary);
     uint8_t *page_data = &binary.buffer[binary.get_index];
-    fd_update_write_page(page, page_data);
+    fd_update_write_page(area, page, page_data);
 }
 
-void fd_control_update_commit(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_update_read_page_impl(
+    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
+    uint8_t area = 0;
+    if (withArea) {
+        fd_binary_get_uint8(&binary);
+    }
+    uint32_t page = fd_binary_get_uint32(&binary);
+    uint8_t page_data[256];
+    fd_update_read_page(area, page, page_data);
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_READ_PAGE);
+    fd_binary_put_bytes(binary_out, page_data, 256);
+    fd_control_send_complete(detour_source_collection);
+}
+
+void fd_control_update_commit_impl(
+    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint8_t area = 0;
+    if (withArea) {
+        fd_binary_get_uint8(&binary);
+    }
     fd_update_metadata_t metadata;
     metadata.flags = fd_binary_get_uint32(&binary);
     metadata.length = fd_binary_get_uint32(&binary);
@@ -590,12 +626,83 @@ void fd_control_update_commit(fd_detour_source_collection_t *detour_source_colle
     fd_binary_get_bytes(&binary, metadata.crypt_hash, FD_SHA_HASH_SIZE);
     fd_binary_get_bytes(&binary, metadata.crypt_iv, 16);
 
-    uint8_t result = fd_update_commit(&metadata);
+    uint8_t result = fd_update_commit(area, &metadata);
 
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_COMMIT);
     fd_binary_put_uint8(binary_out, result);
     fd_control_send_complete(detour_source_collection);
 }
+
+///////
+
+void fd_control_update_area_get_metadata(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint8_t area = fd_binary_get_uint8(&binary);
+
+    fd_update_metadata_t metadata;
+    fd_update_read_metadata(area, &metadata);
+
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_COMMIT);
+    fd_binary_put_uint32(binary_out, metadata.flags);
+    fd_binary_put_uint32(binary_out, metadata.length);
+    fd_binary_put_bytes(binary_out, metadata.hash, sizeof(metadata.hash));
+    fd_binary_put_bytes(binary_out, metadata.crypt_hash, sizeof(metadata.crypt_hash));
+    fd_binary_put_bytes(binary_out, metadata.crypt_iv, sizeof(metadata.crypt_iv));
+    fd_control_send_complete(detour_source_collection);
+}
+
+void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_get_external_hash_impl(detour_source_collection, data, length, false);
+}
+
+void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_get_sector_hashes_impl(detour_source_collection, data, length, false);
+}
+
+void fd_control_update_erase_sectors(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_erase_sectors_impl(detour_source_collection, data, length, false);
+}
+
+void fd_control_update_write_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_write_page_impl(detour_source_collection, data, length, false);
+}
+
+void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_read_page_impl(detour_source_collection, data, length, false);
+}
+
+void fd_control_update_commit(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_commit_impl(detour_source_collection, data, length, false);
+}
+
+///////
+
+void fd_control_update_area_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_get_external_hash_impl(detour_source_collection, data, length, true);
+}
+
+void fd_control_update_area_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_get_sector_hashes_impl(detour_source_collection, data, length, true);
+}
+
+void fd_control_update_area_erase_sectors(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_erase_sectors_impl(detour_source_collection, data, length, true);
+}
+
+void fd_control_update_area_write_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_write_page_impl(detour_source_collection, data, length, true);
+}
+
+void fd_control_update_area_read_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_read_page_impl(detour_source_collection, data, length, true);
+}
+
+void fd_control_update_area_commit(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_control_update_commit_impl(detour_source_collection, data, length, true);
+}
+
+/////
 
 void fd_control_radio_direct_test_mode_enter(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
@@ -697,12 +804,22 @@ void fd_control_initialize_commands(void) {
     fd_control_commands[FD_CONTROL_SET_PROPERTIES] = fd_control_set_properties;
     fd_control_commands[FD_CONTROL_PROVISION] = fd_control_provision;
     fd_control_commands[FD_CONTROL_RESET] = fd_control_reset;
+
     fd_control_commands[FD_CONTROL_UPDATE_GET_EXTERNAL_HASH] = fd_control_update_get_external_hash;
     fd_control_commands[FD_CONTROL_UPDATE_READ_PAGE] = fd_control_update_read_page;
     fd_control_commands[FD_CONTROL_UPDATE_GET_SECTOR_HASHES] = fd_control_update_get_sector_hashes;
     fd_control_commands[FD_CONTROL_UPDATE_ERASE_SECTORS] = fd_control_update_erase_sectors;
     fd_control_commands[FD_CONTROL_UPDATE_WRITE_PAGE] = fd_control_update_write_page;
     fd_control_commands[FD_CONTROL_UPDATE_COMMIT] = fd_control_update_commit;
+
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_METADATA] = fd_control_update_area_get_metadata;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_EXTERNAL_HASH] = fd_control_update_area_get_external_hash;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_SECTOR_HASHES] = fd_control_update_area_get_sector_hashes;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_ERASE_SECTORS] = fd_control_update_area_erase_sectors;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_WRITE_PAGE] = fd_control_update_area_write_page;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_READ_PAGE] = fd_control_update_area_read_page;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_COMMIT] = fd_control_update_area_commit;
+
     fd_control_commands[FD_CONTROL_RADIO_DIRECT_TEST_MODE_ENTER] = fd_control_radio_direct_test_mode_enter;
     fd_control_commands[FD_CONTROL_RADIO_DIRECT_TEST_MODE_EXIT] = fd_control_radio_direct_test_mode_exit;
     fd_control_commands[FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT] = fd_control_radio_direct_test_mode_report;

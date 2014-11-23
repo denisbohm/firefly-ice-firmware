@@ -3,6 +3,8 @@
 
 #define HARDWARE_ID_SIZE 16
 
+#include "fd_range.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -22,6 +24,8 @@ typedef struct {
 } fd_hal_system_hardware_version_t;
 
 void fd_hal_system_initialize(void);
+
+fd_range_t fd_hal_system_get_firmware_update_range(uint8_t area);
 
 void fd_hal_system_get_firmware_version(fd_hal_system_firmware_version_t *version);
 void fd_hal_system_get_boot_version(fd_hal_system_firmware_version_t *version);

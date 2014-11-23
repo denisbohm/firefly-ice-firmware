@@ -37,7 +37,3 @@ void fd_hal_external_flash_read(uint32_t address, uint8_t *data, uint32_t length
 void fd_hal_external_flash_wait_while_busy(void) {
     fd_w25q16dw_wait_while_busy();
 }
-
-fd_range_t fd_hal_external_flash_get_firmware_update_range(void) {
-    return fd_range_make(0, 0x40000);
-}

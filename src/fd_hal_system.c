@@ -40,6 +40,10 @@
 
 static const uint8_t fd_hal_system_firmware_commit[] = {FIRMWARE_COMMIT};
 
+fd_range_t fd_hal_system_get_firmware_update_range(uint8_t area __attribute__((unused))) {
+    return fd_range_make(0, 0x40000);
+}
+
 void fd_hal_system_get_firmware_version(fd_hal_system_firmware_version_t *version) {
     version->major = FIRMWARE_MAJOR;
     version->minor = FIRMWARE_MINOR;

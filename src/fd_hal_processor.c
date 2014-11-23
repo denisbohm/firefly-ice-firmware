@@ -213,15 +213,15 @@ fd_range_t fd_hal_processor_get_boot_range(void) {
     return fd_range_make(0x00000000, 0x00007000);
 }
 
-fd_range_t fd_hal_processor_get_crypto_range(void) {
+fd_range_t fd_hal_processor_get_crypto_range(uint8_t area __attribute__((unused))) {
     return fd_range_make(0x00007000, 0x00000800);
 }
 
-fd_range_t fd_hal_processor_get_firmware_update_metadata_range(void) {
+fd_range_t fd_hal_processor_get_firmware_update_metadata_range(uint8_t area __attribute__((unused))) {
     return fd_range_make(0x00007800, 0x00000800);
 }
 
-fd_range_t fd_hal_processor_get_firmware_range(void) {
+fd_range_t fd_hal_processor_get_firmware_range(uint8_t area __attribute__((unused))) {
     return fd_range_make(0x00008000, 0x00040000 - 0x00008000);
 }
 

@@ -620,18 +620,20 @@ void fd_control_update_commit_impl(
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
-        fd_binary_get_uint8(&binary);
-        metadata.revision.major = fd_binary_get_uint16(&binary);
-        metadata.revision.minor = fd_binary_get_uint16(&binary);
-        metadata.revision.patch = fd_binary_get_uint16(&binary);
-        metadata.revision.capabilities = fd_binary_get_uint32(&binary);
-        fd_binary_get_bytes(&binary, metadata.revision.commit, FD_VERSION_COMMIT_SIZE);
+        area = fd_binary_get_uint8(&binary);
     }
     metadata.binary.flags = fd_binary_get_uint32(&binary);
     metadata.binary.length = fd_binary_get_uint32(&binary);
     fd_binary_get_bytes(&binary, metadata.binary.hash, FD_SHA_HASH_SIZE);
     fd_binary_get_bytes(&binary, metadata.binary.crypt_hash, FD_SHA_HASH_SIZE);
     fd_binary_get_bytes(&binary, metadata.binary.crypt_iv, FD_VERSION_CRYPT_IV_SIZE);
+    if (withArea) {
+        metadata.revision.major = fd_binary_get_uint16(&binary);
+        metadata.revision.minor = fd_binary_get_uint16(&binary);
+        metadata.revision.patch = fd_binary_get_uint16(&binary);
+        metadata.revision.capabilities = fd_binary_get_uint32(&binary);
+        fd_binary_get_bytes(&binary, metadata.revision.commit, FD_VERSION_COMMIT_SIZE);
+    }
 
     uint8_t result = fd_update_commit(area, &metadata);
 

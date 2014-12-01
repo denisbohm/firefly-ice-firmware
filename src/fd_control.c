@@ -642,23 +642,6 @@ void fd_control_update_commit_impl(
 
 ///////
 
-void fd_control_update_area_get_metadata(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, data, length);
-    uint8_t area = fd_binary_get_uint8(&binary);
-
-    fd_version_metadata_t metadata;
-    fd_hal_system_get_update_metadata(area, &metadata);
-
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_COMMIT);
-    fd_binary_put_uint32(binary_out, metadata.binary.flags);
-    fd_binary_put_uint32(binary_out, metadata.binary.length);
-    fd_binary_put_bytes(binary_out, metadata.binary.hash, sizeof(metadata.binary.hash));
-    fd_binary_put_bytes(binary_out, metadata.binary.crypt_hash, sizeof(metadata.binary.crypt_hash));
-    fd_binary_put_bytes(binary_out, metadata.binary.crypt_iv, sizeof(metadata.binary.crypt_iv));
-    fd_control_send_complete(detour_source_collection);
-}
-
 void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_control_update_get_external_hash_impl(detour_source_collection, data, length, false);
 }
@@ -684,6 +667,29 @@ void fd_control_update_commit(fd_detour_source_collection_t *detour_source_colle
 }
 
 ///////
+
+void fd_control_update_area_get_metadata(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint8_t area = fd_binary_get_uint8(&binary);
+
+    fd_version_metadata_t metadata;
+    bool valid = fd_hal_system_get_update_metadata(area, &metadata);
+
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_AREA_GET_METADATA);
+    fd_binary_put_uint8(binary_out, valid ? 1 : 0);
+    fd_binary_put_uint32(binary_out, metadata.binary.flags);
+    fd_binary_put_uint32(binary_out, metadata.binary.length);
+    fd_binary_put_bytes(binary_out, metadata.binary.hash, sizeof(metadata.binary.hash));
+    fd_binary_put_bytes(binary_out, metadata.binary.crypt_hash, sizeof(metadata.binary.crypt_hash));
+    fd_binary_put_bytes(binary_out, metadata.binary.crypt_iv, sizeof(metadata.binary.crypt_iv));
+    fd_binary_put_uint16(binary_out, metadata.revision.major);
+    fd_binary_put_uint16(binary_out, metadata.revision.minor);
+    fd_binary_put_uint16(binary_out, metadata.revision.patch);
+    fd_binary_put_uint32(binary_out, metadata.revision.capabilities);
+    fd_binary_put_bytes(binary_out, metadata.revision.commit, sizeof(metadata.revision.commit));
+    fd_control_send_complete(detour_source_collection);
+}
 
 void fd_control_update_area_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_control_update_get_external_hash_impl(detour_source_collection, data, length, true);

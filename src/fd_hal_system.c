@@ -128,7 +128,6 @@ void fd_hal_system_set_update_metadata(uint8_t area, fd_version_metadata_t *meta
     fd_hal_processor_write_flash_data(fd_hal_system_get_firmware_update_metadata_range(area).address, (uint8_t *)&metadata_stored, sizeof(fd_version_metadata_stored_t));
 }
 
-
 void fd_hal_system_set_regulator(bool switching) {
     if (switching) {
         GPIO_PinModeSet(PWR_MODE_PORT_PIN, gpioModePushPull, 0);

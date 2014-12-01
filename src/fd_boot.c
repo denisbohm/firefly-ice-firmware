@@ -26,8 +26,8 @@ static const fd_boot_data_t boot_data __attribute__ ((used, section(".boot_data"
 };
 
 bool is_metadata_valid(void) {
-    uint32_t *address = (uint32_t *)fd_hal_processor_get_firmware_update_metadata_range(FD_UPDATE_AREA_APPLICATION).address;
-    return *address != 0xffffffff;
+    fd_version_metadata_t metadata;
+    return fd_hal_system_get_update_metadata(FD_HAL_SYSTEM_AREA_APPLICATION, &metadata);
 }
 
 void internal_read(uint32_t address, uint8_t *data, uint32_t length) {
@@ -40,36 +40,43 @@ void internal_read(uint32_t address, uint8_t *data, uint32_t length) {
 }
 
 bool is_internal_firmware_valid(void) {
-    fd_update_metadata_t metadata;
-    fd_update_read_metadata(FD_UPDATE_AREA_APPLICATION, &metadata);
+    fd_version_metadata_t metadata;
+    fd_hal_system_get_update_metadata(FD_HAL_SYSTEM_AREA_APPLICATION, &metadata);
 
-    uint32_t firmware_address = fd_hal_processor_get_firmware_range(FD_UPDATE_AREA_APPLICATION).address;
+    fd_range_t range;
+    fd_hal_system_get_firmware_range(FD_HAL_SYSTEM_AREA_APPLICATION, &range);
+    uint32_t firmware_address = range.address;
     uint8_t internal_hash[FD_SHA_HASH_SIZE];
-    fd_sha1(internal_read, firmware_address, metadata.length, internal_hash);
+    fd_sha1(internal_read, firmware_address, metadata.binary.length, internal_hash);
 
-    return fd_sha1_is_equal(metadata.crypt_hash, internal_hash);
+    return fd_sha1_is_equal(metadata.binary.crypt_hash, internal_hash);
 }
 
 bool is_external_firmware_valid(void) {
-    fd_update_metadata_t metadata;
-    fd_update_read_metadata(FD_UPDATE_AREA_APPLICATION, &metadata);
+    fd_version_metadata_t metadata;
+    fd_hal_system_get_update_metadata(FD_HAL_SYSTEM_AREA_APPLICATION, &metadata);
 
-    uint32_t data_base_address = fd_hal_system_get_firmware_update_range(FD_UPDATE_AREA_APPLICATION).address;
+    fd_range_t range;
+    fd_hal_system_get_update_external_flash_range(FD_HAL_SYSTEM_AREA_APPLICATION, &range);
+    uint32_t data_base_address = range.address;
     uint8_t external_hash[FD_SHA_HASH_SIZE];
-    fd_sha1(fd_w25q16dw_read, data_base_address, metadata.length, external_hash);
+    fd_sha1(fd_w25q16dw_read, data_base_address, metadata.binary.length, external_hash);
 
-    return fd_sha1_is_equal(metadata.hash, external_hash);
+    return fd_sha1_is_equal(metadata.binary.hash, external_hash);
 }
 
 void copy_firmware(void) {
     MSC_Init();
 
-    fd_update_metadata_t metadata;
-    fd_update_read_metadata(FD_UPDATE_AREA_APPLICATION, &metadata);
+    fd_version_metadata_t metadata;
+    fd_hal_system_get_update_metadata(FD_HAL_SYSTEM_AREA_APPLICATION, &metadata);
 
-    uint32_t external_address = fd_hal_system_get_firmware_update_range(FD_UPDATE_AREA_APPLICATION).address;
-    uint32_t internal_address = fd_hal_processor_get_firmware_range(FD_UPDATE_AREA_APPLICATION).address;
-    uint32_t end = internal_address + metadata.length;
+    fd_range_t range;
+    fd_hal_system_get_update_external_flash_range(FD_HAL_SYSTEM_AREA_APPLICATION, &range);
+    uint32_t external_address = range.address;
+    fd_hal_system_get_firmware_range(FD_HAL_SYSTEM_AREA_APPLICATION, &range);
+    uint32_t internal_address = range.address;
+    uint32_t end = internal_address + metadata.binary.length;
     uint8_t data[INTERNAL_PAGE_SIZE];
     while (internal_address < end) {
         fd_w25q16dw_read(external_address, data, INTERNAL_PAGE_SIZE);
@@ -84,7 +91,9 @@ void copy_firmware(void) {
 }
 
 void run_firmware(void) {
-    uint32_t firmware_address = fd_hal_processor_get_firmware_range(FD_UPDATE_AREA_APPLICATION).address;
+    fd_range_t range;
+    fd_hal_system_get_firmware_range(FD_HAL_SYSTEM_AREA_APPLICATION, &range);
+    uint32_t firmware_address = range.address;
     SCB->VTOR = firmware_address;
     uint32_t *vector_table = (uint32_t *)firmware_address;
     uint32_t sp = vector_table[0];

@@ -6,9 +6,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define FD_VERSION_METADATA_MAGIC 0xb001da1a
+#define FD_VERSION_MAGIC 0xb001da1a
+
+#define FD_VERSION_METADATA_FLAG_ENCRYPTED 0x00000001
 
 #define FD_VERSION_COMMIT_SIZE 20
+#define FD_VERSION_CRYPT_IV_SIZE 16
 
 typedef struct {
     uint16_t major;
@@ -16,24 +19,34 @@ typedef struct {
     uint16_t patch;
     uint32_t capabilities;
     uint8_t commit[FD_VERSION_COMMIT_SIZE];
-} fd_version_t;
-
-typedef struct {
-    uint32_t length;
-    uint8_t hash[FD_SHA_HASH_SIZE];
-} fd_version_binary_t;
+} fd_version_revision_t;
 
 typedef struct {
     uint32_t magic;
-    fd_version_t version;
+    fd_version_revision_t revision;
+} fd_version_revision_stored_t;
+
+typedef struct {
+    uint32_t flags;
+    uint32_t length;
+    uint8_t hash[FD_SHA_HASH_SIZE];
+    uint8_t crypt_hash[FD_SHA_HASH_SIZE];
+    uint8_t crypt_iv[FD_VERSION_CRYPT_IV_SIZE];
+} fd_version_binary_t;
+
+typedef struct {
     fd_version_binary_t binary;
+    fd_version_revision_t revision;
 } fd_version_metadata_t;
+
+typedef struct {
+    uint32_t magic;
+    fd_version_metadata_t metadata;
+} fd_version_metadata_stored_t;
 
 typedef struct {
     uint16_t major;
     uint16_t minor;
 } fd_version_hardware_t;
-
-bool fd_version_is_equal(fd_version_t a, fd_version_t b);
 
 #endif

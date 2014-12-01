@@ -166,7 +166,6 @@
       <file file_name="src/fd_hal_ble.c" />
       <file file_name="src/fd_hal_aes.c" />
       <file file_name="src/fd_hal_aes.h" />
-      <file file_name="src/fd_version.c" />
       <file file_name="src/fd_version.h" />
     </folder>
     <folder Name="CMSIS Files">
@@ -704,7 +703,7 @@
       <file file_name="src/fd_hal_usb.h" />
       <file file_name="src/fd_hal_aes.c" />
       <file file_name="src/fd_hal_aes.h" />
-      <file file_name="src/fd_version.c" />
+      <file file_name="src/fd_version.h" />
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />

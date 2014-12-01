@@ -152,13 +152,13 @@ void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __
 }
 
 void fd_control_get_property_version(fd_binary_t *binary) {
-    fd_hal_system_firmware_version_t version;
-    fd_hal_system_get_firmware_version(&version);
+    fd_version_revision_t version;
+    fd_hal_system_get_firmware_version(FD_HAL_SYSTEM_AREA_APPLICATION, &version);
     fd_binary_put_uint16(binary, version.major);
     fd_binary_put_uint16(binary, version.minor);
     fd_binary_put_uint16(binary, version.patch);
     fd_binary_put_uint32(binary, version.capabilities);
-    fd_binary_put_bytes(binary, version.commit, FD_HAL_SYSTEM_COMMIT_SIZE);
+    fd_binary_put_bytes(binary, version.commit, FD_VERSION_COMMIT_SIZE);
 }
 
 void fd_control_get_property_hardware_id(fd_binary_t *binary) {
@@ -242,13 +242,13 @@ void fd_control_set_property_tx_power(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_boot_version(fd_binary_t *binary) {
-    fd_hal_system_firmware_version_t version;
-    fd_hal_system_get_boot_version(&version);
+    fd_version_revision_t version;
+    fd_hal_system_get_firmware_version(FD_HAL_SYSTEM_AREA_BOOTLOADER, &version);
     fd_binary_put_uint16(binary, version.major);
     fd_binary_put_uint16(binary, version.minor);
     fd_binary_put_uint16(binary, version.patch);
     fd_binary_put_uint32(binary, version.capabilities);
-    fd_binary_put_bytes(binary, version.commit, FD_HAL_SYSTEM_COMMIT_SIZE);
+    fd_binary_put_bytes(binary, version.commit, FD_VERSION_COMMIT_SIZE);
 }
 
 void fd_control_get_property_regulator(fd_binary_t *binary) {
@@ -366,7 +366,7 @@ void fd_control_get_property_recognition(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_hardware_version(fd_binary_t *binary) {
-    fd_hal_system_hardware_version_t version;
+    fd_version_hardware_t version;
     fd_hal_system_get_hardware_version(&version);
     fd_binary_put_uint16(binary, version.major);
     fd_binary_put_uint16(binary, version.minor);
@@ -613,18 +613,25 @@ void fd_control_update_read_page_impl(
 void fd_control_update_commit_impl(
     fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
 ) {
+    fd_version_metadata_t metadata;
+    memset(&metadata, 0, sizeof(metadata));
+
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
         fd_binary_get_uint8(&binary);
+        metadata.revision.major = fd_binary_get_uint16(&binary);
+        metadata.revision.minor = fd_binary_get_uint16(&binary);
+        metadata.revision.patch = fd_binary_get_uint16(&binary);
+        metadata.revision.capabilities = fd_binary_get_uint32(&binary);
+        fd_binary_get_bytes(&binary, metadata.revision.commit, FD_VERSION_COMMIT_SIZE);
     }
-    fd_update_metadata_t metadata;
-    metadata.flags = fd_binary_get_uint32(&binary);
-    metadata.length = fd_binary_get_uint32(&binary);
-    fd_binary_get_bytes(&binary, metadata.hash, FD_SHA_HASH_SIZE);
-    fd_binary_get_bytes(&binary, metadata.crypt_hash, FD_SHA_HASH_SIZE);
-    fd_binary_get_bytes(&binary, metadata.crypt_iv, 16);
+    metadata.binary.flags = fd_binary_get_uint32(&binary);
+    metadata.binary.length = fd_binary_get_uint32(&binary);
+    fd_binary_get_bytes(&binary, metadata.binary.hash, FD_SHA_HASH_SIZE);
+    fd_binary_get_bytes(&binary, metadata.binary.crypt_hash, FD_SHA_HASH_SIZE);
+    fd_binary_get_bytes(&binary, metadata.binary.crypt_iv, FD_VERSION_CRYPT_IV_SIZE);
 
     uint8_t result = fd_update_commit(area, &metadata);
 
@@ -640,15 +647,15 @@ void fd_control_update_area_get_metadata(fd_detour_source_collection_t *detour_s
     fd_binary_initialize(&binary, data, length);
     uint8_t area = fd_binary_get_uint8(&binary);
 
-    fd_update_metadata_t metadata;
-    fd_update_read_metadata(area, &metadata);
+    fd_version_metadata_t metadata;
+    fd_hal_system_get_update_metadata(area, &metadata);
 
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_COMMIT);
-    fd_binary_put_uint32(binary_out, metadata.flags);
-    fd_binary_put_uint32(binary_out, metadata.length);
-    fd_binary_put_bytes(binary_out, metadata.hash, sizeof(metadata.hash));
-    fd_binary_put_bytes(binary_out, metadata.crypt_hash, sizeof(metadata.crypt_hash));
-    fd_binary_put_bytes(binary_out, metadata.crypt_iv, sizeof(metadata.crypt_iv));
+    fd_binary_put_uint32(binary_out, metadata.binary.flags);
+    fd_binary_put_uint32(binary_out, metadata.binary.length);
+    fd_binary_put_bytes(binary_out, metadata.binary.hash, sizeof(metadata.binary.hash));
+    fd_binary_put_bytes(binary_out, metadata.binary.crypt_hash, sizeof(metadata.binary.crypt_hash));
+    fd_binary_put_bytes(binary_out, metadata.binary.crypt_iv, sizeof(metadata.binary.crypt_iv));
     fd_control_send_complete(detour_source_collection);
 }
 

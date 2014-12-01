@@ -27,13 +27,6 @@ void fd_hal_processor_set_debug_lock(void);
 
 void fd_hal_processor_get_hardware_id(fd_binary_t *binary);
 
-fd_range_t fd_hal_processor_get_boot_range(void);
-fd_range_t fd_hal_processor_get_crypto_range(uint8_t area);
-fd_range_t fd_hal_processor_get_firmware_update_metadata_range(uint8_t area);
-fd_range_t fd_hal_processor_get_firmware_range(uint8_t area);
-
-fd_boot_data_t *fd_hal_processor_get_boot_data_address(void);
-
 uint8_t *fd_hal_processor_get_provision_map_address(void);
 
 void fd_hal_processor_write_user_data(uint8_t *data, uint32_t length);

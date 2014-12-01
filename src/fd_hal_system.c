@@ -2,6 +2,7 @@
 #include "fd_boot.h"
 #include "fd_control_codes.h"
 #include "fd_event.h"
+#include "fd_hal_aes.h"
 #include "fd_hal_processor.h"
 #include "fd_hal_system.h"
 #include "fd_pins.h"
@@ -40,20 +41,39 @@
 
 static const uint8_t fd_hal_system_firmware_commit[] = {FIRMWARE_COMMIT};
 
-fd_range_t fd_hal_system_get_firmware_update_range(uint8_t area __attribute__((unused))) {
-    return fd_range_make(0, 0x40000);
+bool fd_hal_system_get_update_external_flash_range(uint8_t area, fd_range_t *range) {
+    switch (area) {
+        case FD_HAL_SYSTEM_AREA_APPLICATION:
+            *range = fd_range_make(0, 0x40000);
+            return true;
+        default:
+            break;
+    }
+    return false;
 }
 
-void fd_hal_system_get_firmware_version(fd_hal_system_firmware_version_t *version) {
-    version->major = FIRMWARE_MAJOR;
-    version->minor = FIRMWARE_MINOR;
-    version->patch = FIRMWARE_PATCH;
-    version->capabilities = FIRMWARE_CAPABILITIES;
-    memcpy(version->commit, fd_hal_system_firmware_commit, FD_HAL_SYSTEM_COMMIT_SIZE);
+bool fd_hal_system_get_firmware_version(uint8_t area, fd_version_revision_t *version) {
+    switch (area) {
+        case FD_HAL_SYSTEM_AREA_BOOTLOADER:
+            version->major = FIRMWARE_MAJOR;
+            version->minor = FIRMWARE_MINOR;
+            version->patch = FIRMWARE_PATCH;
+            version->capabilities = FIRMWARE_CAPABILITIES;
+            memcpy(version->commit, fd_hal_system_firmware_commit, FD_VERSION_COMMIT_SIZE);
+            return true;
+        default:
+            break;
+    }
+    return false;
 }
 
-void fd_hal_system_get_boot_version(fd_hal_system_firmware_version_t *version) {
-    fd_boot_data_t boot_data = *fd_hal_processor_get_boot_data_address();
+static
+fd_boot_data_t *fd_hal_system_get_boot_data_address(void) {
+     return (fd_boot_data_t *)0x6f00;
+}
+
+void fd_hal_system_get_boot_version(fd_version_revision_t *version) {
+    fd_boot_data_t boot_data = *fd_hal_system_get_boot_data_address();
     if (boot_data.magic != FD_BOOT_MAGIC) {
         memset(&boot_data, 0, sizeof(fd_boot_data_t));
         boot_data.minor = 1;
@@ -62,13 +82,52 @@ void fd_hal_system_get_boot_version(fd_hal_system_firmware_version_t *version) {
     version->minor = boot_data.minor;
     version->patch = boot_data.patch;
     version->capabilities = boot_data.capabilities;
-    memcpy(version->commit, boot_data.git_commit, FD_HAL_SYSTEM_COMMIT_SIZE);
+    memcpy(version->commit, boot_data.git_commit, FD_VERSION_COMMIT_SIZE);
 }
 
-void fd_hal_system_get_hardware_version(fd_hal_system_hardware_version_t *version) {
+void fd_hal_system_get_hardware_version(fd_version_hardware_t *version) {
     version->major = HARDWARE_MAJOR;
     version->minor = HARDWARE_MINOR;
 }
+
+bool fd_hal_system_get_firmware_range(uint8_t area, fd_range_t *range) {
+    switch (area) {
+        case FD_HAL_SYSTEM_AREA_BOOTLOADER:
+            *range = fd_range_make(0x00000000, 0x00007000);
+            return true;
+        case FD_HAL_SYSTEM_AREA_APPLICATION:
+            *range = fd_range_make(0x00008000, 0x00040000 - 0x00008000);
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool fd_hal_system_get_crypto_key(uint8_t area __attribute__((unused)), uint8_t *key) {
+    fd_range_t range = fd_range_make(0x00007000, 0x00000800);
+    memcpy(key, (uint8_t *)range.address, FD_HAL_AES_KEY_SIZE);
+    return true;
+}
+
+static
+fd_range_t fd_hal_system_get_firmware_update_metadata_range(uint8_t area __attribute__((unused))) {
+    return fd_range_make(0x00007800, 0x00000800);
+}
+
+bool fd_hal_system_get_update_metadata(uint8_t area, fd_version_metadata_t *metadata) {
+    fd_version_metadata_stored_t *metadata_stored = (fd_version_metadata_stored_t *)fd_hal_system_get_firmware_update_metadata_range(area).address;
+    *metadata = metadata_stored->metadata;
+    return metadata_stored->magic == FD_VERSION_MAGIC;
+}
+
+void fd_hal_system_set_update_metadata(uint8_t area, fd_version_metadata_t *metadata) {
+    fd_version_metadata_stored_t metadata_stored;
+    metadata_stored.magic = FD_VERSION_MAGIC;
+    metadata_stored.metadata = *metadata;
+    fd_hal_processor_write_flash_data(fd_hal_system_get_firmware_update_metadata_range(area).address, (uint8_t *)&metadata_stored, sizeof(fd_version_metadata_stored_t));
+}
+
 
 void fd_hal_system_set_regulator(bool switching) {
     if (switching) {

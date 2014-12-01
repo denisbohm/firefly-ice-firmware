@@ -202,31 +202,11 @@ void fd_hal_processor_set_debug_lock(void) {
 void fd_hal_processor_get_hardware_id(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, fd_usb_get_vendor_id());
     fd_binary_put_uint16(binary, fd_usb_get_product_id());
-    fd_hal_system_hardware_version_t version;
+    fd_version_hardware_t version;
     fd_hal_system_get_hardware_version(&version);
     fd_binary_put_uint16(binary, version.major);
     fd_binary_put_uint16(binary, version.minor);
     fd_binary_put_uint64(binary, SYSTEM_GetUnique());
-}
-
-fd_range_t fd_hal_processor_get_boot_range(void) {
-    return fd_range_make(0x00000000, 0x00007000);
-}
-
-fd_range_t fd_hal_processor_get_crypto_range(uint8_t area __attribute__((unused))) {
-    return fd_range_make(0x00007000, 0x00000800);
-}
-
-fd_range_t fd_hal_processor_get_firmware_update_metadata_range(uint8_t area __attribute__((unused))) {
-    return fd_range_make(0x00007800, 0x00000800);
-}
-
-fd_range_t fd_hal_processor_get_firmware_range(uint8_t area __attribute__((unused))) {
-    return fd_range_make(0x00008000, 0x00040000 - 0x00008000);
-}
-
-fd_boot_data_t *fd_hal_processor_get_boot_data_address(void) {
-     return (fd_boot_data_t *)0x6f00;
 }
 
 #define USER_DATA_ADDRESS 0x0fe00000 // user data is 2kB

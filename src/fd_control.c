@@ -670,26 +670,44 @@ void fd_control_update_commit(fd_detour_source_collection_t *detour_source_colle
 
 ///////
 
-void fd_control_update_area_get_metadata(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_update_area_get_version(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint8_t area = fd_binary_get_uint8(&binary);
 
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_AREA_GET_VERSION);
+    uint32_t flags = 0;
+    fd_version_revision_t revision;
+    if (fd_hal_system_get_firmware_version(FD_HAL_SYSTEM_AREA_APPLICATION, &revision)) {
+        flags |= FD_CONTROL_UPDATE_AREA_GET_VERSION_FLAG_REVISION;
+    }
     fd_version_metadata_t metadata;
-    bool valid = fd_hal_system_get_update_metadata(area, &metadata);
+    if (fd_hal_system_get_update_metadata(area, &metadata)) {
+        flags |= FD_CONTROL_UPDATE_AREA_GET_VERSION_FLAG_METADATA;
+    }
+    fd_binary_put_uint32(binary_out, flags);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_AREA_GET_METADATA);
-    fd_binary_put_uint8(binary_out, valid ? 1 : 0);
-    fd_binary_put_uint32(binary_out, metadata.binary.flags);
-    fd_binary_put_uint32(binary_out, metadata.binary.length);
-    fd_binary_put_bytes(binary_out, metadata.binary.hash, sizeof(metadata.binary.hash));
-    fd_binary_put_bytes(binary_out, metadata.binary.crypt_hash, sizeof(metadata.binary.crypt_hash));
-    fd_binary_put_bytes(binary_out, metadata.binary.crypt_iv, sizeof(metadata.binary.crypt_iv));
-    fd_binary_put_uint16(binary_out, metadata.revision.major);
-    fd_binary_put_uint16(binary_out, metadata.revision.minor);
-    fd_binary_put_uint16(binary_out, metadata.revision.patch);
-    fd_binary_put_uint32(binary_out, metadata.revision.capabilities);
-    fd_binary_put_bytes(binary_out, metadata.revision.commit, sizeof(metadata.revision.commit));
+    if (flags & FD_CONTROL_UPDATE_AREA_GET_VERSION_FLAG_REVISION) {
+        fd_binary_put_uint16(binary_out, revision.major);
+        fd_binary_put_uint16(binary_out, revision.minor);
+        fd_binary_put_uint16(binary_out, revision.patch);
+        fd_binary_put_uint32(binary_out, revision.capabilities);
+        fd_binary_put_bytes(binary_out, revision.commit, FD_VERSION_COMMIT_SIZE);
+    }
+
+    if (flags & FD_CONTROL_UPDATE_AREA_GET_VERSION_FLAG_METADATA) {
+        fd_binary_put_uint32(binary_out, metadata.binary.flags);
+        fd_binary_put_uint32(binary_out, metadata.binary.length);
+        fd_binary_put_bytes(binary_out, metadata.binary.hash, sizeof(metadata.binary.hash));
+        fd_binary_put_bytes(binary_out, metadata.binary.crypt_hash, sizeof(metadata.binary.crypt_hash));
+        fd_binary_put_bytes(binary_out, metadata.binary.crypt_iv, sizeof(metadata.binary.crypt_iv));
+        fd_binary_put_uint16(binary_out, metadata.revision.major);
+        fd_binary_put_uint16(binary_out, metadata.revision.minor);
+        fd_binary_put_uint16(binary_out, metadata.revision.patch);
+        fd_binary_put_uint32(binary_out, metadata.revision.capabilities);
+        fd_binary_put_bytes(binary_out, metadata.revision.commit, sizeof(metadata.revision.commit));
+    }
+
     fd_control_send_complete(detour_source_collection);
 }
 
@@ -827,7 +845,7 @@ void fd_control_initialize_commands(void) {
     fd_control_commands[FD_CONTROL_UPDATE_WRITE_PAGE] = fd_control_update_write_page;
     fd_control_commands[FD_CONTROL_UPDATE_COMMIT] = fd_control_update_commit;
 
-    fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_METADATA] = fd_control_update_area_get_metadata;
+    fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_VERSION] = fd_control_update_area_get_version;
     fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_EXTERNAL_HASH] = fd_control_update_area_get_external_hash;
     fd_control_commands[FD_CONTROL_UPDATE_AREA_GET_SECTOR_HASHES] = fd_control_update_area_get_sector_hashes;
     fd_control_commands[FD_CONTROL_UPDATE_AREA_ERASE_SECTORS] = fd_control_update_area_erase_sectors;

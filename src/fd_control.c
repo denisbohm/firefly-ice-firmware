@@ -529,7 +529,7 @@ void fd_control_update_get_external_hash_impl(
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
-        fd_binary_get_uint8(&binary);
+        area = fd_binary_get_uint8(&binary);
     }
     uint32_t external_address = fd_binary_get_uint32(&binary);
     uint32_t external_length = fd_binary_get_uint32(&binary);
@@ -547,7 +547,7 @@ void fd_control_update_get_sector_hashes_impl(
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
-        fd_binary_get_uint8(&binary);
+        area = fd_binary_get_uint8(&binary);
     }
     uint32_t sector_count = fd_binary_get_uint8(&binary);
 
@@ -570,7 +570,7 @@ void fd_control_update_erase_sectors_impl(
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
-        fd_binary_get_uint8(&binary);
+        area = fd_binary_get_uint8(&binary);
     }
     uint32_t sector_count = fd_binary_get_uint8(&binary);
     for (uint32_t i = 0; i < sector_count; ++i) {
@@ -586,7 +586,7 @@ void fd_control_update_write_page_impl(
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
-        fd_binary_get_uint8(&binary);
+        area = fd_binary_get_uint8(&binary);
     }
     uint32_t page = fd_binary_get_uint16(&binary);
     uint8_t *page_data = &binary.buffer[binary.get_index];
@@ -600,7 +600,7 @@ void fd_control_update_read_page_impl(
     fd_binary_initialize(&binary, data, length);
     uint8_t area = 0;
     if (withArea) {
-        fd_binary_get_uint8(&binary);
+        area = fd_binary_get_uint8(&binary);
     }
     uint32_t page = fd_binary_get_uint32(&binary);
     uint8_t page_data[256];

@@ -93,8 +93,10 @@ uint8_t fd_update_commit(uint8_t area, fd_version_metadata_t *metadata) {
     }
 
 #ifdef DEBUG
-#warning debug is defined - firmware update commit is not enabled
-    return FD_UPDATE_COMMIT_FAIL_UNSUPPORTED;
+#warning debug is defined - firmware update commit is not enabled for primary
+    if (area <= FD_HAL_SYSTEM_AREA_OPERATING_SYSTEM) {
+        return FD_UPDATE_COMMIT_FAIL_UNSUPPORTED;
+    }
 #endif
 
     fd_version_metadata_t update_metadata;

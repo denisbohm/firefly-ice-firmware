@@ -678,7 +678,7 @@ void fd_control_update_area_get_version(fd_detour_source_collection_t *detour_so
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_AREA_GET_VERSION);
     uint32_t flags = 0;
     fd_version_revision_t revision;
-    if (fd_hal_system_get_firmware_version(FD_HAL_SYSTEM_AREA_APPLICATION, &revision)) {
+    if (fd_hal_system_get_firmware_version(area, &revision)) {
         flags |= FD_CONTROL_UPDATE_AREA_GET_VERSION_FLAG_REVISION;
     }
     fd_version_metadata_t metadata;

@@ -209,6 +209,11 @@ void fd_hal_processor_get_hardware_id(fd_binary_t *binary) {
     fd_binary_put_uint64(binary, SYSTEM_GetUnique());
 }
 
+void fd_hal_processor_get_hardware_unique(fd_binary_t *binary) {
+    fd_binary_put_uint8(binary, 8); // length
+    fd_binary_put_uint64(binary, SYSTEM_GetUnique()); // bytes
+}
+
 #define USER_DATA_ADDRESS 0x0fe00000 // user data is 2kB
 
 uint8_t *fd_hal_processor_get_provision_map_address(void) {

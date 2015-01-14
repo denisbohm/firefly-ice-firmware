@@ -25,7 +25,8 @@ void fd_hal_processor_interrupts_enable(void);
 bool fd_hal_processor_get_debug_lock(void);
 void fd_hal_processor_set_debug_lock(void);
 
-void fd_hal_processor_get_hardware_id(fd_binary_t *binary);
+void fd_hal_processor_get_hardware_id(fd_binary_t *binary); // deprecated
+void fd_hal_processor_get_hardware_unique(fd_binary_t *binary);
 
 uint8_t *fd_hal_processor_get_provision_map_address(void);
 

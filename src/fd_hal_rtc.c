@@ -10,6 +10,13 @@
 
 static volatile uint32_t rtc_countdown;
 
+void fd_hal_rtc_set_utc_offset(int32_t utc_offset __attribute__((unused))) {
+}
+
+int32_t fd_hal_rtc_get_utc_offset(void) {
+    return 0;
+}
+
 void fd_hal_rtc_initialize(void) {
     rtc_countdown = 0;
 

@@ -4,11 +4,13 @@
 #include "fd_control_codes.h"
 #include "fd_event.h"
 #include "fd_hal_aes.h"
+#include "fd_hal_ble.h"
 #include "fd_hal_processor.h"
 #include "fd_hal_reset.h"
 #include "fd_hal_rtc.h"
 #include "fd_hal_system.h"
 #include "fd_hal_ui.h"
+#include "fd_hal_usb.h"
 #include "fd_lock.h"
 #include "fd_log.h"
 #include "fd_main.h"
@@ -117,6 +119,57 @@ void fd_control_ping(fd_detour_source_collection_t *detour_source_collection, ui
     fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_PING);
     fd_binary_put_uint16(binary_out, ping_length);
     fd_binary_put_bytes(binary_out, ping_data, ping_length);
+    fd_control_send_complete(detour_source_collection);
+}
+
+void fd_control_rtc(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t flags = fd_binary_get_uint32(&binary);
+    if (flags & FD_CONTROL_RTC_FLAG_SET_TIME) {
+        fd_time_t time;
+        time.seconds = fd_binary_get_uint32(&binary);
+        time.microseconds = fd_binary_get_uint32(&binary);
+        fd_hal_rtc_set_time(time);
+    }
+    if (flags & FD_CONTROL_RTC_FLAG_SET_UTC_OFFSET) {
+        int32_t utc_offset = fd_binary_get_uint32(&binary);
+        fd_hal_rtc_set_utc_offset(utc_offset);
+    }
+
+    if (flags & (FD_CONTROL_RTC_FLAG_GET_TIME | FD_CONTROL_RTC_FLAG_GET_UTC_OFFSET)) {
+        fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_RTC);
+        fd_binary_put_uint32(binary_out, flags);
+        if (flags & FD_CONTROL_RTC_FLAG_GET_TIME) {
+            fd_time_t time = fd_hal_rtc_get_time();
+            fd_binary_put_uint32(binary_out, time.seconds);
+            fd_binary_put_uint32(binary_out, time.microseconds);
+        }
+        if (flags & FD_CONTROL_RTC_FLAG_GET_UTC_OFFSET) {
+            int32_t utc_offset = fd_hal_rtc_get_utc_offset();
+            fd_binary_put_uint32(binary_out, utc_offset);
+        }
+        fd_control_send_complete(detour_source_collection);
+    }
+}
+
+void fd_control_hardware(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t flags = fd_binary_get_uint32(&binary);
+
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_HARDWARE);
+    fd_binary_put_uint32(binary_out, flags);
+    if (flags & FD_CONTROL_HARDWARE_FLAG_GET_UNIQUE) {
+        fd_hal_processor_get_hardware_unique(binary_out);
+    }
+    if (flags & FD_CONTROL_HARDWARE_FLAG_GET_USB) {
+        fd_binary_put_uint16(binary_out, fd_hal_usb_get_vendor_id());
+        fd_binary_put_uint16(binary_out, fd_hal_usb_get_product_id());
+    }
+    if (flags & FD_CONTROL_HARDWARE_FLAG_GET_BLE) {
+        fd_hal_ble_get_primary_service_uuid(binary_out);
+    }
     fd_control_send_complete(detour_source_collection);
 }
 
@@ -837,6 +890,8 @@ void fd_control_initialize_commands(void) {
     fd_control_commands[FD_CONTROL_SET_PROPERTIES] = fd_control_set_properties;
     fd_control_commands[FD_CONTROL_PROVISION] = fd_control_provision;
     fd_control_commands[FD_CONTROL_RESET] = fd_control_reset;
+    fd_control_commands[FD_CONTROL_RTC] = fd_control_rtc;
+    fd_control_commands[FD_CONTROL_HARDWARE] = fd_control_hardware;
 
     fd_control_commands[FD_CONTROL_UPDATE_GET_EXTERNAL_HASH] = fd_control_update_get_external_hash;
     fd_control_commands[FD_CONTROL_UPDATE_READ_PAGE] = fd_control_update_read_page;

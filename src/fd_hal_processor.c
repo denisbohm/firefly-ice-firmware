@@ -239,3 +239,12 @@ void fd_hal_processor_write_flash_data(uint32_t address, uint8_t *data, uint32_t
     MSC_Deinit();
     fd_hal_processor_interrupts_enable();
 }
+
+// !!! assumes length fits in page indicated by address -denis
+void fd_hal_processor_erase_flash_data(uint32_t address, uint32_t length __attribute__((unused))) {
+    fd_hal_processor_interrupts_disable();
+    MSC_Init();
+    MSC_ErasePage((void *)address);
+    MSC_Deinit();
+    fd_hal_processor_interrupts_enable();
+}

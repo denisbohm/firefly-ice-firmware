@@ -33,5 +33,6 @@ uint8_t *fd_hal_processor_get_provision_map_address(void);
 void fd_hal_processor_write_user_data(uint8_t *data, uint32_t length);
 
 void fd_hal_processor_write_flash_data(uint32_t address, uint8_t *data, uint32_t length);
+void fd_hal_processor_erase_flash_data(uint32_t address, uint32_t length);
 
 #endif

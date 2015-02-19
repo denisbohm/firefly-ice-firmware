@@ -74,21 +74,21 @@ uint8_t fd_update_commit(uint8_t area, fd_version_metadata_t *metadata) {
     uint32_t data_base_address = range.address;
     fd_sha1(fd_hal_external_flash_read, data_base_address, metadata->binary.length, external_hash);
     fd_hal_external_flash_sleep();
-    if (!fd_sha1_is_equal(metadata->binary.hash, external_hash)) {
-        return FD_UPDATE_COMMIT_FAIL_HASH_MISMATCH;
+    if (!fd_sha1_is_equal(metadata->binary.crypt_hash, external_hash)) {
+        return FD_UPDATE_COMMIT_FAIL_CRYPT_HASH_MISMATCH;
     }
 
     if (metadata->binary.flags & FD_VERSION_METADATA_FLAG_ENCRYPTED) {
-        uint8_t crypt_hash[FD_SHA_HASH_SIZE];
+        uint8_t hash[FD_SHA_HASH_SIZE];
         uint8_t key[FD_HAL_AES_KEY_SIZE];
         fd_hal_system_get_crypto_key(area, key);
         fd_hal_aes_decrypt_start(&decrypt, key, metadata->binary.crypt_iv);
         fd_hal_external_flash_wake();
-        fd_sha1(decrypt_get, data_base_address, metadata->binary.length, crypt_hash);
+        fd_sha1(decrypt_get, data_base_address, metadata->binary.length, hash);
         fd_hal_external_flash_sleep();
         fd_hal_aes_decrypt_stop(&decrypt);
-        if (!fd_sha1_is_equal(crypt_hash, metadata->binary.crypt_hash)) {
-            return FD_UPDATE_COMMIT_FAIL_CRYPT_HASH_MISMATCH;
+        if (!fd_sha1_is_equal(hash, metadata->binary.hash)) {
+            return FD_UPDATE_COMMIT_FAIL_HASH_MISMATCH;
         }
     }
 

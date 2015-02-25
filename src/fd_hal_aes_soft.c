@@ -575,7 +575,9 @@ void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
 #endif // #if defined(CBC) && CBC
 
 void fd_hal_aes_decrypt_start(fd_hal_aes_decrypt_t *decrypt __attribute__((unused)), const uint8_t *key, const uint8_t *iv) {
-    AES128_CBC_decrypt_buffer(0, 0,  0, key, iv);
+    uint8_t output[KEYLEN];
+    uint8_t input[KEYLEN];
+    AES128_CBC_decrypt_buffer(output, input,  0, key, iv);
 }
 
 void fd_hal_aes_decrypt_blocks(fd_hal_aes_decrypt_t *decrypt __attribute__((unused)), uint8_t *in, uint8_t *out, uint32_t length) {

@@ -120,7 +120,9 @@ void SHA1_Update(SHA_CTX *context, sha1_byte *data, unsigned int len) {
             memcpy(&context->buffer[j], data, (i = 64-j));
             SHA1_Transform(context->state, context->buffer);
             for ( ; i + 63 < len; i += 64) {
-                SHA1_Transform(context->state, &data[i]);
+                sha1_byte buffer[64];
+                memcpy(buffer, &data[i], 64);
+                SHA1_Transform(context->state, buffer);
             }
             j = 0;
         }

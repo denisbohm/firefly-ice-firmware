@@ -231,20 +231,20 @@ void fd_hal_processor_write_user_data(uint8_t *data, uint32_t length) {
     fd_hal_processor_interrupts_enable();
 }
 
-void fd_hal_processor_write_flash_data(uint32_t address, uint8_t *data, uint32_t length) {
+void fd_hal_processor_write_flash_data(void *address, uint8_t *data, size_t length) {
     fd_hal_processor_interrupts_disable();
     MSC_Init();
-    MSC_ErasePage((void *)address);
-    MSC_WriteWord((void *)address, data, length);
+    MSC_ErasePage(address);
+    MSC_WriteWord(address, data, length);
     MSC_Deinit();
     fd_hal_processor_interrupts_enable();
 }
 
 // !!! assumes length fits in page indicated by address -denis
-void fd_hal_processor_erase_flash_data(uint32_t address, uint32_t length __attribute__((unused))) {
+void fd_hal_processor_erase_flash_data(void *address, size_t length __attribute__((unused))) {
     fd_hal_processor_interrupts_disable();
     MSC_Init();
-    MSC_ErasePage((void *)address);
+    MSC_ErasePage(address);
     MSC_Deinit();
     fd_hal_processor_interrupts_enable();
 }

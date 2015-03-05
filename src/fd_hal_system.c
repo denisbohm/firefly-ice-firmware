@@ -127,7 +127,7 @@ void fd_hal_system_set_update_metadata(uint8_t area, fd_version_metadata_t *meta
     fd_version_metadata_stored_t metadata_stored;
     metadata_stored.magic = FD_VERSION_MAGIC;
     metadata_stored.metadata = *metadata;
-    fd_hal_processor_write_flash_data(fd_hal_system_get_firmware_update_metadata_range(area).address, (uint8_t *)&metadata_stored, sizeof(fd_version_metadata_stored_t));
+    fd_hal_processor_write_flash_data((void *)fd_hal_system_get_firmware_update_metadata_range(area).address, (uint8_t *)&metadata_stored, sizeof(fd_version_metadata_stored_t));
 }
 
 void fd_hal_system_set_regulator(bool switching) {

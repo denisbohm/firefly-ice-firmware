@@ -23,8 +23,6 @@ fd_time_t fd_hal_rtc_get_time(void);
 
 fd_time_t fd_hal_rtc_get_accurate_time(void);
 
-typedef void (*fd_hal_rtc_callback_t)(void);
-
 void fd_hal_rtc_set_countdown(uint32_t countdown);
 uint32_t fd_hal_rtc_get_countdown(void);
 

@@ -91,8 +91,8 @@ double fd_power_estimate_battery_level(void) {
 
 void fd_power_initialize(void) {
     fd_hal_reset_retained_t *retained = RETAINED;
-    if (retained->power_battery_level == 0) {
-        // battery level is uninitialized/unknown, so make a guess... -denis
+    if ((retained->power_battery_level <= 0) || (retained->power_battery_level > 1.0)) {
+        // battery level is uninitialized/unknown/bogus, so make a guess... -denis
         retained->power_battery_level = fd_power_estimate_battery_level();
     }
 

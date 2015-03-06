@@ -219,9 +219,12 @@ void fd_control_get_property_hardware_id(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_site(fd_binary_t *binary) {
-    uint8_t *site;
-    uint16_t site_length;
-    fd_map_get(fd_hal_processor_get_provision_map_address(), "site", FD_MAP_TYPE_UTF8, &site, &site_length);
+    uint8_t *site = 0;
+    uint16_t site_length = 0;
+    uint8_t *address = fd_hal_processor_get_provision_map_address();
+    if (address != 0) {
+        fd_map_get(address, "site", FD_MAP_TYPE_UTF8, &site, &site_length);
+    }
 
     fd_binary_put_uint16(binary, site_length);
     fd_binary_put_bytes(binary, site, site_length);
@@ -343,8 +346,11 @@ void fd_control_set_property_logging(fd_binary_t *binary) {
 }
 
 uint32_t fd_control_get_name(uint8_t **name) {
-    uint16_t length;
-    fd_map_get(fd_hal_processor_get_provision_map_address(), "name", FD_MAP_TYPE_UTF8, name, &length);
+    uint16_t length = 0;
+    uint8_t *address = fd_hal_processor_get_provision_map_address();
+    if (address != 0) {
+        fd_map_get(address, "name", FD_MAP_TYPE_UTF8, name, &length);
+    }
     return length;
 }
 
@@ -945,14 +951,21 @@ void fd_control_command(void) {
         // get the command info
         fd_control_input_t *input = &fd_control_inputs[0];
         detour_source_collection = input->detour_source_collection;
-        memcpy(fd_control_command_buffer, fd_control_input_buffer, input->length);
-        length = input->length;
+        uint32_t input_length = input->length;
+        if (input_length <= sizeof(fd_control_command_buffer)) {
+            length = input_length;
+            memcpy(fd_control_command_buffer, fd_control_input_buffer, input_length);
+        } else {
+            // to much data from the detour source to fit in the command buffer, so just ignore it -denis
+            fd_log_assert_fail("command buffer size exceeded");
+            length = 0;
+        }
 
         // remove it from the inputs
         --fd_control_inputs_count;
         memmove(fd_control_inputs, &fd_control_inputs[1], sizeof(fd_control_input_t) * fd_control_inputs_count);
-        fd_control_input_buffer_count -= length;
-        memmove(fd_control_input_buffer, &fd_control_input_buffer[length], fd_control_input_buffer_count);
+        fd_control_input_buffer_count -= input_length;
+        memmove(fd_control_input_buffer, &fd_control_input_buffer[input_length], fd_control_input_buffer_count);
     }
     fd_hal_processor_interrupts_enable();
 

@@ -62,14 +62,14 @@ void fd_event_set(uint32_t events) {
     fd_event_pending |= events;
 }
 
-void fd_event_process(void) {
+bool fd_event_process_pending(void) {
     fd_hal_processor_interrupts_disable();
     uint32_t pending = fd_event_pending;
     fd_event_pending = 0;
     fd_hal_processor_interrupts_enable();
-
+    
     fd_hal_reset_feed_watchdog();
-
+    
     if (pending) {
         fd_event_item_t *item = fd_event_items;
         fd_event_item_t *end = &fd_event_items[fd_event_item_count];
@@ -78,7 +78,13 @@ void fd_event_process(void) {
                 (*item->callback)();
             }
         }
-    } else {
+    }
+    return pending != 0;
+}
+
+void fd_event_process(void) {
+    bool pending = fd_event_process_pending();
+    if (!pending) {
         for (uint32_t i = 0; i < fd_event_em2_check_count; ++i) {
             fd_event_em2_check_t em2_check = fd_event_em2_checks[i];
             if (!em2_check()) {

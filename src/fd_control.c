@@ -942,8 +942,8 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
 
 void fd_control_command(void) {
     int count;
-    fd_detour_source_collection_t *detour_source_collection;
-    uint32_t length;
+    fd_detour_source_collection_t *detour_source_collection = 0;
+    uint32_t length = 0;
 
     fd_hal_processor_interrupts_disable();
     count = fd_control_inputs_count;

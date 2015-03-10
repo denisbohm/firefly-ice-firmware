@@ -5,6 +5,8 @@
 #include "fd_sha.h"
 #include "fd_update.h"
 
+#include "sha.h"
+
 #include <string.h>
 
 void fd_update_get_external_hash(uint8_t area, uint32_t address, uint32_t length, uint8_t *hash) {
@@ -62,8 +64,9 @@ void fd_update_read_page(uint8_t area, uint32_t page, uint8_t *data) {
 static fd_hal_aes_decrypt_t decrypt;
 
 static void decrypt_get(uint32_t address, uint8_t *data, uint32_t length) {
-    fd_hal_external_flash_read(address, data, length);
-    fd_hal_aes_decrypt_blocks(&decrypt, data, data, length);
+    uint8_t in[SHA1_BLOCK_LENGTH];
+    fd_hal_external_flash_read(address, in, length);
+    fd_hal_aes_decrypt_blocks(&decrypt, in, data, length);
 }
 
 uint8_t fd_update_commit(uint8_t area, fd_version_metadata_t *metadata) {

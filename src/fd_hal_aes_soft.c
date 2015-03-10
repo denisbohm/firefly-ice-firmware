@@ -67,7 +67,7 @@ static const uint8_t* Key;
 
 #if defined(CBC) && CBC
   // Initial Vector used only for CBC mode
-  static uint8_t* Iv;
+  static uint8_t Iv[KEYLEN];
 #endif
 
 // The lookup-tables are marked const so they can be placed in read-only storage instead of RAM
@@ -507,7 +507,8 @@ void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
 
   if(iv != 0)
   {
-    Iv = (uint8_t*)iv;
+      memcpy(Iv, iv, KEYLEN);
+//    Iv = (uint8_t*)iv;
   }
 
   for(i = 0; i < length; i += KEYLEN)
@@ -516,7 +517,8 @@ void AES128_CBC_encrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
     BlockCopy(output, input);
     state = (state_t*)output;
     Cipher();
-    Iv = output;
+    memcpy(Iv, output, KEYLEN);
+//    Iv = output;
     input += KEYLEN;
     output += KEYLEN;
   }
@@ -548,7 +550,8 @@ void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
   // If iv is passed as 0, we continue to encrypt without re-setting the Iv
   if(iv != 0)
   {
-    Iv = (uint8_t*)iv;
+      memcpy(Iv, iv, KEYLEN);
+//    Iv = (uint8_t*)iv;
   }
 
   for(i = 0; i < length; i += KEYLEN)
@@ -557,7 +560,8 @@ void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
     state = (state_t*)output;
     InvCipher();
     XorWithIv(output);
-    Iv = input;
+    memcpy(Iv, input, KEYLEN);
+//    Iv = input;
     input += KEYLEN;
     output += KEYLEN;
   }
@@ -577,15 +581,12 @@ void AES128_CBC_decrypt_buffer(uint8_t* output, uint8_t* input, uint32_t length,
 void fd_hal_aes_decrypt_start(fd_hal_aes_decrypt_t *decrypt __attribute__((unused)), const uint8_t *key, const uint8_t *iv) {
     uint8_t output[KEYLEN];
     uint8_t input[KEYLEN];
+    memset(input, 0, KEYLEN);
     AES128_CBC_decrypt_buffer(output, input,  0, key, iv);
 }
 
 void fd_hal_aes_decrypt_blocks(fd_hal_aes_decrypt_t *decrypt __attribute__((unused)), uint8_t *in, uint8_t *out, uint32_t length) {
-    for (uint32_t i = 0; i < length; i += 16) {
-        AES128_CBC_decrypt_buffer(out, in, 16, 0, 0);
-        in += 16;
-        out += 16;
-    }
+    AES128_CBC_decrypt_buffer(out, in, length, 0, 0);
 }
 
 void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused))) {

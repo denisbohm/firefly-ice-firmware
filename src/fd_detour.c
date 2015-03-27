@@ -131,21 +131,27 @@ void fd_detour_source_collection_initialize(fd_detour_source_collection_t *colle
     collection->buffer = buffer;
     collection->bufferSize = bufferSize;
     collection->bufferCount = 0;
+    collection->callback = 0;
 }
 
 bool fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {
+    bool result = false;
     uint32_t bufferCount = collection->bufferCount;
     while (true) {
         if ((collection->bufferCount + collection->packetSize) > collection->bufferSize) {
             collection->bufferCount = bufferCount;
-            return false;
+            break;
         }
         if (!fd_detour_source_get(source, &collection->buffer[collection->bufferCount], collection->packetSize)) {
+            result = true;
             break;
         }
         collection->bufferCount += collection->packetSize;
     }
-    return true;
+    if (collection->callback) {
+        collection->callback();
+    }
+    return result;
 }
 
 bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, uint8_t *buffer) {

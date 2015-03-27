@@ -44,12 +44,15 @@ typedef struct fd_detour_source {
     uint32_t offset;
 } fd_detour_source_t;
 
+typedef void (*fd_detour_source_callback_t)(void);
+
 typedef struct {
     fd_lock_owner_t owner;
     uint32_t packetSize;
     uint8_t *buffer;
     uint32_t bufferSize;
     uint32_t bufferCount;
+    fd_detour_source_callback_t callback;
 } fd_detour_source_collection_t;
 
 void fd_detour_initialize(fd_detour_t *detour, uint8_t *data, uint32_t size);

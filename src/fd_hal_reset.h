@@ -7,6 +7,8 @@
 
 #define FD_HAL_RESET_RETAINED_BASE 0x20000000
 
+#define FD_HAL_RESET_STARTUP_COMMAND_ENTER_STORAGE_MODE 0x4d534543
+
 typedef struct {
     uint32_t magic;
 
@@ -19,6 +21,8 @@ typedef struct {
     uint8_t watchdog_context[4];
 
     uint8_t context[4];
+
+    uint32_t startup_command;
 } fd_hal_reset_retained_t;
 
 #define RETAINED ((fd_hal_reset_retained_t *)FD_HAL_RESET_RETAINED_BASE)

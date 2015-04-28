@@ -586,7 +586,7 @@ void fd_control_update_get_external_hash_impl(
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t area = 0;
+    uint8_t area = FD_HAL_SYSTEM_AREA_APPLICATION;
     if (withArea) {
         area = fd_binary_get_uint8(&binary);
     }
@@ -604,7 +604,7 @@ void fd_control_update_get_sector_hashes_impl(
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t area = 0;
+    uint8_t area = FD_HAL_SYSTEM_AREA_APPLICATION;
     if (withArea) {
         area = fd_binary_get_uint8(&binary);
     }
@@ -627,7 +627,7 @@ void fd_control_update_erase_sectors_impl(
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t area = 0;
+    uint8_t area = FD_HAL_SYSTEM_AREA_APPLICATION;
     if (withArea) {
         area = fd_binary_get_uint8(&binary);
     }
@@ -643,7 +643,7 @@ void fd_control_update_write_page_impl(
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t area = 0;
+    uint8_t area = FD_HAL_SYSTEM_AREA_APPLICATION;
     if (withArea) {
         area = fd_binary_get_uint8(&binary);
     }
@@ -657,7 +657,7 @@ void fd_control_update_read_page_impl(
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t area = 0;
+    uint8_t area = FD_HAL_SYSTEM_AREA_APPLICATION;
     if (withArea) {
         area = fd_binary_get_uint8(&binary);
     }
@@ -677,7 +677,7 @@ void fd_control_update_commit_impl(
 
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
-    uint8_t area = 0;
+    uint8_t area = FD_HAL_SYSTEM_AREA_APPLICATION;
     if (withArea) {
         area = fd_binary_get_uint8(&binary);
     }

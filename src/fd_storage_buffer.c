@@ -115,6 +115,30 @@ void fd_storage_buffer_add(fd_storage_buffer_t *storage_buffer, uint8_t *data, u
 #define SIZEOF_UINT32 4
 #define SIZEOF_FLOAT16 2
 
+void fd_storage_buffer_add_time_series_s(
+    fd_storage_buffer_t *storage_buffer, uint32_t time_s, uint16_t interval_s, uint8_t *data, uint32_t length
+) {
+    if ((storage_buffer->index + length) > FD_STORAGE_MAX_DATA_LENGTH) {
+        fd_storage_buffer_flush(storage_buffer);
+    }
+    if (storage_buffer->index > 0) {
+        uint32_t next_time = fd_binary_unpack_uint32(&storage_buffer->data[0]);
+        uint32_t count = (storage_buffer->index - SIZEOF_UINT32 - SIZEOF_UINT16) / length;
+        next_time += count * interval_s;
+        if (time_s != next_time) {
+            fd_storage_buffer_flush(storage_buffer);
+        }
+    }
+    if (storage_buffer->index == 0) {
+        fd_binary_pack_uint32(&storage_buffer->data[storage_buffer->index], time_s);
+        storage_buffer->index += SIZEOF_UINT32;
+        fd_binary_pack_uint16(&storage_buffer->data[storage_buffer->index], interval_s);
+        storage_buffer->index += SIZEOF_UINT16;
+    }
+    memcpy(&storage_buffer->data[storage_buffer->index], data, length);
+    storage_buffer->index += length;
+}
+
 void fd_storage_buffer_add_time_series_s_float16(
     fd_storage_buffer_t *storage_buffer, uint32_t time_s, uint16_t interval_s, float value
 ) {

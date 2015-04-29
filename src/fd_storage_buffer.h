@@ -24,6 +24,10 @@ void fd_storage_buffer_flush(fd_storage_buffer_t *storage_buffer);
 
 void fd_storage_buffer_add(fd_storage_buffer_t *storage_buffer, uint8_t *data, uint32_t length);
 
+void fd_storage_buffer_add_time_series_s(
+    fd_storage_buffer_t *storage_buffer, uint32_t time_s, uint16_t interval_s, uint8_t *data, uint32_t length
+);
+
 void fd_storage_buffer_add_time_series_s_float16(
     fd_storage_buffer_t *storage_buffer, uint32_t time_s, uint16_t interval_s, float value
 );

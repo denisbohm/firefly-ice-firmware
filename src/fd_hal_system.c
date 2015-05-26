@@ -151,6 +151,16 @@ float fd_hal_system_get_regulated_voltage(void) {
     return 2.5f;
 }
 
+double fd_hal_system_get_charge_level_change_per_minute(void) {
+    // full charge over 2 hours
+    return 1.0 / (2.0 * 60.0);
+}
+
+double fd_hal_system_get_discharge_level_change_per_minute(void) {
+    // full discharge over 2 weeks
+    return 1.0 / (14.0 * 24.0 * 60.0);
+}
+
 bool fd_hal_system_is_charging(void) {
     return GPIO_PinInGet(CHG_STAT_PORT_PIN) == 0;
 }

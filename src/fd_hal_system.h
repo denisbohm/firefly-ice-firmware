@@ -29,8 +29,10 @@ bool fd_hal_system_get_regulator(void);
 
 float fd_hal_system_get_regulated_voltage(void);
 
-bool fd_hal_system_is_charging(void);
+double fd_hal_system_get_charge_level_change_per_minute(void);
+double fd_hal_system_get_discharge_level_change_per_minute(void);
 
+bool fd_hal_system_is_charging(void);
 float fd_hal_system_get_temperature(void);
 float fd_hal_system_get_battery_voltage(void);
 float fd_hal_system_get_charge_current(void);

@@ -12,7 +12,12 @@ typedef struct {
     float temperature;
 } fd_power_t;
 
+typedef void (*fd_power_callback_t)(void);
+
 void fd_power_initialize(void);
+
+void fd_power_set_low_battery_level_callback(fd_power_callback_t callback);
+fd_power_callback_t fd_power_get_low_battery_level_callback(void);
 
 void fd_power_get(fd_power_t *power);
 void fd_power_set(float battery_level);

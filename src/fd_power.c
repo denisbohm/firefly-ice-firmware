@@ -10,7 +10,9 @@
 static fd_timer_t fd_power_update_timer;
 static uint32_t fd_power_high_start;
 static uint32_t fd_power_low_start;
+static bool fd_power_low_battery;
 static fd_power_callback_t fd_power_low_battery_level_callback;
+static fd_power_callback_t fd_power_high_battery_level_callback;
 
 #define UPDATE_INTERVAL 60
 
@@ -46,19 +48,39 @@ void fd_power_sanity_check(void) {
     }
 
     // sanity check for almost discharged battery
+    bool low_power_condition = false;
     if (battery_voltage < 3.5f) {
         if (fd_power_low_start == 0) {
             fd_power_low_start = fd_hal_rtc_get_seconds();
         }
         uint32_t duration = fd_hal_rtc_get_seconds() - fd_power_low_start;
         if (duration >= FD_POWER_LOW_DURATION) {
-            // The battery appears to be almost discharged.
+            // the battery appears to be almost discharged
             if (RETAINED->power_battery_level > 0.05) {
                 RETAINED->power_battery_level = 0.05;
+            }
+
+            // low power condition if there isn't usb power present
+            if (!is_usb_powered) {
+                low_power_condition = true;
+                if (!fd_power_low_battery) {
+                    fd_power_low_battery = true;
+                    if (fd_power_low_battery_level_callback) {
+                        fd_power_low_battery_level_callback();
+                    }
+                }
             }
         }
     } else {
         fd_power_low_start = 0;
+    }
+
+    // !!! need to add some hysteresis -denis
+    if (fd_power_low_battery && !low_power_condition) {
+        fd_power_low_battery = false;
+        if (fd_power_high_battery_level_callback) {
+            fd_power_high_battery_level_callback();
+        }
     }
 }
 
@@ -82,12 +104,6 @@ void fd_power_charge_current_callback(void) {
     }
 
     fd_power_sanity_check();
-
-    if (RETAINED->power_battery_level < 0.05) {
-        if (fd_power_low_battery_level_callback) {
-            fd_power_low_battery_level_callback();
-        }
-    }
 }
 
 double fd_power_estimate_battery_level(void) {
@@ -123,16 +139,26 @@ fd_power_callback_t fd_power_get_low_battery_level_callback(void) {
     return fd_power_low_battery_level_callback;
 }
 
+void fd_power_set_high_battery_level_callback(fd_power_callback_t callback) {
+    fd_power_high_battery_level_callback = callback;
+}
+
+fd_power_callback_t fd_power_get_high_battery_level_callback(void) {
+    return fd_power_high_battery_level_callback;
+}
+
 void fd_power_initialize(void) {
     fd_hal_reset_retained_t *retained = RETAINED;
-    if ((retained->power_battery_level <= 0) || (retained->power_battery_level > 1.0)) {
+    if ((retained->power_battery_level < 0.05) || (retained->power_battery_level > 1.0)) {
         // battery level is uninitialized/unknown/bogus, so make a guess... -denis
         retained->power_battery_level = fd_power_estimate_battery_level();
     }
 
     fd_power_high_start = 0;
     fd_power_low_start = 0;
+    fd_power_low_battery = false;
     fd_power_low_battery_level_callback = 0;
+    fd_power_high_battery_level_callback = 0;
 
     fd_event_add_callback(FD_EVENT_ADC_CHARGE_CURRENT, fd_power_charge_current_callback);
 

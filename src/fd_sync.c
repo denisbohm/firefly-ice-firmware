@@ -26,7 +26,7 @@ void fd_sync_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
     memcpy(data, &fd_sync_detour_buffer[offset], length);
 }
 
-void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
+void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
     uint32_t flags = 0;
     uint32_t offset = 0;
     if (length >= 4) {

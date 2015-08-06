@@ -77,6 +77,7 @@ void fd_power_sanity_check(void) {
 
     // !!! need to add some hysteresis -denis
     if (fd_power_low_battery && !low_power_condition) {
+        fd_power_low_start = 0;
         fd_power_low_battery = false;
         if (fd_power_high_battery_level_callback) {
             fd_power_high_battery_level_callback();

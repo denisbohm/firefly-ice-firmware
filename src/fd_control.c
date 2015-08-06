@@ -56,6 +56,9 @@ void fd_control_command(void);
 
 fd_control_command_t fd_control_commands[256];
 
+fd_control_callback_t fd_control_before_callback;
+fd_control_callback_t fd_control_after_callback;
+
 void fd_control_initialize(void) {
     fd_detour_source_initialize(&fd_control_detour_source);
 
@@ -66,6 +69,9 @@ void fd_control_initialize(void) {
     fd_control_initialize_commands();
 
     fd_event_add_callback(FD_EVENT_COMMAND, fd_control_command);
+
+    fd_control_before_callback = 0;
+    fd_control_after_callback = 0;
 }
 
 void fd_control_set_command(uint8_t code, fd_control_command_t command) {
@@ -936,7 +942,13 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
     uint8_t code = data[0];
     fd_control_command_t command = fd_control_commands[code];
     if (command) {
+        if (fd_control_before_callback) {
+            fd_control_before_callback(code);
+        }
         (*command)(detour_source_collection, &data[1], length - 1);
+        if (fd_control_after_callback) {
+            fd_control_after_callback(code);
+        }
     }
 }
 

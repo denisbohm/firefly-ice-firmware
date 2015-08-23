@@ -23,6 +23,7 @@
 #define FD_EVENT_BLE_STEP (1 << 16)
 #define FD_EVENT_COMMAND (1 << 17)
 #define FD_EVENT_LOCK_STATE (1 << 18)
+#define FD_EVENT_USB_POWER (1 << 19)
 
 typedef void (*fd_event_callback_t)(void);
 

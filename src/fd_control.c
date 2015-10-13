@@ -176,6 +176,9 @@ void fd_control_hardware(fd_detour_source_collection_t *detour_source_collection
     if (flags & FD_CONTROL_HARDWARE_FLAG_GET_BLE) {
         fd_hal_ble_get_primary_service_uuid(binary_out);
     }
+    if (flags & FD_CONTROL_HARDWARE_FLAG_GET_MODEL) {
+        fd_binary_put_uint32(binary_out, fd_hal_processor_get_model_number());
+    }
     fd_control_send_complete(detour_source_collection);
 }
 

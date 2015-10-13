@@ -28,6 +28,9 @@ void fd_hal_processor_set_debug_lock(void);
 
 void fd_hal_processor_get_hardware_id(fd_binary_t *binary); // deprecated
 void fd_hal_processor_get_hardware_unique(fd_binary_t *binary);
+uint32_t fd_hal_processor_get_model_number(void);
+void fd_hal_processor_get_serial_number_string(uint8_t *serial_number, uint32_t length);
+uint32_t fd_hal_processor_get_production_date(void);
 
 uint8_t *fd_hal_processor_get_provision_map_address(void);
 

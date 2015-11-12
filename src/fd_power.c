@@ -16,14 +16,8 @@ static fd_power_callback_t fd_power_high_battery_level_callback;
 
 #define UPDATE_INTERVAL 60
 
-#define FD_POWER_HIGH_DURATION (1 * 60)
+#define FD_POWER_HIGH_DURATION (2 * 60)
 #define FD_POWER_LOW_DURATION (5 * 60)
-
-void fd_power_update_callback(void) {
-    fd_hal_system_start_conversions();
-
-    fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
-}
 
 static
 void fd_power_sanity_check(void) {
@@ -85,7 +79,13 @@ void fd_power_sanity_check(void) {
     }
 }
 
-void fd_power_charge_current_callback(void) {
+static
+void fd_power_usb_power_callback(void) {
+    fd_power_high_start = 0;
+}
+
+static
+void fd_power_update_callback(void) {
     bool is_usb_powered = fd_hal_usb_is_powered();
     bool is_charging = fd_hal_system_is_charging();
     if (is_usb_powered) {
@@ -94,8 +94,6 @@ void fd_power_charge_current_callback(void) {
             if (RETAINED->power_battery_level > 1.0) {
                 RETAINED->power_battery_level = 1.0;
             }
-        } else {
-            RETAINED->power_battery_level = 1.0;
         }
     } else {
         RETAINED->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute();
@@ -103,10 +101,13 @@ void fd_power_charge_current_callback(void) {
             RETAINED->power_battery_level = 0.0;
         }
     }
-
     fd_power_sanity_check();
+
+    fd_hal_system_start_conversions();
+    fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
 }
 
+static
 double fd_power_estimate_battery_level(void) {
     float battery_voltage = fd_hal_system_get_battery_voltage();
     bool is_usb_powered = fd_hal_usb_is_powered();
@@ -161,7 +162,7 @@ void fd_power_initialize(void) {
     fd_power_low_battery_level_callback = 0;
     fd_power_high_battery_level_callback = 0;
 
-    fd_event_add_callback(FD_EVENT_ADC_CHARGE_CURRENT, fd_power_charge_current_callback);
+    fd_event_add_callback(FD_EVENT_USB_POWER, fd_power_usb_power_callback);
 
     fd_timer_add(&fd_power_update_timer, fd_power_update_callback);
     fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);

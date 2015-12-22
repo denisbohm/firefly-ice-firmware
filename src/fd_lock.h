@@ -11,6 +11,7 @@ enum {
     fd_lock_owner_none = 0,
     fd_lock_owner_ble = FD_LOCK_OWNER_ENCODE('B', 'L', 'E', ' '),
     fd_lock_owner_usb = FD_LOCK_OWNER_ENCODE('U', 'S', 'B', ' '),
+    fd_lock_owner_inet = FD_LOCK_OWNER_ENCODE('I', 'N', 'E', 'T'),
 };
 typedef uint32_t fd_lock_owner_t;
 

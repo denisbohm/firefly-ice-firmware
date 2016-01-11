@@ -194,9 +194,11 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
         fd_hal_processor_write_user_data(provision_data, provision_data_length);
     }
 
+#ifndef FD_NO_SENSING
     if (options & FD_PROVISION_OPTION_SENSING_ERASE) {
         fd_sensing_erase();
     }
+#endif
     if (options & FD_PROVISION_OPTION_DEBUG_LOCK) {
         fd_hal_processor_set_debug_lock();
     }
@@ -326,16 +328,6 @@ void fd_control_set_property_regulator(fd_binary_t *binary) {
     fd_hal_system_set_regulator(switching);
 }
 
-void fd_control_get_property_sensing_count(fd_binary_t *binary) {
-    uint32_t count = fd_sensing_get_stream_sample_count();
-    fd_binary_put_uint32(binary, count);
-}
-
-void fd_control_set_property_sensing_count(fd_binary_t *binary) {
-    uint32_t count = fd_binary_get_uint32(binary);
-    fd_sensing_set_stream_sample_count(count);
-}
-
 void fd_control_get_property_logging(fd_binary_t *binary) {
     fd_binary_put_uint32(binary, FD_CONTROL_LOGGING_STATE | FD_CONTROL_LOGGING_COUNT);
     fd_binary_put_uint32(binary, fd_log_get_storage() ? FD_CONTROL_LOGGING_STORAGE : 0);
@@ -429,10 +421,6 @@ void fd_control_set_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner
     fd_hal_ui_set_indicate(owner, indicate);
 }
 
-void fd_control_get_property_recognition(fd_binary_t *binary) {
-    fd_binary_put_uint8(binary, fd_recognition_get_enable());
-}
-
 void fd_control_get_property_hardware_version(fd_binary_t *binary) {
     fd_version_hardware_t version;
     fd_hal_system_get_hardware_version(&version);
@@ -440,10 +428,28 @@ void fd_control_get_property_hardware_version(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, version.minor);
 }
 
+#ifndef FD_NO_SENSING
+
+void fd_control_get_property_sensing_count(fd_binary_t *binary) {
+    uint32_t count = fd_sensing_get_stream_sample_count();
+    fd_binary_put_uint32(binary, count);
+}
+
+void fd_control_set_property_sensing_count(fd_binary_t *binary) {
+    uint32_t count = fd_binary_get_uint32(binary);
+    fd_sensing_set_stream_sample_count(count);
+}
+
+void fd_control_get_property_recognition(fd_binary_t *binary) {
+    fd_binary_put_uint8(binary, fd_recognition_get_enable());
+}
+
 void fd_control_set_property_recognition(fd_binary_t *binary) {
     bool enable = fd_binary_get_uint8(binary) != 0;
     fd_recognition_set_enable(enable);
 }
+
+#endif
 
 #define GET_PROPERTY_MASK \
  (FD_CONTROL_PROPERTY_VERSION |\
@@ -524,14 +530,16 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_REGULATOR: {
                     fd_control_get_property_regulator(binary_out);
                 } break;
+#ifndef FD_NO_SENSING
                 case FD_CONTROL_PROPERTY_SENSING_COUNT: {
                     fd_control_get_property_sensing_count(binary_out);
                 } break;
-                case FD_CONTROL_PROPERTY_INDICATE: {
-                    fd_control_get_property_indicate(binary_out, detour_source_collection->owner);
-                } break;
                 case FD_CONTROL_PROPERTY_RECOGNITION: {
                     fd_control_get_property_recognition(binary_out);
+                } break;
+#endif
+                case FD_CONTROL_PROPERTY_INDICATE: {
+                    fd_control_get_property_indicate(binary_out, detour_source_collection->owner);
                 } break;
                 case FD_CONTROL_PROPERTY_HARDWARE_VERSION: {
                     fd_control_get_property_hardware_version(binary_out);
@@ -576,14 +584,16 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_REGULATOR: {
                     fd_control_set_property_regulator(&binary);
                 } break;
+#ifndef FD_NO_SENSING
                 case FD_CONTROL_PROPERTY_SENSING_COUNT: {
                     fd_control_set_property_sensing_count(&binary);
                 } break;
-                case FD_CONTROL_PROPERTY_INDICATE: {
-                    fd_control_set_property_indicate(&binary, detour_source_collection->owner);
-                } break;
                 case FD_CONTROL_PROPERTY_RECOGNITION: {
                     fd_control_set_property_recognition(&binary);
+                } break;
+#endif
+                case FD_CONTROL_PROPERTY_INDICATE: {
+                    fd_control_set_property_indicate(&binary, detour_source_collection->owner);
                 } break;
             }
         }
@@ -933,7 +943,9 @@ void fd_control_initialize_commands(void) {
     fd_control_commands[FD_CONTROL_SYNC_ACK] = fd_sync_ack;
     fd_control_commands[FD_CONTROL_LOCK] = fd_control_lock;
     fd_control_commands[FD_CONTROL_DIAGNOSTICS] = fd_control_diagnostics;
+#ifndef FD_NO_SENSING
     fd_control_commands[FD_CONTROL_SENSING_SYNTHESIZE] = fd_sensing_synthesize;
+#endif
 }
 
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis

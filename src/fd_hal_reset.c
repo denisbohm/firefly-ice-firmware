@@ -17,6 +17,12 @@ fd_time_t fd_hal_reset_last_time;
 fd_hal_reset_retained_t fd_hal_reset_retained_at_initialize;
 static bool retain_was_valid;
 
+#define FD_HAL_RESET_RETAINED_BASE 0x20000000
+
+fd_hal_reset_retained_t *fd_hal_reset_retained(void) {
+    return (fd_hal_reset_retained_t *)FD_HAL_RESET_RETAINED_BASE;
+}
+
 static
 bool is_ram_retained_reset(uint32_t cause) {
     if (cause == 0) {

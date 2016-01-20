@@ -5,8 +5,6 @@
 
 #include <stdint.h>
 
-#define FD_HAL_RESET_RETAINED_BASE 0x20000000
-
 #define FD_HAL_RESET_STARTUP_COMMAND_ENTER_STORAGE_MODE 0x4d534543
 
 typedef struct {
@@ -25,7 +23,7 @@ typedef struct {
     uint32_t startup_command;
 } fd_hal_reset_retained_t;
 
-#define RETAINED ((fd_hal_reset_retained_t *)FD_HAL_RESET_RETAINED_BASE)
+#define RETAINED fd_hal_reset_retained()
 
 #define FD_HAL_RESET_SYSTEM_REQUEST 1
 #define FD_HAL_RESET_WATCHDOG 2
@@ -38,6 +36,7 @@ extern fd_time_t fd_hal_reset_last_time;
 void fd_hal_reset_initialize(void);
 
 bool fd_hal_reset_retained_was_valid_on_startup(void);
+fd_hal_reset_retained_t *fd_hal_reset_retained(void);
 extern fd_hal_reset_retained_t fd_hal_reset_retained_at_initialize;
 
 void fd_hal_reset_by(uint8_t type);

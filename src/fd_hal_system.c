@@ -151,6 +151,14 @@ float fd_hal_system_get_regulated_voltage(void) {
     return 2.5f;
 }
 
+float fd_hal_system_get_almost_low_battery_voltage(void) {
+    return 3.625f;
+}
+
+float fd_hal_system_get_low_battery_voltage(void) {
+    return 3.6f;
+}
+
 double fd_hal_system_get_charge_level_change_per_minute(void) {
     // full charge over 2 hours
     return 1.0 / (2.0 * 60.0);

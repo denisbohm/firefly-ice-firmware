@@ -43,7 +43,7 @@ void fd_power_sanity_check(void) {
 
     // sanity check for almost discharged battery
     bool low_power_condition = false;
-    if (battery_voltage < 3.5f) {
+    if (battery_voltage < fd_hal_system_get_almost_low_battery_voltage()) {
         if (fd_power_low_start == 0) {
             fd_power_low_start = fd_hal_rtc_get_seconds();
         }
@@ -116,7 +116,7 @@ double fd_power_estimate_battery_level(void) {
         // The battery appears to be fully charged.
         return 1.0;
     }
-    if (battery_voltage < 3.5f) {
+    if (battery_voltage < fd_hal_system_get_low_battery_voltage()) {
         // The battery appears to be almost discharged.
         return 0.05;
     }

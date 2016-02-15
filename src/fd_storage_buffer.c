@@ -17,6 +17,14 @@ void fd_storage_buffer_collection_initialize(void) {
     storage_buffer_collection.last = 0;
 }
 
+void fd_storage_buffer_collection_flush(void) {
+    fd_storage_buffer_t *storage_buffer = storage_buffer_collection.first;
+    while (storage_buffer) {
+        fd_storage_buffer_flush(storage_buffer);
+        storage_buffer = storage_buffer->next;
+    }
+}
+
 void fd_storage_buffer_collection_push(fd_storage_buffer_t *storage_buffer) {
     if (storage_buffer_collection.first == 0) {
         storage_buffer_collection.first = storage_buffer;

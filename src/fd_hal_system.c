@@ -159,6 +159,26 @@ float fd_hal_system_get_low_battery_voltage(void) {
     return 3.6f;
 }
 
+double fd_hal_system_get_charge_current_limit(void) {
+    return 0.08;
+}
+
+double fd_hal_system_get_charge_current_limit_threshold(void) {
+    return fd_hal_system_get_charge_current_limit() * 0.9;
+}
+
+double fd_hal_system_get_battery_level_at_cccv_threshold(void) {
+    return 0.85;
+}
+
+double fd_hal_system_get_discharge_threshold_voltage(void) {
+    return 4.0;
+}
+
+double fd_hal_system_get_discharge_threshold_level(void) {
+    return 0.9;
+}
+
 double fd_hal_system_get_charge_level_change_per_minute(void) {
     // full charge over 2 hours
     return 1.0 / (2.0 * 60.0);

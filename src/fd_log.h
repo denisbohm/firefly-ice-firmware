@@ -20,7 +20,15 @@ void fd_log_at(char *file, int line, char *message);
 #define fd_log_string_helper(a) #a
 #define fd_log_string(a) fd_log_string_helper(a)
 
+#if defined(FD_ASSERT_NONE)
+#define fd_log_assert_fail(message)
+#define fd_log_assert(condition)
+#elif defined(FD_ASSERT_TERSE)
+#define fd_log_assert_fail(message) fd_log_at(__FILE__, __LINE__, "")
+#define fd_log_assert(condition) if (!(condition)) fd_log_assert_fail(#condition)
+#else
 #define fd_log_assert_fail(message) fd_log_at(__FILE__, __LINE__, message)
 #define fd_log_assert(condition) if (!(condition)) fd_log_assert_fail(#condition)
+#endif
 
 #endif

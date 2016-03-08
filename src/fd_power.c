@@ -50,6 +50,11 @@ static bool fd_power_low_battery;
 static fd_power_callback_t fd_power_low_battery_level_callback;
 static fd_power_callback_t fd_power_high_battery_level_callback;
 
+#define FD_POWER_STATE_FLAG_USB_POWER 0x00000001
+
+static uint32_t fd_power_state;
+static uint32_t fd_power_state_start;
+
 #define UPDATE_INTERVAL 60
 
 #define FD_POWER_HIGH_DURATION (2 * 60)
@@ -118,6 +123,15 @@ void fd_power_sanity_check(void) {
 static
 void fd_power_usb_power_callback(void) {
     fd_power_high_start = 0;
+    
+    uint32_t current_state = 0;
+    if (fd_hal_usb_is_powered()) {
+        current_state = FD_POWER_STATE_FLAG_USB_POWER;
+    }
+    if (fd_power_state != current_state) {
+        fd_power_state = current_state;
+        fd_power_state_start = fd_hal_rtc_get_seconds();
+    }
 }
 
 static
@@ -198,6 +212,21 @@ double fd_power_estimate_battery_level(void) {
     return level;
 }
 
+// The battery voltage, charge status, etc, take some time to reach a "stable" state.
+// Currently, a stable state is considered to have been reached after USB power has
+// been present for 3 minutes or not present for 6 minutes. -denis
+static
+bool fd_power_is_stable(void) {
+    uint32_t now = fd_hal_rtc_get_seconds();
+    if (now < fd_power_state_start) {
+        // in case the time was adjusted backwards... -denis
+        fd_power_state_start = now;
+    }
+    uint32_t delta = now - fd_power_state_start;
+    uint32_t stable_delta = (fd_power_state & FD_POWER_STATE_FLAG_USB_POWER) ? 3 * 60 : 6 * 60;
+    return delta >= stable_delta;
+}
+
 static
 void fd_power_update_callback(void) {
     bool is_usb_powered = fd_hal_usb_is_powered();
@@ -217,14 +246,16 @@ void fd_power_update_callback(void) {
         }
     }
 #else
-    double level = fd_power_estimate_battery_level();
-    if (is_usb_powered) {
-        if (level > RETAINED->power_battery_level) {
-            RETAINED->power_battery_level = level;
-        }
-    } else {
-        if (level < RETAINED->power_battery_level) {
-            RETAINED->power_battery_level = level;
+    if (fd_power_is_stable()) {
+        double level = fd_power_estimate_battery_level();
+        if (is_usb_powered) {
+            if (level > RETAINED->power_battery_level) {
+                RETAINED->power_battery_level = level;
+            }
+        } else {
+            if (level < RETAINED->power_battery_level) {
+                RETAINED->power_battery_level = level;
+            }
         }
     }
 #endif
@@ -257,6 +288,12 @@ void fd_power_initialize(void) {
         // battery level is uninitialized/unknown/bogus, so make a guess... -denis
         retained->power_battery_level = fd_power_estimate_battery_level();
     }
+    
+    fd_power_state = 0;
+    if (fd_hal_usb_is_powered()) {
+        fd_power_state = FD_POWER_STATE_FLAG_USB_POWER;
+    }
+    fd_power_state_start = fd_hal_rtc_get_seconds();
 
     fd_power_high_start = 0;
     fd_power_low_start = 0;

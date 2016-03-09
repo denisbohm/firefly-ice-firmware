@@ -28,6 +28,7 @@ void fd_hal_system_set_regulator(bool switching);
 bool fd_hal_system_get_regulator(void);
 
 float fd_hal_system_get_regulated_voltage(void);
+float fd_hal_system_get_charging_low_battery_voltage(void);
 float fd_hal_system_get_almost_low_battery_voltage(void);
 float fd_hal_system_get_low_battery_voltage(void);
 

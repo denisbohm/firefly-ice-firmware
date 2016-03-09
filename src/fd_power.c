@@ -161,7 +161,7 @@ double fd_power_estimate_battery_level(void) {
                 // The battery is charging and in the constant current phase.
                 // 0% to 85%
                 // *** simple linear approximation ***
-                double min = fd_hal_system_get_low_battery_voltage();
+                double min = fd_hal_system_get_charging_low_battery_voltage();
                 double max = 4.2;
                 double voltage = battery_voltage;
                 if (voltage > max) {

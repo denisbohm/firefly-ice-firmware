@@ -151,6 +151,10 @@ float fd_hal_system_get_regulated_voltage(void) {
     return 2.5f;
 }
 
+float fd_hal_system_get_charging_low_battery_voltage(void) {
+    return 3.7f;
+}
+
 float fd_hal_system_get_almost_low_battery_voltage(void) {
     return 3.625f;
 }

@@ -7,6 +7,10 @@
 
 #define FD_HAL_RESET_STARTUP_COMMAND_ENTER_STORAGE_MODE 0x4d534543
 
+#ifndef FD_HAL_RESET_CONTEXT_SIZE
+#define FD_HAL_RESET_CONTEXT_SIZE 12
+#endif
+
 typedef struct {
     uint32_t magic;
 
@@ -14,14 +18,22 @@ typedef struct {
 
     double power_battery_level;
 
-    uint32_t watchdog_lr;
     uint32_t watchdog_pc;
-    uint8_t watchdog_context[4];
+    uint32_t watchdog_lr;
+    char watchdog_context[FD_HAL_RESET_CONTEXT_SIZE];
 
-    uint8_t context[4];
+    char context[FD_HAL_RESET_CONTEXT_SIZE];
 
     uint32_t startup_command;
 } fd_hal_reset_retained_t;
+
+typedef struct {
+    fd_time_t time;
+    uint32_t cause;
+    uint32_t pc;
+    uint32_t lr;
+    char context[FD_HAL_RESET_CONTEXT_SIZE];
+} fd_hal_reset_state_t;
 
 #define RETAINED fd_hal_reset_retained()
 
@@ -30,8 +42,7 @@ typedef struct {
 #define FD_HAL_RESET_HARD_FAULT 3
 #define FD_HAL_RESET_RETAIN 4
 
-extern uint32_t fd_hal_reset_last_cause;
-extern fd_time_t fd_hal_reset_last_time;
+extern fd_hal_reset_state_t fd_hal_reset_last;
 
 void fd_hal_reset_initialize(void);
 
@@ -43,7 +54,17 @@ void fd_hal_reset_by(uint8_t type);
 
 void fd_hal_reset_start_watchdog(void);
 void fd_hal_reset_feed_watchdog(void);
-void fd_hal_reset_push_watchdog_context(char *context);
-void fd_hal_reset_pop_watchdog_context(void);
+void fd_hal_reset_push_watchdog_context(const char *context, char *save);
+void fd_hal_reset_pop_watchdog_context(const char *save);
+
+#ifdef FD_RESET_DEBUG_WATCHDOG
+#define FD_HAL_RESET_PUSH()\
+ char fd_hal_reset_context[FD_HAL_RESET_CONTEXT_SIZE];\
+ fd_hal_reset_push_watchdog_context(__FUNCTION__, fd_hal_reset_context)
+#define FD_HAL_RESET_POP() fd_hal_reset_pop_watchdog_context(fd_hal_reset_context)
+#else
+#define FD_HAL_RESET_PUSH()
+#define FD_HAL_RESET_POP()
+#endif
 
 #endif

@@ -242,8 +242,8 @@ void fd_control_get_property_site(fd_binary_t *binary) {
 }
 
 void fd_control_get_property_reset(fd_binary_t *binary) {
-    fd_binary_put_uint32(binary, fd_hal_reset_last_cause);
-    fd_binary_put_time64(binary, fd_hal_reset_last_time);
+    fd_binary_put_uint32(binary, fd_hal_reset_last.cause);
+    fd_binary_put_time64(binary, fd_hal_reset_last.time);
 }
 
 void fd_control_get_property_retained(fd_binary_t *binary) {

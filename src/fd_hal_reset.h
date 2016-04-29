@@ -35,8 +35,6 @@ typedef struct {
     char context[FD_HAL_RESET_CONTEXT_SIZE];
 } fd_hal_reset_state_t;
 
-#define RETAINED fd_hal_reset_retained()
-
 #define FD_HAL_RESET_SYSTEM_REQUEST 1
 #define FD_HAL_RESET_WATCHDOG 2
 #define FD_HAL_RESET_HARD_FAULT 3

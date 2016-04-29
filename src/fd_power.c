@@ -74,8 +74,9 @@ void fd_power_sanity_check(void) {
         uint32_t duration = fd_hal_rtc_get_seconds() - fd_power_high_start;
         if (duration >= FD_POWER_HIGH_DURATION) {
             // The battery appears to be fully charged.
-            if (RETAINED->power_battery_level < 1.0) {
-                RETAINED->power_battery_level = 1.0;
+            fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
+            if (retained->power_battery_level < 1.0) {
+                retained->power_battery_level = 1.0;
             }
         }
     } else {
@@ -91,8 +92,9 @@ void fd_power_sanity_check(void) {
         uint32_t duration = fd_hal_rtc_get_seconds() - fd_power_low_start;
         if (duration >= FD_POWER_LOW_DURATION) {
             // the battery appears to be almost discharged
-            if (RETAINED->power_battery_level > 0.05) {
-                RETAINED->power_battery_level = 0.05;
+            fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
+            if (retained->power_battery_level > 0.05) {
+                retained->power_battery_level = 0.05;
             }
         
             // low power condition if there isn't usb power present
@@ -229,32 +231,33 @@ bool fd_power_is_stable(void) {
 
 static
 void fd_power_update_callback(void) {
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
     bool is_usb_powered = fd_hal_usb_is_powered();
 #ifdef FD_POWER_USE_RATE
     bool is_charging = fd_hal_system_is_charging();
     if (is_usb_powered) {
         if (is_charging) {
-            RETAINED->power_battery_level += fd_hal_system_get_charge_level_change_per_minute();
-            if (RETAINED->power_battery_level > 1.0) {
-                RETAINED->power_battery_level = 1.0;
+            retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute();
+            if (retained->power_battery_level > 1.0) {
+                retained->power_battery_level = 1.0;
             }
         }
     } else {
-        RETAINED->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute();
-        if (RETAINED->power_battery_level < 0.0) {
-            RETAINED->power_battery_level = 0.0;
+        retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute();
+        if (retained->power_battery_level < 0.0) {
+            retained->power_battery_level = 0.0;
         }
     }
 #else
     if (fd_power_is_stable()) {
         double level = fd_power_estimate_battery_level();
         if (is_usb_powered) {
-            if (level > RETAINED->power_battery_level) {
-                RETAINED->power_battery_level = level;
+            if (level > retained->power_battery_level) {
+                retained->power_battery_level = level;
             }
         } else {
-            if (level < RETAINED->power_battery_level) {
-                RETAINED->power_battery_level = level;
+            if (level < retained->power_battery_level) {
+                retained->power_battery_level = level;
             }
         }
     }
@@ -283,7 +286,7 @@ fd_power_callback_t fd_power_get_high_battery_level_callback(void) {
 }
 
 void fd_power_initialize(void) {
-    fd_hal_reset_retained_t *retained = RETAINED;
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
     if ((retained->power_battery_level < 0.01) || (retained->power_battery_level > 1.0)) {
         // battery level is uninitialized/unknown/bogus, so make a guess... -denis
         retained->power_battery_level = fd_power_estimate_battery_level();
@@ -308,7 +311,8 @@ void fd_power_initialize(void) {
 }
 
 void fd_power_get(fd_power_t *power) {
-    power->battery_level = RETAINED->power_battery_level;
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
+    power->battery_level = retained->power_battery_level;
     power->battery_voltage = fd_hal_system_get_battery_voltage();
     power->is_usb_powered = fd_hal_usb_is_powered();
     power->is_charging = power->is_usb_powered && fd_hal_system_is_charging();
@@ -317,5 +321,6 @@ void fd_power_get(fd_power_t *power) {
 }
 
 void fd_power_set(float battery_level) {
-    RETAINED->power_battery_level = battery_level;
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
+    retained->power_battery_level = battery_level;
 }

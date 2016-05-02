@@ -184,7 +184,7 @@ double fd_power_estimate_battery_level(void) {
             if (battery_voltage > threshold_voltage) {
                 // 100% to 90% range when battery voltage is between 4.2 and 4.0 V
                 double min = threshold_voltage;
-                double max = 4.2;
+                double max = fd_hal_system_get_recharge_threshold_voltage();
                 double voltage = battery_voltage;
                 if (voltage > max) {
                     voltage = max;

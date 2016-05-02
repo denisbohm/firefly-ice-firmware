@@ -37,6 +37,7 @@ double fd_hal_system_get_charge_current_limit_threshold(void);
 double fd_hal_system_get_battery_level_at_cccv_threshold(void);
 double fd_hal_system_get_discharge_threshold_voltage(void);
 double fd_hal_system_get_discharge_threshold_level(void);
+double fd_hal_system_get_recharge_threshold_voltage(void);
 double fd_hal_system_get_charge_level_change_per_minute(void);
 double fd_hal_system_get_discharge_level_change_per_minute(void);
 

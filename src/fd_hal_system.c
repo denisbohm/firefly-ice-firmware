@@ -183,6 +183,10 @@ double fd_hal_system_get_discharge_threshold_level(void) {
     return 0.9;
 }
 
+double fd_hal_system_get_recharge_threshold_voltage(void) {
+    return 4.05;
+}
+
 double fd_hal_system_get_charge_level_change_per_minute(void) {
     // full charge over 2 hours
     return 1.0 / (2.0 * 60.0);

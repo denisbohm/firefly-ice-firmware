@@ -51,14 +51,22 @@ USBD_HID_Init fdi_usbd_hid_init;
 
 __ALIGN_BEGIN uint8_t fdi_usbd_hid_rx_buffer[HID_OUT_PACKET] __ALIGN_END;
 
-fdi_usb_data_callback_t fdi_usb_data_callback = 0;
+fdi_usb_data_callback_t fdi_usb_data_callback;
+
+fdi_usb_tx_ready_callback_t fdi_usb_tx_ready_callback;
 
 void fdi_usb_initialize(void) {
     fdi_usb_state_change_callback = 0;
+    fdi_usb_data_callback = 0;
+    fdi_usb_tx_ready_callback = 0;
 }
 
 void fdi_usb_set_data_callback(fdi_usb_data_callback_t callback) {
     fdi_usb_data_callback = callback;
+}
+
+void fdi_usb_set_tx_ready_callback(fdi_usb_tx_ready_callback_t callback) {
+    fdi_usb_tx_ready_callback = callback;
 }
 
 bool fdi_usb_is_powered_up(void) {
@@ -93,6 +101,10 @@ static uint32_t data_in_count = 0;
 uint8_t DataIn(void *pdev, uint8_t epnum) {
     ++data_in_count;
     breakpoint();
+
+    if (fdi_usb_tx_ready_callback) {
+        fdi_usb_tx_ready_callback();
+    }
 }
 
 static uint32_t data_out_count = 0;

@@ -87,18 +87,24 @@ bool fd_event_process_pending(void) {
     fd_hal_reset_feed_watchdog();
     
     if (pending) {
+#ifdef FD_EVENT_TIMING
         bool is_timing = fd_hal_timing_get_enable();
+#endif
         fd_event_item_t *item = fd_event_items;
         fd_event_item_t *end = &fd_event_items[fd_event_item_count];
         for (; item < end; ++item) {
             if (item->events & pending) {
+#ifdef FD_EVENT_TIMING
                 if (is_timing) {
                     fd_timing_start(&item->timing);
                 }
+#endif
                 (*item->callback)();
+#ifdef FD_EVENT_TIMING
                 if (is_timing) {
                     fd_timing_end(&item->timing);
                 }
+#endif
             }
         }
     }

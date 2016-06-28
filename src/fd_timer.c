@@ -85,18 +85,24 @@ void fd_timer_schedule_countdown(void) {
 
 static
 void fd_timer_callback_triggered(void) {
+#ifdef FD_TIMER_TIMING
     bool is_timing = fd_hal_timing_get_enable();
+#endif
     for (uint32_t i = 0; i < timer_count; ++i) {
         fd_timer_t *timer = timers[i];
         if (timer->triggered) {
             timer->triggered = false;
+#ifdef FD_TIMER_TIMING
             if (is_timing) {
                 fd_timing_start(&timer->timing);
             }
+#endif
             (*timer->callback)();
+#ifdef FD_TIMER_TIMING
             if (is_timing) {
                 fd_timing_end(&timer->timing);
             }
+#endif
         }
     }
 }

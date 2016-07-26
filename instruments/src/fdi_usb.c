@@ -31,6 +31,7 @@ static bool fdi_usb_initialized = false;
 
 fdi_usb_state_change_callback_t fdi_usb_state_change_callback;
 fdi_usb_status_t fdi_usb_status;
+bool fdi_usb_send_available;
 
 __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 
@@ -59,6 +60,7 @@ void fdi_usb_initialize(void) {
     fdi_usb_state_change_callback = 0;
     fdi_usb_data_callback = 0;
     fdi_usb_tx_ready_callback = 0;
+    fdi_usb_send_available = false;
 }
 
 void fdi_usb_set_data_callback(fdi_usb_data_callback_t callback) {
@@ -73,7 +75,12 @@ bool fdi_usb_is_powered_up(void) {
     return (RCC->AHB2ENR & RCC_AHB2Periph_OTG_FS) != 0;
 }
 
+bool fdi_usb_can_send(void) {
+    return fdi_usb_send_available;
+}
+
 void fdi_usb_send(uint8_t *buffer, size_t length) {
+    fdi_usb_send_available = false;
     USBD_HID_SendReport(&USB_OTG_dev, buffer, length);
 }
 
@@ -84,33 +91,37 @@ void breakpoint(void) {
 
 static uint32_t tx_sent_count = 0;
 
-uint8_t EP0_TxSent(void *pdev) {
-    ++tx_sent_count;
+uint8_t EP0_TxSent(void *pdev __attribute__((unused))) {
+    ++tx_sent_count; // USBD_HID_SendReport complete?
     breakpoint();
+    return USBD_OK;
 }
    
 static uint32_t rx_ready_count = 0;
 
-uint8_t EP0_RxReady(void *pdev) {
+uint8_t EP0_RxReady(void *pdev __attribute__((unused))) {
     ++rx_ready_count;
     breakpoint();
+    return USBD_OK;
 }
 
 static uint32_t data_in_count = 0;
 
-uint8_t DataIn(void *pdev, uint8_t epnum) {
+uint8_t DataIn(void *pdev __attribute__((unused)), uint8_t epnum __attribute__((unused))) {
     ++data_in_count;
     breakpoint();
 
+    fdi_usb_send_available = true;
     if (fdi_usb_tx_ready_callback) {
         fdi_usb_tx_ready_callback();
     }
+    return USBD_OK;
 }
 
 static uint32_t data_out_count = 0;
 
 // called when data is received
-uint8_t DataOut(void *pdev, uint8_t epnum) {
+uint8_t DataOut(void *pdev, uint8_t epnum __attribute__((unused))) {
     ++data_out_count;
     breakpoint();
 
@@ -119,6 +130,7 @@ uint8_t DataOut(void *pdev, uint8_t epnum) {
     }
 
     DCD_EP_PrepareRx(pdev, HID_OUT_EP, fdi_usbd_hid_rx_buffer, HID_OUT_PACKET);
+    return USBD_OK;
 }
 
 uint8_t fdi_usbd_hid_init_and_prepare_rx(void *pdev, uint8_t cfgidx) {
@@ -198,6 +210,8 @@ void USBD_USR_DeviceResumed(void) {
 }
 
 void USBD_USR_DeviceConnected(void) {
+    fdi_usb_send_available = true;
+
     fdi_usb_set_status(fdi_usb_status_connected);
 }
 

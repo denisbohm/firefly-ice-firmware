@@ -250,7 +250,7 @@ __ALIGN_BEGIN static uint8_t HID_ReportDesc[HID_REPORT_DESC_SIZE] __ALIGN_END =
   * @retval status
   */
 static uint8_t  USBD_HID_Init (void  *pdev, 
-                               uint8_t cfgidx)
+                               uint8_t cfgidx __attribute__((unused)))
 {
   
   /* Open EP IN */
@@ -276,7 +276,7 @@ static uint8_t  USBD_HID_Init (void  *pdev,
   * @retval status
   */
 static uint8_t  USBD_HID_DeInit (void  *pdev, 
-                                 uint8_t cfgidx)
+                                 uint8_t cfgidx __attribute__((unused)))
 {
   /* Close HID EPs */
   DCD_EP_Close (pdev , HID_IN_EP);
@@ -397,7 +397,7 @@ uint8_t USBD_HID_SendReport     (USB_OTG_CORE_HANDLE  *pdev,
   * @param  length : pointer data length
   * @retval pointer to descriptor buffer
   */
-static uint8_t  *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length)
+static uint8_t  *USBD_HID_GetCfgDesc (uint8_t speed __attribute__((unused)), uint16_t *length)
 {
   *length = sizeof (USBD_HID_CfgDesc);
   return USBD_HID_CfgDesc;
@@ -411,7 +411,7 @@ static uint8_t  *USBD_HID_GetCfgDesc (uint8_t speed, uint16_t *length)
   * @retval status
   */
 static uint8_t  USBD_HID_DataIn (void  *pdev, 
-                              uint8_t epnum)
+                              uint8_t epnum __attribute__((unused)))
 {
   
   /* Ensure that the FIFO is empty before a new transfer, this condition could 

@@ -1,16 +1,12 @@
 #include "fdi_adc.h"
 
+#include "fdi_delay.h"
+
 #include <stm32f4xx.h>
 
-// PA3 ADC1_3 ATE_MCU1_VCC2
-// PA4 ADC1_4 ATE_BS_SHR
-// PA5 ADC1_5 ATE_BS_SLR
-// PA6 ADC1_6 ATE_USB_CS_OUT
-// PA7 ADC1_7 ATE_MCU2_VCC2
-// PC5 ADC1_15 ATE_BATTERY+2
-
 void fdi_adc_initialize(void) {
-    GPIO_InitTypeDef gpio_init = { 0 };
+    GPIO_InitTypeDef gpio_init;
+    GPIO_StructInit(&gpio_init);
     gpio_init.GPIO_Mode = GPIO_Mode_AN;
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
     gpio_init.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
@@ -24,6 +20,7 @@ void fdi_adc_power_up(void) {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
     ADC_DeInit();
     ADC_InitTypeDef adc_init;
+    ADC_StructInit(&adc_init);
     adc_init.ADC_DataAlign = ADC_DataAlign_Right;
     adc_init.ADC_Resolution = ADC_Resolution_12b;
     adc_init.ADC_ContinuousConvMode = ENABLE;
@@ -34,10 +31,12 @@ void fdi_adc_power_up(void) {
     ADC_Init(ADC1, &adc_init);
     ADC_Cmd(ADC1, ENABLE);
 
-    ADC_TempSensorVrefintCmd(ENABLE);
+    ADC_CommonInitTypeDef adc_common_init;
+    ADC_CommonStructInit(&adc_common_init);
+    adc_common_init.ADC_Prescaler = ADC_Prescaler_Div8;
+    ADC_CommonInit(&adc_common_init);
 
-    float voltage = fdi_adc_convert(ADC_Channel_Vrefint);
-    float delta = voltage - 1.21f;
+    ADC_TempSensorVrefintCmd(ENABLE);
 }
 
 void fdi_adc_power_down(void) {
@@ -47,10 +46,20 @@ void fdi_adc_power_down(void) {
 }
 
 float fdi_adc_convert(uint32_t channel) {
-    ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_480Cycles);
-    ADC_SoftwareStartConv(ADC1);
-    while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)) {
+    const int conversions = 32;
+    uint32_t value = 0;
+    for (int i = 0; i < conversions; ++i) {
+        ADC_ClearFlag(ADC1, ADC_FLAG_OVR | ADC_FLAG_EOC);
+        ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_480Cycles);
+        fdi_delay_us(10);
+        do {
+            ADC_SoftwareStartConv(ADC1);
+            if (ADC_GetFlagStatus(ADC1, ADC_FLAG_OVR)) {
+                ADC1->SR &= ~ADC_FLAG_OVR;
+            }
+        } while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+
+        value += ADC_GetConversionValue(ADC1);
     }
-    uint16_t value = ADC_GetConversionValue(ADC1);
-    return value * 3.3f / 4096.0f;
+    return value * 3.3f / 4096.0f / conversions;
 }

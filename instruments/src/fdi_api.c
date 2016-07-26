@@ -1,17 +1,26 @@
 #include "fdi_api.h"
 
-#include "fdi_detour.h"
 #include "fdi_interrupt.h"
 #include "fdi_usb.h"
 
 #include "fd_binary.h"
-#include "fd_detour.h"
 #include "fd_log.h"
 
 #include <string.h>
 
+#define fdi_api_usb_send_limit 64
+
 typedef struct {
-    uint32_t type;
+    uint32_t ordinal;
+    uint32_t length;
+    uint32_t offset;
+} fdi_api_merge_t;
+
+fdi_api_merge_t fdi_api_merge;
+
+typedef struct {
+    uint64_t identifier;
+    uint64_t type;
     fdi_api_function_t function;
 } fdi_api_entry_t;
 
@@ -19,122 +28,224 @@ typedef struct {
 fdi_api_entry_t fdi_api_entrys[fdi_api_entry_size];
 uint32_t fdi_api_entry_count;
 
-fd_detour_t fdi_api_usb_detour_source;
-#define fdi_api_usb_detour_source_size 300
-uint8_t fdi_api_usb_detour_source_data[fdi_api_usb_detour_source_size];
+uint32_t fdi_api_tx_index;
+uint32_t fdi_api_tx_length;
+#define fdi_api_tx_size 300
+uint8_t fdi_api_tx_buffer[fdi_api_tx_size];
 
-fd_detour_t fdi_api_usb_detour;
-#define fdi_api_usb_detour_size 300
-uint8_t fdi_api_usb_detour_data[fdi_api_usb_detour_size];
+uint32_t fdi_api_rx_index;
+uint32_t fdi_api_rx_length;
+#define fdi_api_rx_size 300
+uint8_t fdi_api_rx_buffer[fdi_api_rx_size];
 
-uint8_t fdi_api_data[fdi_api_usb_detour_size];
-volatile uint32_t fdi_api_data_length;
-volatile uint32_t fdi_api_data_overrun;
+fdi_api_can_transmit_handler_t fdi_api_can_transmit_handler;
+fdi_api_transmit_handler_t fdi_api_transmit_handler;
+fdi_api_dispatch_handler_t fdi_api_dispatch_handler;
 
-static bool rx = false;
-
-static void fdi_api_data_callback(uint8_t *data, size_t length) {
-    rx = true;
-}
-
-void fdi_api_initialize(void) {
-    fdi_api_entry_count = 0;
-
-    fdi_detour_source_initialize(&fdi_api_usb_detour_source, fdi_api_usb_detour_source_data, fdi_api_usb_detour_source_size);
-
-    fd_detour_initialize(&fdi_api_usb_detour, fdi_api_usb_detour_data, fdi_api_usb_detour_size);
-
-    fdi_api_data_length = 0;
-    fdi_api_data_overrun = 0;
-}
-
-void fdi_api_initialize_usb(void) {
-    fdi_usb_set_data_callback(fdi_api_data_callback);
-}
-
-void fdi_api_register(uint32_t type, fdi_api_function_t function) {
+void fdi_api_register(uint64_t identifier, uint64_t type, fdi_api_function_t function) {
     fd_log_assert(fdi_api_entry_count < fdi_api_entry_size);
     fdi_api_entry_t *entry = &fdi_api_entrys[fdi_api_entry_count];
+    entry->identifier = identifier;
     entry->type = type;
     entry->function = function;
     fdi_api_entry_count += 1;
 }
 
-fdi_api_function_t fdi_api_lookup(uint32_t type) {
+fdi_api_function_t fdi_api_lookup(uint64_t identifier, uint64_t type) {
     for (uint32_t i = 0; i < fdi_api_entry_count; ++i) {
         fdi_api_entry_t *entry = &fdi_api_entrys[i];
-        if (entry->type == type) {
+        if ((entry->identifier == identifier) && (entry->type == type)) {
             return entry->function;
         }
     }
     return 0;
 }
 
-void fdi_api_process(void) {
-    if (fdi_api_usb_detour_source.state != fd_detour_state_clear) {
-        uint8_t data[64];
-        if (fdi_detour_source_get(&fdi_api_usb_detour_source, data, sizeof(data))) {
-            fdi_usb_send(data, sizeof(data));
-        }
-    }
+bool fdi_api_can_transmit(void) {
+    return fdi_usb_can_send();
+}
 
+void fdi_api_transmit(uint8_t *data, uint32_t length) {
+    fdi_usb_send(data, length);
+}
+
+// remove data from tx buffer
+bool fdi_api_process_tx(void) {
+    if ((fdi_api_tx_length > 0) && fdi_api_can_transmit_handler()) {
+        uint8_t length = fdi_api_tx_buffer[fdi_api_tx_index];
+        fd_log_assert((fdi_api_tx_index + length) <= fdi_api_tx_length);
+        fdi_api_tx_index += 1;
+        fdi_api_transmit_handler(&fdi_api_tx_buffer[fdi_api_tx_index], length);
+        fdi_api_tx_index += length;
+        if (fdi_api_tx_index == fdi_api_tx_length) {
+            fdi_api_tx_index = 0;
+            fdi_api_tx_length = 0;
+        }
+        return true;
+    }
+    return false;
+}
+
+void fdi_api_dispatch(uint64_t identifier, uint64_t type, fd_binary_t *binary) {
+    fdi_api_function_t function = fdi_api_lookup(identifier, type);
+    if (function) {
+        function(identifier, type, binary);
+        fd_log_assert(binary->flags == 0);
+    } else {
+        fd_log_assert_fail("unknown function");
+    }
+}
+
+// remove data from rx buffer
+bool fdi_api_process_rx(void) {
     uint32_t primask = fdi_interrupt_disable();
-    uint32_t length = fdi_api_data_length;
+    uint32_t index = fdi_api_rx_index;
+    uint32_t length = fdi_api_rx_length;
     fdi_interrupt_restore(primask);
 
     if (length == 0) {
+        return false;
+    }
+
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, &fdi_api_rx_buffer[index], length - index);
+    uint32_t function_length = (uint32_t)fd_binary_get_uint16(&binary);
+    uint64_t identifier = fd_binary_get_varuint(&binary);
+    uint64_t type = fd_binary_get_varuint(&binary);
+    if (binary.flags == 0) {
+        fdi_api_dispatch_handler(identifier, type, &binary);
+    } else {
+        fd_log_assert_fail("underflow");
+    }
+    fd_log_assert(binary.get_index <= (2 + function_length));
+
+    primask = fdi_interrupt_disable();
+    fdi_api_rx_index += 2 + function_length;
+    if (fdi_api_rx_index >= fdi_api_rx_length) {
+        fdi_api_rx_index = 0;
+        fdi_api_rx_length = 0;
+    }
+    fdi_interrupt_restore(primask);
+    return true;
+}
+
+void fdi_api_process(void) {
+    while (fdi_api_process_tx());
+    while (fdi_api_process_rx());
+}
+
+// append data to tx buffer
+bool fdi_api_send(uint64_t identifier, uint64_t type, uint8_t *data, uint32_t length) {
+    uint8_t buffer[32];
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, buffer, sizeof(buffer));
+    fd_binary_put_varuint(&binary, identifier);
+    fd_binary_put_varuint(&binary, type);
+    uint32_t header_length = binary.put_index;
+    uint32_t content_length = header_length + length;
+
+    uint32_t buffer_index = fdi_api_tx_length;
+    uint32_t data_index = 0;
+    uint32_t data_remaining = length;
+    uint64_t ordinal = 0;
+    while ((ordinal == 0) || (data_remaining > 0)) {
+        uint32_t free = fdi_api_tx_size - buffer_index;
+        fd_binary_initialize(&binary, &fdi_api_tx_buffer[buffer_index], free);
+        fd_binary_put_uint8(&binary, 0 /* length placeholder */);
+        fd_binary_put_varuint(&binary, ordinal);
+        if (ordinal == 0) {
+            fd_binary_put_varuint(&binary, content_length);
+            fd_binary_put_varuint(&binary, identifier);
+            fd_binary_put_varuint(&binary, type);
+        }
+        uint32_t available = 1 + fdi_api_usb_send_limit - binary.put_index;
+        uint32_t amount = data_remaining;
+        if (amount > available) {
+            amount = available;
+        }
+        fd_binary_put_bytes(&binary, &data[data_index], amount);
+        if (binary.flags & FD_BINARY_FLAG_OVERFLOW) {
+            return false;
+        }
+        data_index += amount;
+        data_remaining -= amount;
+        fdi_api_tx_buffer[buffer_index] = binary.put_index - 1;
+        buffer_index += binary.put_index;
+        ordinal += 1;
+    }
+
+    fdi_api_tx_length = buffer_index;
+    return true;
+}
+
+void fdi_api_merge_clear(void) {
+    memset(&fdi_api_merge, 0, sizeof(fdi_api_merge));
+}
+
+// called from interrupt context
+void fdi_api_tx_callback(void) {
+    // wakeup and send next chunk
+    // !!! need to implement to add wait to main loop -denis
+}
+
+// called from interrupt context
+// append data to rx buffer
+void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint64_t ordinal = fd_binary_get_varuint(&binary);
+    if (ordinal == 0) {
+        // start of sequence
+        fd_log_assert(fdi_api_merge.ordinal == 0);
+        fdi_api_merge_clear();
+        fdi_api_merge.length = (uint32_t)fd_binary_get_varuint(&binary);
+        fd_binary_t binary_rx;
+        fd_binary_initialize(&binary_rx, &fdi_api_rx_buffer[fdi_api_rx_index], fdi_api_rx_size - fdi_api_rx_index);
+        fd_binary_put_uint16(&binary_rx, fdi_api_merge.length);
+    } else {
+        if (ordinal != (fdi_api_merge.ordinal + 1)) {
+            fd_log_assert_fail("out of sequence");
+            fdi_api_merge_clear();
+            return;
+        }
+        fdi_api_merge.ordinal += 1;
+    }
+
+    uint8_t *content_data = &data[binary.get_index];
+    uint32_t content_length = length - binary.get_index;
+
+    uint32_t rx_free = fdi_api_rx_size - fdi_api_merge.offset;
+    if (content_length > rx_free) {
+        fd_log_assert_fail("overflow");
+        fdi_api_merge_clear();
         return;
     }
 
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, fdi_api_data, length);
-    uint32_t type = fd_binary_get_uint32(&binary);
-    fdi_api_function_t function = fdi_api_lookup(type);
-    if (function) {
-        function(&binary);
-    } else {
-        fd_log_assert_fail("");
-    }
+    memcpy(&fdi_api_rx_buffer[fdi_api_rx_index + 2 + fdi_api_merge.offset], content_data, content_length);
+    fdi_api_merge.offset += content_length;
 
-    primask = fdi_interrupt_disable();
-    fdi_api_data_length = 0;
-    fdi_interrupt_restore(primask);
-}
-
-void fdi_api_send(uint32_t type, uint8_t *data, uint32_t length) {
-    fd_log_assert(fdi_api_usb_detour_source.state == fd_detour_state_clear);
-    
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, fdi_api_usb_detour_source_data, fdi_api_usb_detour_source_size);
-    fd_binary_put_uint32(&binary, type);
-    fd_binary_put_bytes(&binary, data, length);
-    fdi_detour_source_set(&fdi_api_usb_detour_source, binary.put_index);
-}
-
-// called from interrupt context
-void fdi_api_enqueue(fd_detour_t *detour) {
-    if (fdi_api_data_length > 0) {
-        ++fdi_api_data_overrun;
-    } else {
-        memcpy(fdi_api_data, detour->data, detour->length);
-        fdi_api_data_length = detour->length;
+    if (fdi_api_merge.offset >= fdi_api_merge.length) {
+        // merge complete
+        fdi_api_rx_length = fdi_api_rx_index + 2 + fdi_api_merge.length;
+        fdi_api_merge_clear();
     }
 }
 
-// called from interrupt context
-void fdi_api_event(uint8_t *data, uint32_t length) {
-    fd_detour_event(&fdi_api_usb_detour, data, length);
-    switch (fd_detour_state(&fdi_api_usb_detour)) {
-        case fd_detour_state_clear:
-        case fd_detour_state_intermediate:
-        break;
-        case fd_detour_state_success:
-            fdi_api_enqueue(&fdi_api_usb_detour);
-            fd_detour_clear(&fdi_api_usb_detour);
-        break;
-        case fd_detour_state_error:
-            fd_log_assert_fail("");
-            fd_detour_clear(&fdi_api_usb_detour);
-        break;
-    }
+void fdi_api_initialize(void) {
+    fdi_api_entry_count = 0;
+
+    fdi_api_tx_index = 0;
+    fdi_api_tx_length = 0;
+
+    fdi_api_rx_index = 0;
+    fdi_api_rx_length = 0;
+
+    fdi_api_can_transmit_handler = fdi_api_can_transmit;
+    fdi_api_transmit_handler = fdi_api_transmit;
+    fdi_api_dispatch_handler = fdi_api_dispatch;
+}
+
+void fdi_api_initialize_usb(void) {
+    fdi_usb_set_data_callback(fdi_api_rx_callback);
+    fdi_usb_set_tx_ready_callback(fdi_api_tx_callback);
 }

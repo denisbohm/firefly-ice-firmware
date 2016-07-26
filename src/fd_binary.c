@@ -97,6 +97,7 @@ void fd_binary_initialize(fd_binary_t *binary, uint8_t *buffer, uint32_t size) {
     binary->size = size;
     binary->put_index = 0;
     binary->get_index = 0;
+    binary->flags = 0;
 }
 
 uint32_t fd_binary_remaining_length(fd_binary_t *binary) {
@@ -156,15 +157,62 @@ fd_time_t fd_binary_get_time64(fd_binary_t *binary) {
     return fd_binary_unpack_time64(buffer);
 }
 
+uint64_t fd_binary_get_varuint(fd_binary_t *binary) {
+    uint64_t value = 0;
+    uint32_t remaining = binary->size - binary->get_index;
+    uint32_t index = 0;
+    while (index < remaining) {
+        uint64_t byte = binary->buffer[binary->get_index++];
+        value |= (byte & 0x7f) << (index * 7);
+        if ((byte & 0x80) == 0) {
+            return value;
+        }
+        if ((value & 0xe000000000000000) != 0) {
+            binary->flags |= FD_BINARY_FLAG_INVALID_REPRESENTATION;
+            return 0;
+        }
+        index += 1;
+    }
+    binary->flags |= FD_BINARY_FLAG_OUT_OF_BOUNDS;
+    return 0;
+}
+
+int64_t fd_binary_get_varint(fd_binary_t *binary) {
+    uint64_t zig_zag = fd_binary_get_varuint(binary);
+    uint64_t bit_pattern;
+    if ((zig_zag & 0x0000000000000001) != 0) {
+        bit_pattern = (zig_zag >> 1) ^ 0xffffffffffffffff;
+    } else {
+        bit_pattern = zig_zag >> 1;
+    }
+    return (int64_t)bit_pattern;
+}
+
+fd_binary_string_t fd_binary_get_string(fd_binary_t *binary) {
+    uint64_t length = fd_binary_get_varuint(binary);
+    uint32_t remaining = fd_binary_remaining_length(binary);
+    if (remaining < length) {
+        binary->flags |= FD_BINARY_FLAG_INVALID_REPRESENTATION;
+        length = 0;
+    }
+    fd_binary_string_t string = {
+        .length = length,
+        .data = &binary->buffer[binary->get_index]
+    };
+    binary->get_index += length;
+    return string;
+}
+
 bool fd_binary_put_check(fd_binary_t *binary, uint32_t length) {
     if ((binary->put_index + length) <= binary->size) {
         return true;
     }
+    binary->flags |= FD_BINARY_FLAG_OVERFLOW;
     fd_log_assert_fail("");
     return false;
 }
 
-void fd_binary_put_bytes(fd_binary_t *binary, uint8_t *data, uint32_t length) {
+void fd_binary_put_bytes(fd_binary_t *binary, const uint8_t *data, uint32_t length) {
     if (fd_binary_put_check(binary, length)) {
         memcpy(&binary->buffer[binary->put_index], data, length);
         binary->put_index += length;
@@ -233,4 +281,35 @@ void fd_binary_put_time64(fd_binary_t *binary, fd_time_t value) {
         binary->put_index += 8;
         fd_binary_pack_time64(buffer, value);
     }
+}
+
+void fd_binary_put_varuint(fd_binary_t *binary, uint64_t value) {
+    uint64_t remainder = value;
+    while (remainder != 0) {
+        if (remainder <= 0x7f) {
+            break;
+        }
+        uint8_t byte = remainder | 0x80;
+        fd_binary_put_uint8(binary, byte);
+        remainder = remainder >> 7;
+    }
+    uint8_t byte = remainder;
+    fd_binary_put_uint8(binary, byte);
+}
+
+void fd_binary_put_varint(fd_binary_t *binary, int64_t value) {
+    uint64_t bit_pattern = (uint64_t)value;
+    uint64_t zig_zag;
+    if (value < 0) {
+        zig_zag = (bit_pattern << 1) ^ 0xffffffffffffffff;
+    } else {
+        zig_zag = bit_pattern << 1;
+    }
+    fd_binary_put_varuint(binary, zig_zag);
+}
+
+void fd_binary_put_string(fd_binary_t *binary, const char *string) {
+    uint32_t length = (uint32_t)strlen(string);
+    fd_binary_put_varuint(binary, length);
+    fd_binary_put_bytes(binary, (const uint8_t *)string, length);
 }

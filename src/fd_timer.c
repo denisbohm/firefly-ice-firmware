@@ -20,12 +20,15 @@ void fd_timer_initialize(void) {
     fd_event_add_callback(FD_EVENT_TIMER_SCHEDULE, fd_timer_update);
 }
 
-void fd_timer_add(fd_timer_t *timer, fd_timer_callback_t callback) {
+void fd_timer_add_with_identifier(fd_timer_t *timer, fd_timer_callback_t callback, const char *identifier __attribute__((unused))) {
     timer->callback = callback;
     timer->active = false;
     timer->scheduled = false;
     timer->triggered = false;
     timer->countdown = 0;
+#ifdef FD_TIMER_TIMING
+    fd_timing_initialize(&timer->timing, identifier);
+#endif
 
     if (timer_count >= TIMERS_LIMIT) {
         fd_log_assert_fail("timer limit");
@@ -33,6 +36,15 @@ void fd_timer_add(fd_timer_t *timer, fd_timer_callback_t callback) {
     }
 
     timers[timer_count++] = timer;
+}
+
+fd_timing_iterator_t fd_timer_timing_iterator(void) {
+#ifdef FD_TIMER_TIMING
+    fd_timing_iterator_t iterator = fd_timing_iterator_array_of_pointers(fd_timer_t, timing, timers, timer_count);
+#else
+    fd_timing_iterator_t iterator = fd_timing_iterator_nil();
+#endif
+    return iterator;
 }
 
 static
@@ -73,11 +85,24 @@ void fd_timer_schedule_countdown(void) {
 
 static
 void fd_timer_callback_triggered(void) {
+#ifdef FD_TIMER_TIMING
+    bool is_timing = fd_hal_timing_get_enable();
+#endif
     for (uint32_t i = 0; i < timer_count; ++i) {
         fd_timer_t *timer = timers[i];
         if (timer->triggered) {
             timer->triggered = false;
+#ifdef FD_TIMER_TIMING
+            if (is_timing) {
+                fd_timing_start(&timer->timing);
+            }
+#endif
             (*timer->callback)();
+#ifdef FD_TIMER_TIMING
+            if (is_timing) {
+                fd_timing_end(&timer->timing);
+            }
+#endif
         }
     }
 }

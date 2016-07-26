@@ -8,6 +8,9 @@
 typedef struct {
     uint32_t events;
     fd_event_callback_t callback;
+#ifdef FD_EVENT_TIMING
+    fd_timing_t timing;
+#endif
 } fd_event_item_t;
 
 #define ITEM_LIMIT 32
@@ -30,6 +33,7 @@ void fd_event_initialize(void) {
     fd_event_item_count = 0;
     fd_event_em2_check_count = 0;
     fd_event_pending = 0;
+    memset(fd_event_items, 0, sizeof(fd_event_items));
 }
 
 void fd_event_add_em2_check(fd_event_em2_check_t em2_check) {
@@ -41,7 +45,7 @@ void fd_event_add_em2_check(fd_event_em2_check_t em2_check) {
     fd_event_em2_checks[fd_event_em2_check_count++] = em2_check;
 }
 
-void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
+void fd_event_add_callback_with_identifier(uint32_t events, fd_event_callback_t callback, const char *identifier __attribute__((unused))) {
     if (fd_event_item_count >= ITEM_LIMIT) {
         fd_log_assert_fail("");
         return;
@@ -50,6 +54,18 @@ void fd_event_add_callback(uint32_t events, fd_event_callback_t callback) {
     fd_event_item_t *item = &fd_event_items[fd_event_item_count++];
     item->events = events;
     item->callback = callback;
+#ifdef FD_EVENT_TIMING
+    fd_timing_initialize(&item->timing, identifier);
+#endif
+}
+
+fd_timing_iterator_t fd_event_timing_iterator(void) {
+#ifdef FD_EVENT_TIMING
+    fd_timing_iterator_t iterator = fd_timing_iterator_array_of_objects(fd_event_item_t, timing, fd_event_items, fd_event_item_count);
+#else
+    fd_timing_iterator_t iterator = fd_timing_iterator_nil();
+#endif
+    return iterator;
 }
 
 void fd_event_set_exclusive(uint32_t events) {
@@ -71,11 +87,24 @@ bool fd_event_process_pending(void) {
     fd_hal_reset_feed_watchdog();
     
     if (pending) {
+#ifdef FD_EVENT_TIMING
+        bool is_timing = fd_hal_timing_get_enable();
+#endif
         fd_event_item_t *item = fd_event_items;
         fd_event_item_t *end = &fd_event_items[fd_event_item_count];
         for (; item < end; ++item) {
             if (item->events & pending) {
+#ifdef FD_EVENT_TIMING
+                if (is_timing) {
+                    fd_timing_start(&item->timing);
+                }
+#endif
                 (*item->callback)();
+#ifdef FD_EVENT_TIMING
+                if (is_timing) {
+                    fd_timing_end(&item->timing);
+                }
+#endif
             }
         }
     }

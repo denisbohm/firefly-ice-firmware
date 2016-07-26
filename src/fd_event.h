@@ -1,6 +1,8 @@
 #ifndef FD_EVENT_H
 #define FD_EVENT_H
 
+#include "fd_timing.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -33,7 +35,8 @@ void fd_event_initialize(void);
 
 void fd_event_add_em2_check(fd_event_em2_check_t em2_check);
 
-void fd_event_add_callback(uint32_t events, fd_event_callback_t callback);
+void fd_event_add_callback_with_identifier(uint32_t events, fd_event_callback_t callback, const char *identifier);
+#define fd_event_add_callback(events, callback) fd_event_add_callback_with_identifier(events, callback, #callback)
 
 void fd_event_set_exclusive(uint32_t events);
 void fd_event_set(uint32_t events);
@@ -41,5 +44,7 @@ void fd_event_set(uint32_t events);
 bool fd_event_process_pending(void);
 
 void fd_event_process(void);
+
+fd_timing_iterator_t fd_event_timing_iterator(void);
 
 #endif

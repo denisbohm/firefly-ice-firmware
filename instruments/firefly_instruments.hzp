@@ -170,8 +170,6 @@
       <file file_name="src/fdi_tcs3471.h" />
       <file file_name="src/fdi_delay.c" />
       <file file_name="src/fdi_delay.h" />
-      <file file_name="src/fdi_instruments.c" />
-      <file file_name="src/fdi_instruments.h" />
       <file file_name="src/fdi_indicator_instrument.c" />
       <file file_name="src/fdi_indicator_instrument.h" />
       <file file_name="src/fdi_color_instrument.c" />
@@ -190,6 +188,8 @@
       <file file_name="src/fdi_current.h" />
       <file file_name="src/fdi_relay_instrument.c" />
       <file file_name="src/fdi_relay_instrument.h" />
+      <file file_name="src/fdi_instrument.c" />
+      <file file_name="src/fdi_instrument.h" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />

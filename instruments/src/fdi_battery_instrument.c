@@ -4,7 +4,7 @@
 #include "fdi_api.h"
 #include "fdi_current.h"
 #include "fdi_gpio.h"
-#include "fdi_instruments.h"
+#include "fdi_instrument.h"
 #include "fdi_mcp4726.h"
 #include "fdi_relay.h"
 
@@ -12,7 +12,7 @@
 #include "fd_log.h"
 
 typedef struct {
-    uint64_t identifier;
+    fdi_instrument_t super;
     uint32_t enable;
     uint32_t channel_high;
     float multiplier_high;
@@ -29,7 +29,7 @@ fdi_battery_instrument_t fdi_battery_instruments[fdi_battery_instrument_count];
 fdi_battery_instrument_t *fdi_battery_instrument_get(uint64_t identifier) {
     for (int i = 0; i < fdi_battery_instrument_count; ++i) {
         fdi_battery_instrument_t *instrument = &fdi_battery_instruments[i];
-        if (instrument->identifier == identifier) {
+        if (instrument->super.identifier == identifier) {
             return instrument;
         }
     }
@@ -51,7 +51,7 @@ void fdi_battery_instrument_convert(uint64_t identifier, uint64_t type __attribu
     fd_binary_initialize(&response, buffer, sizeof(buffer));
     fd_binary_put_float32(&response, current);
 
-    if (!fdi_api_send(instrument->identifier, apiTypeConvert, response.buffer, response.put_index)) {
+    if (!fdi_api_send(instrument->super.identifier, apiTypeConvert, response.buffer, response.put_index)) {
         fd_log_assert_fail("can't send");
     }
 }
@@ -78,13 +78,13 @@ void fdi_battery_instrument_set_voltage(uint64_t identifier, uint64_t type __att
 
 void fdi_battery_instrument_initialize(void) {
     fdi_battery_instrument_t *instrument = &fdi_battery_instruments[0];
-    uint64_t identifier = fdi_instruments_register();
-    instrument->identifier = identifier;
+    instrument->super.category = "Battery";
+    fdi_instrument_register(&instrument->super);
     instrument->enable = FDI_GPIO_ATE_BS_EN;
     instrument->channel_high = 4; // battery current - high range
     instrument->multiplier_high = fdi_current_sense_gain(4.7f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
     instrument->channel_low = 5; // battery current - low range
     instrument->multiplier_low = fdi_current_sense_gain(4.7f, 4.7f, 10000.0f, 0.0f, 1000.0f);
-    fdi_api_register(identifier, apiTypeConvert, fdi_battery_instrument_convert);
-    fdi_api_register(identifier, apiTypeConvert, fdi_battery_instrument_set_voltage);
+    fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_battery_instrument_convert);
+    fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_battery_instrument_set_voltage);
 }

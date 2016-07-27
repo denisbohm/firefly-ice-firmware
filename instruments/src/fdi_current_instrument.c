@@ -4,14 +4,14 @@
 #include "fdi_api.h"
 #include "fdi_current.h"
 #include "fdi_gpio.h"
-#include "fdi_instruments.h"
+#include "fdi_instrument.h"
 #include "fdi_relay.h"
 
 #include "fd_binary.h"
 #include "fd_log.h"
 
 typedef struct {
-    uint64_t identifier;
+    fdi_instrument_t super;
     uint32_t enable;
     uint32_t channel;
     float multiplier;
@@ -26,7 +26,7 @@ fdi_current_instrument_t fdi_current_instruments[fdi_current_instrument_count];
 fdi_current_instrument_t *fdi_current_instrument_get(uint64_t identifier) {
     for (int i = 0; i < fdi_current_instrument_count; ++i) {
         fdi_current_instrument_t *instrument = &fdi_current_instruments[i];
-        if (instrument->identifier == identifier) {
+        if (instrument->super.identifier == identifier) {
             return instrument;
         }
     }
@@ -46,17 +46,17 @@ void fdi_current_instrument_convert(uint64_t identifier, uint64_t type __attribu
     fd_binary_initialize(&response, buffer, sizeof(buffer));
     fd_binary_put_float32(&response, current);
 
-    if (!fdi_api_send(instrument->identifier, apiTypeConvert, response.buffer, response.put_index)) {
+    if (!fdi_api_send(instrument->super.identifier, apiTypeConvert, response.buffer, response.put_index)) {
         fd_log_assert_fail("can't send");
     }
 }
 
 void fdi_current_instrument_initialize(void) {
     fdi_current_instrument_t *instrument = &fdi_current_instruments[0];
-    uint64_t identifier = fdi_instruments_register();
-    instrument->identifier = identifier;
+    instrument->super.category = "Current";
+    fdi_instrument_register(&instrument->super);
     instrument->enable = FDI_GPIO_ATE_USB_CS_EN;
     instrument->channel = 6; // USB current
     instrument->multiplier = fdi_current_sense_gain(0.1f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
-    fdi_api_register(identifier, apiTypeConvert, fdi_current_instrument_convert);
+    fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_current_instrument_convert);
 }

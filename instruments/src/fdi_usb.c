@@ -79,9 +79,13 @@ bool fdi_usb_can_send(void) {
     return fdi_usb_send_available;
 }
 
+uint8_t fdi_usb_send_data[64];
+
 void fdi_usb_send(uint8_t *buffer, size_t length) {
     fdi_usb_send_available = false;
-    USBD_HID_SendReport(&USB_OTG_dev, buffer, length);
+    memcpy(fdi_usb_send_data, buffer, length);
+    memset(&fdi_usb_send_data[length], 0, 64 - length);
+    USBD_HID_SendReport(&USB_OTG_dev, fdi_usb_send_data, 64);
 }
 
 void breakpoint(void) {
@@ -115,6 +119,7 @@ uint8_t DataIn(void *pdev __attribute__((unused)), uint8_t epnum __attribute__((
     if (fdi_usb_tx_ready_callback) {
         fdi_usb_tx_ready_callback();
     }
+
     return USBD_OK;
 }
 
@@ -192,12 +197,15 @@ fdi_usb_status_t fdi_usb_get_status(void) {
 
 void USBD_USR_Init(void) {   
     fdi_usb_status = fdi_usb_status_reset;
+    fdi_usb_send_available = false;
 }
 
 void USBD_USR_DeviceReset(uint8_t speed __attribute__((unused))) {
 }
 
 void USBD_USR_DeviceConfigured(void) {
+    fdi_usb_send_available = true;
+
     fdi_usb_set_status(fdi_usb_status_configured);
 }
 
@@ -210,8 +218,6 @@ void USBD_USR_DeviceResumed(void) {
 }
 
 void USBD_USR_DeviceConnected(void) {
-    fdi_usb_send_available = true;
-
     fdi_usb_set_status(fdi_usb_status_connected);
 }
 

@@ -1,6 +1,6 @@
 #include "fdi_main.h"
 
-#include "fdi_instruments.h"
+#include "fdi_instrument.h"
 
 #include "fdi_battery_instrument.h"
 #include "fdi_color_instrument.h"
@@ -42,7 +42,7 @@ void fdi_main(void) {
     fdi_api_initialize_usb();
     fdi_usb_power_up();
 
-    fdi_instruments_initialize();
+    fdi_instrument_initialize();
     fdi_battery_instrument_initialize();
     fdi_color_instrument_initialize();
     fdi_indicator_instrument_initialize();

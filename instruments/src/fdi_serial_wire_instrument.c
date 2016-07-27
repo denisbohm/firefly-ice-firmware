@@ -2,7 +2,7 @@
 
 #include "fdi_api.h"
 #include "fdi_gpio.h"
-#include "fdi_instruments.h"
+#include "fdi_instrument.h"
 #include "fdi_serial_wire.h"
 
 #include "fd_log.h"
@@ -10,14 +10,14 @@
 #define fdi_serial_wire_tx_data_size 256
 
 typedef struct {
-    uint64_t identifier;
+    fdi_instrument_t super;
     fdi_serial_wire_t *serial_wire;
     uint8_t tx_data[fdi_serial_wire_tx_data_size];
     uint32_t tx_data_index;
 
 } fdi_serial_wire_instrument_t;
 
-#define fdi_serial_wire_instrument_count 1
+#define fdi_serial_wire_instrument_count 2
 
 static const uint64_t apiTypeSetOutputs = 1;
 static const uint64_t apiTypeGetInputs = 2;
@@ -36,7 +36,7 @@ fdi_serial_wire_instrument_t fdi_serial_wire_instruments[fdi_serial_wire_instrum
 fdi_serial_wire_instrument_t *fdi_serial_wire_instrument_get(uint64_t identifier) {
     for (int i = 0; i < fdi_serial_wire_instrument_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
-        if (instrument->identifier == identifier) {
+        if (instrument->super.identifier == identifier) {
             return instrument;
         }
     }
@@ -58,7 +58,7 @@ void fdi_serial_wire_instrument_flush(uint64_t identifier, uint64_t type __attri
     }
 
     if (instrument->tx_data_index > 0) {
-        if (fdi_api_send(instrument->identifier, apiTypeData, instrument->tx_data, instrument->tx_data_index)) {
+        if (fdi_api_send(instrument->super.identifier, apiTypeData, instrument->tx_data, instrument->tx_data_index)) {
             instrument->tx_data_index = 0;
         } else {
             fd_log_assert_fail("can't send");
@@ -151,10 +151,11 @@ void fdi_serial_wire_instrument_shift_in_data(uint64_t identifier, uint64_t type
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
-        uint64_t identifier = fdi_instruments_register();
-        instrument->identifier = identifier;
+        instrument->super.category = "SerialWire";
+        fdi_instrument_register(&instrument->super);
         instrument->serial_wire = &fdi_serial_wires[i];
         instrument->tx_data_index = 0;
+        uint64_t identifier = instrument->super.identifier;
         fdi_api_register(identifier, apiTypeSetOutputs, fdi_serial_wire_instrument_set_outputs);
         fdi_api_register(identifier, apiTypeGetInputs, fdi_serial_wire_instrument_get_inputs);
         fdi_api_register(identifier, apiTypeShiftOutBits, fdi_serial_wire_instrument_shift_out_bits);

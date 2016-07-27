@@ -69,12 +69,15 @@ void fdi_api_transmit(uint8_t *data, uint32_t length) {
     fdi_usb_send(data, length);
 }
 
+int fdi_api_transmit_count = 0;
+
 // remove data from tx buffer
 bool fdi_api_process_tx(void) {
     if ((fdi_api_tx_length > 0) && fdi_api_can_transmit_handler()) {
         uint8_t length = fdi_api_tx_buffer[fdi_api_tx_index];
         fd_log_assert((fdi_api_tx_index + length) <= fdi_api_tx_length);
         fdi_api_tx_index += 1;
+        ++fdi_api_transmit_count;
         fdi_api_transmit_handler(&fdi_api_tx_buffer[fdi_api_tx_index], length);
         fdi_api_tx_index += length;
         if (fdi_api_tx_index == fdi_api_tx_length) {

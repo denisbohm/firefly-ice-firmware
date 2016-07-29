@@ -14,6 +14,6 @@ typedef struct {
     uint16_t b;
 } fdi_tcs3471_conversion_t;
 
-bool fdi_tcs3471_convert(uint8_t address, fdi_tcs3471_conversion_t *conversion);
+bool fdi_tcs3471_convert(uint8_t address, uint8_t atime, uint8_t again, fdi_tcs3471_conversion_t *conversion);
 
 #endif

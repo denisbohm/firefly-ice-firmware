@@ -8,6 +8,8 @@
 #include "fd_binary.h"
 #include "fd_log.h"
 
+#include <math.h>
+
 typedef struct {
     fdi_instrument_t super;
     uint8_t address;
@@ -29,14 +31,39 @@ fdi_color_instrument_t *fdi_color_instrument_get(uint64_t identifier) {
     return 0;
 }
 
-void fdi_color_instrument_convert(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+void fdi_color_instrument_convert(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_color_instrument_t *instrument = fdi_color_instrument_get(identifier);
     if (instrument == 0) {
         return;
     }
 
+    float integration_time = fd_binary_get_float32(binary);
+    float gain = fd_binary_get_float32(binary);
+
+    float atimef = 256.0f - integration_time / 0.0024f;
+    if (atimef < 0.0f) {
+        atimef = 0.0f;
+    }
+    if (atimef > 256.0f) {
+        atimef = 256.0f;
+    }
+    uint8_t atime = (uint8_t)roundf(atimef);
+
+    uint8_t again;
+    if (gain <= 1.0f) {
+        again = 0b00;
+    } else
+    if (gain <= 4.0f) {
+        again = 0b01;
+    } else
+    if (gain <= 16.0f) {
+        again = 0b10;
+    } else {
+        again = 0b11;
+    }
+
     fdi_tcs3471_conversion_t conversion;
-    fdi_tcs3471_convert(instrument->address, &conversion);
+    fdi_tcs3471_convert(instrument->address, atime, again, &conversion);
 
     uint8_t buffer[32];
     fd_binary_t response;

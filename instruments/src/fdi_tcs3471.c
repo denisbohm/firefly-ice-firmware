@@ -13,6 +13,10 @@ const uint8_t fdi_tcs3471_register_enable_wen = 0b00001000;
 const uint8_t fdi_tcs3471_register_enable_aen = 0b00000010;
 const uint8_t fdi_tcs3471_register_enable_pon = 0b00000001;
 
+const uint8_t fdi_tcs3471_register_timing = 0x01;
+
+const uint8_t fdi_tcs3471_register_control = 0x0f;
+
 const uint8_t fdi_tcs3471_register_id = 0x12;
 const uint8_t fdi_tcs3471_register_id_tcs34715 = 0x14;
 
@@ -28,12 +32,27 @@ const uint8_t fdi_tcs3471_register_gdatah = 0x19;
 const uint8_t fdi_tcs3471_register_bdata = 0x1a;
 const uint8_t fdi_tcs3471_register_bdatah = 0x1b;
 
-bool fdi_tcs3471_convert(uint8_t address, fdi_tcs3471_conversion_t *conversion) {
+bool fdi_tcs3471_convert(uint8_t address, uint8_t atime, uint8_t again, fdi_tcs3471_conversion_t *conversion) {
+    bool error = false;
+
+    uint8_t command_timing[] = {
+        fdi_tcs3471_command | fdi_tcs3471_register_timing,
+        atime,
+    };
+    error |= fdi_i2c_write(address, command_timing, sizeof(command_timing));
+
+    uint8_t command_control[] = {
+        fdi_tcs3471_command | fdi_tcs3471_register_control,
+        again,
+    };
+    error |= fdi_i2c_write(address, command_control, sizeof(command_control));
+
     uint8_t command_enable[] = {
         fdi_tcs3471_command | fdi_tcs3471_register_enable,
         fdi_tcs3471_register_enable_wen | fdi_tcs3471_register_enable_aen | fdi_tcs3471_register_enable_pon,
     };
-    bool error = fdi_i2c_write(address, command_enable, sizeof(command_enable));
+    error |= fdi_i2c_write(address, command_enable, sizeof(command_enable));
+
     uint8_t command_status[] = {
         fdi_tcs3471_command | fdi_tcs3471_register_status
     };
@@ -42,6 +61,7 @@ bool fdi_tcs3471_convert(uint8_t address, fdi_tcs3471_conversion_t *conversion) 
     do {
         error |= fdi_i2c_read(address, &status, 1);
     } while ((status & fdi_tcs3471_register_status_avalid) == 0);
+
     uint8_t command_data[] = {
         fdi_tcs3471_command | fdi_tcs3471_register_cdata
     };
@@ -52,10 +72,12 @@ bool fdi_tcs3471_convert(uint8_t address, fdi_tcs3471_conversion_t *conversion) 
     conversion->r = (data[3] << 8) | data[2];
     conversion->g = (data[5] << 8) | data[4];
     conversion->b = (data[7] << 8) | data[6];
+
     uint8_t command_disable[] = {
         fdi_tcs3471_command | fdi_tcs3471_register_enable,
         0,
     };
     error |= fdi_i2c_write(address, command_disable, sizeof(command_disable));
+
     return error;
 }

@@ -12,7 +12,7 @@ typedef struct {
     uint32_t control;
 } fdi_relay_instrument_t;
 
-#define fdi_relay_instrument_count 1
+#define fdi_relay_instrument_count 5
 
 static const uint64_t apiTypeSet = 1;
 
@@ -39,9 +39,19 @@ void fdi_relay_instrument_set(uint64_t identifier, uint64_t type __attribute((un
 }
 
 void fdi_relay_instrument_initialize(void) {
-    fdi_relay_instrument_t *instrument = &fdi_relay_instruments[0];
-    instrument->super.category = "Relay";
-    fdi_instrument_register(&instrument->super);
-    instrument->control = FDI_RELAY_ATE_BUTTON_EN;
-    fdi_api_register(instrument->super.identifier, apiTypeSet, fdi_relay_instrument_set);
+    uint32_t controls[] = {
+        FDI_RELAY_ATE_BUTTON_EN,
+        FDI_RELAY_ATE_USB_5V_EN,
+        FDI_RELAY_ATE_USB_D_EN,
+        FDI_RELAY_ATE_MCU_VCC_SENSE,
+        FDI_RELAY_ATE_BATTERY_SENSE,
+    };
+
+    for (int i = 0; i < fdi_relay_instrument_count; ++i) {
+        fdi_relay_instrument_t *instrument = &fdi_relay_instruments[i];
+        instrument->super.category = "Relay";
+        fdi_instrument_register(&instrument->super);
+        instrument->control = controls[i];
+        fdi_api_register(instrument->super.identifier, apiTypeSet, fdi_relay_instrument_set);
+    }
 }

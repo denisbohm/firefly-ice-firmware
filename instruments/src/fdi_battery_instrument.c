@@ -22,7 +22,10 @@ typedef struct {
 
 #define fdi_battery_instrument_count 1
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
+static const uint64_t apiTypeSetVoltage = 2;
+static const uint64_t apiTypeSetEnabled = 3;
 
 fdi_battery_instrument_t fdi_battery_instruments[fdi_battery_instrument_count];
 
@@ -70,21 +73,43 @@ void fdi_battery_instrument_set_voltage(uint64_t identifier, uint64_t type __att
         voltage = 4.2f;
     }
     // 0x0222 = 2.75 V (battery cut-off)
-    // ? = 4.2 V (max value)
-    float multiplier = 1.0f; // ?
+    // 0x010d = 4.2 V (max value)
+    float multiplier = ((float)(0x0222 - 0x010d)) / (4.2f - 2.75f);
     uint16_t value = 0x0222 - (int)((voltage - 2.75f) * multiplier);
     fdi_mcp4726_write_volatile_dac_register(value);
+}
+
+void fdi_battery_instrument_set_enabled(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_battery_instrument_t *instrument = fdi_battery_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    bool enabled = fd_binary_get_uint8(binary) != 0;
+    fdi_gpio_set(instrument->enable, enabled);
+}
+
+void fdi_battery_instrument_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_battery_instrument_t *instrument = fdi_battery_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_gpio_off(instrument->enable);
 }
 
 void fdi_battery_instrument_initialize(void) {
     fdi_battery_instrument_t *instrument = &fdi_battery_instruments[0];
     instrument->super.category = "Battery";
-    fdi_instrument_register(&instrument->super);
+    instrument->super.reset = fdi_battery_instrument_reset;
     instrument->enable = FDI_GPIO_ATE_BS_EN;
     instrument->channel_high = 4; // battery current - high range
     instrument->multiplier_high = fdi_current_sense_gain(4.7f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
     instrument->channel_low = 5; // battery current - low range
     instrument->multiplier_low = fdi_current_sense_gain(4.7f, 4.7f, 10000.0f, 0.0f, 1000.0f);
+    fdi_instrument_register(&instrument->super);
+    fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_battery_instrument_reset);
     fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_battery_instrument_convert);
-    fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_battery_instrument_set_voltage);
+    fdi_api_register(instrument->super.identifier, apiTypeSetVoltage, fdi_battery_instrument_set_voltage);
+    fdi_api_register(instrument->super.identifier, apiTypeSetEnabled, fdi_battery_instrument_set_enabled);
 }

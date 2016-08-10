@@ -15,6 +15,7 @@ typedef struct {
 
 #define fdi_indicator_instrument_count 1
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSetRGB = 1;
 
 fdi_indicator_instrument_t fdi_indicator_instruments[fdi_indicator_instrument_count];
@@ -43,12 +44,25 @@ void fdi_indicator_instrument_set_rgb(uint64_t identifier, uint64_t type __attri
     fdi_gpio_set(instrument->led_b, b < 0.5f); 
 }
 
+void fdi_indicator_instrument_reset(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
+    fdi_indicator_instrument_t *instrument = fdi_indicator_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_gpio_on(instrument->led_r); 
+    fdi_gpio_on(instrument->led_g); 
+    fdi_gpio_on(instrument->led_b); 
+}
+
 void fdi_indicator_instrument_initialize(void) {
     fdi_indicator_instrument_t *instrument = &fdi_indicator_instruments[0];
     instrument->super.category = "Indicator";
-    fdi_instrument_register(&instrument->super);
+    instrument->super.reset = fdi_indicator_instrument_reset;
     instrument->led_r = FDI_GPIO_LED_R;
     instrument->led_g = FDI_GPIO_LED_G;
     instrument->led_b = FDI_GPIO_LED_B;
+    fdi_instrument_register(&instrument->super);
+    fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_indicator_instrument_reset);
     fdi_api_register(instrument->super.identifier, apiTypeSetRGB, fdi_indicator_instrument_set_rgb);
 }

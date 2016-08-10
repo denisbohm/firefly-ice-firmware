@@ -19,7 +19,9 @@ typedef struct {
 
 #define fdi_current_instrument_count 1
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
+static const uint64_t apiTypeSetEnabled = 2;
 
 fdi_current_instrument_t fdi_current_instruments[fdi_current_instrument_count];
 
@@ -51,12 +53,34 @@ void fdi_current_instrument_convert(uint64_t identifier, uint64_t type __attribu
     }
 }
 
+void fdi_current_instrument_set_enabled(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_current_instrument_t *instrument = fdi_current_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    bool enabled = fd_binary_get_uint8(binary) != 0;
+    fdi_gpio_set(instrument->enable, enabled);
+}
+
+void fdi_current_instrument_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_current_instrument_t *instrument = fdi_current_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_gpio_off(instrument->enable);
+}
+
 void fdi_current_instrument_initialize(void) {
     fdi_current_instrument_t *instrument = &fdi_current_instruments[0];
     instrument->super.category = "Current";
-    fdi_instrument_register(&instrument->super);
+    instrument->super.reset = fdi_current_instrument_reset;
     instrument->enable = FDI_GPIO_ATE_USB_CS_EN;
     instrument->channel = 6; // USB current
     instrument->multiplier = fdi_current_sense_gain(0.1f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
+    fdi_instrument_register(&instrument->super);
+    fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_current_instrument_reset);
     fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_current_instrument_convert);
+    fdi_api_register(instrument->super.identifier, apiTypeSetEnabled, fdi_current_instrument_set_enabled);
 }

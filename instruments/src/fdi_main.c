@@ -4,6 +4,7 @@
 
 #include "fdi_battery_instrument.h"
 #include "fdi_color_instrument.h"
+#include "fdi_current_instrument.h"
 #include "fdi_indicator_instrument.h"
 #include "fdi_relay_instrument.h"
 #include "fdi_serial_wire_instrument.h"
@@ -45,6 +46,7 @@ void fdi_main(void) {
     fdi_instrument_initialize();
     fdi_battery_instrument_initialize();
     fdi_color_instrument_initialize();
+    fdi_current_instrument_initialize();
     fdi_indicator_instrument_initialize();
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();

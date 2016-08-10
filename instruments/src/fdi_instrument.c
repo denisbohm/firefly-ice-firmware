@@ -7,8 +7,9 @@
 
 static const uint64_t apiIdentifierInstrumentManager = 0;
 
-static const uint64_t apiTypeEcho = 1;
-static const uint64_t apiTypeDiscoverInstruments = 2;
+static const uint64_t apiTypeResetInstruments = 0;
+static const uint64_t apiTypeDiscoverInstruments = 1;
+static const uint64_t apiTypeEcho = 2;
 
 #define FDI_INSTRUMENT_LIMIT 32
 
@@ -38,6 +39,15 @@ void fdi_instrument_discover_instruments(uint64_t identifier __attribute__((unus
     }
 }
 
+void fdi_instrument_reset_instruments(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary_in __attribute__((unused))) {
+    for (uint32_t i = 0; i < fdi_instrument_count; ++i) {
+        fdi_instrument_t *instrument = fdi_instruments[i];
+        if (instrument->reset) {
+            instrument->reset(instrument->identifier, 0, 0);
+        }
+    }
+}
+
 void fdi_instrument_register(fdi_instrument_t *instrument) {
     if (fdi_instrument_count >= FDI_INSTRUMENT_LIMIT) {
         return;
@@ -49,6 +59,7 @@ void fdi_instrument_register(fdi_instrument_t *instrument) {
 void fdi_instrument_initialize(void) {
     fdi_instrument_count = 0;
 
+    fdi_api_register(apiIdentifierInstrumentManager, apiTypeResetInstruments, fdi_instrument_reset_instruments);
     fdi_api_register(apiIdentifierInstrumentManager, apiTypeEcho, fdi_instrument_echo);
     fdi_api_register(apiIdentifierInstrumentManager, apiTypeDiscoverInstruments, fdi_instrument_discover_instruments);
 }

@@ -14,13 +14,9 @@ void fdi_relay_set(uint32_t identifier, bool value) {
 }
 
 void fdi_relay_on(uint32_t identifier) {
-    fd_log_assert((FDI_RELAY_ATE_USB_5V_EN <= identifier) && (identifier < FDI_RELAY_ATE_MCU_VCC_SENSE));
-
     fdi_gpio_on(identifier);
 }
 
 void fdi_relay_off(uint32_t identifier) {
-    fd_log_assert((FDI_RELAY_ATE_USB_5V_EN <= identifier) && (identifier < FDI_RELAY_ATE_MCU_VCC_SENSE));
-
     fdi_gpio_off(identifier);
 }

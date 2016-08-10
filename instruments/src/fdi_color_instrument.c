@@ -17,6 +17,7 @@ typedef struct {
 
 #define fdi_color_instrument_count 1
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
 
 fdi_color_instrument_t fdi_color_instruments[fdi_color_instrument_count];
@@ -78,10 +79,21 @@ void fdi_color_instrument_convert(uint64_t identifier, uint64_t type __attribute
     }
 }
 
+void fdi_color_instrument_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_color_instrument_t *instrument = fdi_color_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    // nothing to do...
+}
+
 void fdi_color_instrument_initialize(void) {
     fdi_color_instrument_t *instrument = &fdi_color_instruments[0];
     instrument->super.category = "Color";
-    fdi_instrument_register(&instrument->super);
+    instrument->super.reset = fdi_color_instrument_reset;
     instrument->address = fdi_tcs34715_address;
+    fdi_instrument_register(&instrument->super);
+    fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_color_instrument_reset);
     fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_color_instrument_convert);
 }

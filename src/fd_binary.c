@@ -104,54 +104,92 @@ uint32_t fd_binary_remaining_length(fd_binary_t *binary) {
     return binary->size - binary->put_index;
 }
 
+bool fd_binary_get_check(fd_binary_t *binary, uint32_t length) {
+    if ((binary->get_index + length) <= binary->size) {
+        return true;
+    }
+    binary->flags |= FD_BINARY_FLAG_OVERFLOW;
+    fd_log_assert_fail("");
+    return false;
+}
+
 void fd_binary_get_bytes(fd_binary_t *binary, uint8_t *data, uint32_t length) {
+    if (!fd_binary_get_check(binary, length)) {
+        memset(data, 0, length);
+        return;
+    }
     memcpy(data, &binary->buffer[binary->get_index], length);
     binary->get_index += length;
 }
 
 uint8_t fd_binary_get_uint8(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 1)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 1;
     return fd_binary_unpack_uint8(buffer);
 }
 
 uint16_t fd_binary_get_uint16(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 2)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 2;
     return fd_binary_unpack_uint16(buffer);
 }
 
 uint32_t fd_binary_get_uint24(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 3)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 3;
     return fd_binary_unpack_uint24(buffer);
 }
 
 uint32_t fd_binary_get_uint32(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 4)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 4;
     return fd_binary_unpack_uint32(buffer);
 }
 
 uint64_t fd_binary_get_uint64(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 8)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 8;
     return fd_binary_unpack_uint64(buffer);
 }
 
 float fd_binary_get_float16(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 2)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 2;
     return fd_binary_unpack_float16(buffer);
 }
 
 float fd_binary_get_float32(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 4)) {
+        return 0;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 4;
     return fd_binary_unpack_float32(buffer);
 }
 
 fd_time_t fd_binary_get_time64(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 8)) {
+        fd_time_t time = {.seconds = 0, .microseconds = 0};
+        return time;
+    }
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 8;
     return fd_binary_unpack_time64(buffer);

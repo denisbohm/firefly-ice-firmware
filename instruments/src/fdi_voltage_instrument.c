@@ -17,6 +17,7 @@ typedef struct {
 
 #define fdi_voltage_instrument_count 3
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
 
 fdi_voltage_instrument_t fdi_voltage_instruments[fdi_voltage_instrument_count];
@@ -49,32 +50,46 @@ void fdi_voltage_instrument_convert(uint64_t identifier, uint64_t type __attribu
     }
 }
 
+void fdi_voltage_instrument_reset(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
+    fdi_voltage_instrument_t *instrument = fdi_voltage_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    // nothing to do...
+}
+
 void fdi_voltage_instrument_initialize(void) {
     {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
         instrument->super.category = "Voltage";
-        fdi_instrument_register(&instrument->super);
+        instrument->super.reset = fdi_voltage_instrument_reset;
         instrument->channel = 15; // battery voltage
         instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_reset);
         fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_convert);
     }
 
     {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[1];
         instrument->super.category = "Voltage";
-        fdi_instrument_register(&instrument->super);
+        instrument->super.reset = fdi_voltage_instrument_reset;
         instrument->channel = 3; // main rail voltage
         instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_reset);
         fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_convert);
     }
 
     {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[2];
         instrument->super.category = "Voltage";
-        fdi_instrument_register(&instrument->super);
+        instrument->super.reset = fdi_voltage_instrument_reset;
         instrument->channel = 7; // auxiliary rail voltage
         instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_reset);
         fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_convert);
     }
-
 }

@@ -18,9 +18,11 @@ extern fdi_serial_wire_t fdi_serial_wires[];
 
 void fdi_serial_wire_initialize(void);
 
+void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire);
+
 void fdi_serial_wire_set_power(fdi_serial_wire_t *serial_wire, bool power);
 
-void fdi_serial_wire_set_nreset(fdi_serial_wire_t *serial_wire, bool nreset);
+void fdi_serial_wire_set_reset(fdi_serial_wire_t *serial_wire, bool nreset);
 
 void fdi_serial_wire_set_direction_to_read(fdi_serial_wire_t *serial_wire);
 

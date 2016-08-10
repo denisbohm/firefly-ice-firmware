@@ -13,11 +13,11 @@ void fdi_serial_wire_set_power(fdi_serial_wire_t *serial_wire, bool power) {
     }
 }
 
-void fdi_serial_wire_set_nreset(fdi_serial_wire_t *serial_wire, bool nreset) {
-    if (nreset) {
-        fdi_gpio_off(serial_wire->gpio_reset);
-    } else {
+void fdi_serial_wire_set_reset(fdi_serial_wire_t *serial_wire, bool reset) {
+    if (reset) {
         fdi_gpio_on(serial_wire->gpio_reset);
+    } else {
+        fdi_gpio_off(serial_wire->gpio_reset);
     }
 }
 
@@ -44,14 +44,14 @@ void fdi_serial_wire_shift_out(fdi_serial_wire_t *serial_wire, int byte, int bit
 uint8_t fdi_serial_wire_shift_in(fdi_serial_wire_t *serial_wire, int bit_count) {
     uint8_t byte = 0;
     while (bit_count-- > 0) {
+        byte >>= 1;
         fdi_serial_wire_half_bit_delay();
         fdi_gpio_on(serial_wire->gpio_clock);
         if (fdi_gpio_get(serial_wire->gpio_data)) {
-            byte |= 1;
+            byte |= 0b10000000;
         }
         fdi_serial_wire_half_bit_delay();
         fdi_gpio_off(serial_wire->gpio_clock);
-        byte <<= 1;
     }
     return byte;
 }
@@ -65,6 +65,14 @@ void fdi_serial_wire_set_direction_to_write(fdi_serial_wire_t *serial_wire) {
     fdi_gpio_on(serial_wire->gpio_data);
     fdi_gpio_on(serial_wire->gpio_direction);
     fdi_gpio_set_mode_out(serial_wire->gpio_data);
+}
+
+void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire) {
+    fdi_gpio_off(serial_wire->gpio_power);
+    fdi_gpio_set_mode_in(serial_wire->gpio_data);
+    fdi_gpio_off(serial_wire->gpio_direction);
+    fdi_gpio_on(serial_wire->gpio_clock);
+    fdi_gpio_off(serial_wire->gpio_reset);
 }
 
 void fdi_serial_wire_initialize(void) {

@@ -19,6 +19,7 @@ typedef struct {
 
 #define fdi_serial_wire_instrument_count 2
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSetOutputs = 1;
 static const uint64_t apiTypeGetInputs = 2;
 static const uint64_t apiTypeShiftOutBits = 3;
@@ -27,9 +28,11 @@ static const uint64_t apiTypeShiftInBits = 5;
 static const uint64_t apiTypeShiftInData = 6;
 static const uint64_t apiTypeFlush = 7;
 static const uint64_t apiTypeData = 8;
+static const uint64_t apiTypeSetEnabled = 9;
 
-static const uint8_t outputReset = 0;
-static const uint8_t outputDirection = 1;
+static const uint8_t outputIndicator = 0;
+static const uint8_t outputReset = 1;
+static const uint8_t outputDirection = 2;
 
 fdi_serial_wire_instrument_t fdi_serial_wire_instruments[fdi_serial_wire_instrument_count];
 
@@ -75,11 +78,14 @@ void fdi_serial_wire_instrument_set_outputs(uint64_t identifier, uint64_t type _
     uint8_t outputs = fd_binary_get_uint8(binary);
     uint8_t values = fd_binary_get_uint8(binary);
 
-    if (outputs & outputReset) {
-        fdi_serial_wire_set_nreset(instrument->serial_wire, (values & outputReset) != 0);
+    if (outputs & (1 << outputIndicator)) {
+        fdi_gpio_set(FDI_GPIO_LED_R, (values & (1 << outputIndicator)) == 0);
     }
-    if (outputs & outputDirection) {
-        if ((values & outputDirection) != 0) {
+    if (outputs & (1 << outputReset)) {
+        fdi_serial_wire_set_reset(instrument->serial_wire, (values & (1 << outputReset)) != 0);
+    }
+    if (outputs & (1 << outputDirection)) {
+        if ((values & (1 << outputDirection)) != 0) {
             fdi_serial_wire_set_direction_to_write(instrument->serial_wire);
         } else {
             fdi_serial_wire_set_direction_to_read(instrument->serial_wire);
@@ -148,14 +154,37 @@ void fdi_serial_wire_instrument_shift_in_data(uint64_t identifier, uint64_t type
     } while (byte_count-- > 0);
 }
 
+void fdi_serial_wire_instrument_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_serial_wire_reset(instrument->serial_wire);
+    instrument->tx_data_index = 0;
+}
+
+void fdi_serial_wire_instrument_set_enabled(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    bool enabled = fd_binary_get_uint8(binary) != 0;
+    fdi_serial_wire_reset(instrument->serial_wire);
+    fdi_serial_wire_set_power(instrument->serial_wire, enabled);
+}
+
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
         instrument->super.category = "SerialWire";
-        fdi_instrument_register(&instrument->super);
+        instrument->super.reset = fdi_serial_wire_instrument_reset;
         instrument->serial_wire = &fdi_serial_wires[i];
         instrument->tx_data_index = 0;
+        fdi_instrument_register(&instrument->super);
         uint64_t identifier = instrument->super.identifier;
+        fdi_api_register(identifier, apiTypeReset, fdi_serial_wire_instrument_reset);
         fdi_api_register(identifier, apiTypeSetOutputs, fdi_serial_wire_instrument_set_outputs);
         fdi_api_register(identifier, apiTypeGetInputs, fdi_serial_wire_instrument_get_inputs);
         fdi_api_register(identifier, apiTypeShiftOutBits, fdi_serial_wire_instrument_shift_out_bits);
@@ -163,5 +192,6 @@ void fdi_serial_wire_instrument_initialize(void) {
         fdi_api_register(identifier, apiTypeShiftInBits, fdi_serial_wire_instrument_shift_in_bits);
         fdi_api_register(identifier, apiTypeShiftInData, fdi_serial_wire_instrument_shift_in_data);
         fdi_api_register(identifier, apiTypeFlush, fdi_serial_wire_instrument_flush);
+        fdi_api_register(identifier, apiTypeSetEnabled, fdi_serial_wire_instrument_set_enabled);
     }
 }

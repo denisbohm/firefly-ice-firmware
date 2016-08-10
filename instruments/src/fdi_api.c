@@ -30,12 +30,12 @@ uint32_t fdi_api_entry_count;
 
 uint32_t fdi_api_tx_index;
 uint32_t fdi_api_tx_length;
-#define fdi_api_tx_size 300
+#define fdi_api_tx_size 4096
 uint8_t fdi_api_tx_buffer[fdi_api_tx_size];
 
 uint32_t fdi_api_rx_index;
 uint32_t fdi_api_rx_length;
-#define fdi_api_rx_size 300
+#define fdi_api_rx_size 4096
 uint8_t fdi_api_rx_buffer[fdi_api_rx_size];
 
 fdi_api_can_transmit_handler_t fdi_api_can_transmit_handler;
@@ -113,14 +113,19 @@ bool fdi_api_process_rx(void) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, &fdi_api_rx_buffer[index], length - index);
     uint32_t function_length = (uint32_t)fd_binary_get_uint16(&binary);
-    uint64_t identifier = fd_binary_get_varuint(&binary);
-    uint64_t type = fd_binary_get_varuint(&binary);
-    if (binary.flags == 0) {
-        fdi_api_dispatch_handler(identifier, type, &binary);
-    } else {
-        fd_log_assert_fail("underflow");
-    }
-    fd_log_assert(binary.get_index <= (2 + function_length));
+    do {
+        uint64_t identifier = fd_binary_get_varuint(&binary);
+        uint64_t type = fd_binary_get_varuint(&binary);
+        uint64_t content_length = fd_binary_get_varuint(&binary);
+        uint32_t content_index = binary.get_index;
+        if (binary.flags == 0) {
+            fdi_api_dispatch_handler(identifier, type, &binary);
+        } else {
+            fd_log_assert_fail("underflow");
+        }
+        fd_log_assert(binary.get_index <= (content_index + content_length));
+        binary.get_index = content_index + content_length;
+    } while (binary.get_index < binary.size);
 
     primask = fdi_interrupt_disable();
     fdi_api_rx_index += 2 + function_length;

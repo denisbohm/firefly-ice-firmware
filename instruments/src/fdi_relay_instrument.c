@@ -14,6 +14,7 @@ typedef struct {
 
 #define fdi_relay_instrument_count 5
 
+static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSet = 1;
 
 fdi_relay_instrument_t fdi_relay_instruments[fdi_relay_instrument_count];
@@ -38,6 +39,15 @@ void fdi_relay_instrument_set(uint64_t identifier, uint64_t type __attribute((un
     fdi_relay_set(instrument->control, on);
 }
 
+void fdi_relay_instrument_reset(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
+    fdi_relay_instrument_t *instrument = fdi_relay_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_relay_off(instrument->control);
+}
+
 void fdi_relay_instrument_initialize(void) {
     uint32_t controls[] = {
         FDI_RELAY_ATE_BUTTON_EN,
@@ -50,8 +60,10 @@ void fdi_relay_instrument_initialize(void) {
     for (int i = 0; i < fdi_relay_instrument_count; ++i) {
         fdi_relay_instrument_t *instrument = &fdi_relay_instruments[i];
         instrument->super.category = "Relay";
-        fdi_instrument_register(&instrument->super);
+        instrument->super.reset = fdi_relay_instrument_reset;
         instrument->control = controls[i];
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_relay_instrument_reset);
         fdi_api_register(instrument->super.identifier, apiTypeSet, fdi_relay_instrument_set);
     }
 }

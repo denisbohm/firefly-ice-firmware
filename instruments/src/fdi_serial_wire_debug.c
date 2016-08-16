@@ -332,7 +332,7 @@ bool fdi_serial_wire_debug_set_overrun_detection(
     }
     
     serial_wire->overrun_detection_enabled = enabled;
-    return false;
+    return true;
 }
 
 bool fdi_serial_wire_debug_before_memory_transfer(
@@ -439,8 +439,6 @@ bool fdi_serial_wire_debug_read_data(
     uint32_t length,
     fdi_serial_wire_debug_error_t *error
 ) {
-    fdi_serial_wire_debug_test(serial_wire);
-
     if (!fdi_serial_wire_debug_before_memory_transfer(serial_wire, address, error)) {
         return false;
     }
@@ -598,4 +596,9 @@ void fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
     result = fdi_serial_wire_debug_write_memory_uint32(serial_wire, address, 0x12345678, &error);
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
+
+    uint8_t data[] = {0x12, 0x34, 0x56, 0x78};
+    result = fdi_serial_wire_debug_write_data(serial_wire, address, data, sizeof(data), &error);
+    uint8_t verify[] = {0, 0, 0, 0};
+    result = fdi_serial_wire_debug_read_data(serial_wire, address, verify, sizeof(verify), &error);
 }

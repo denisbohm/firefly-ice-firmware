@@ -39,6 +39,7 @@ void fdi_main(void) {
     fdi_i2c_initialize();
     fdi_serial_wire_initialize();
     fdi_adc_initialize();
+    fdi_adc_power_up();
 
     fdi_usb_initialize();
     fdi_api_initialize_usb();

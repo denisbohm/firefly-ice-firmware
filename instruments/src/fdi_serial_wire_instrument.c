@@ -215,7 +215,7 @@ void fdi_serial_wire_instrument_api_read_memory(uint64_t identifier, uint64_t ty
     bool success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address, &data[1], length, &error);
     data[0] = success ? 0 : error.code;
 
-    if (!fdi_api_send(instrument->super.identifier, apiTypeWriteMemory, data, 1 + length)) {
+    if (!fdi_api_send(instrument->super.identifier, apiTypeReadMemory, data, 1 + length)) {
         fd_log_assert_fail("can't send");
     }
 }

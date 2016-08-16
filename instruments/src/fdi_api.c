@@ -89,7 +89,19 @@ bool fdi_api_process_tx(void) {
     return false;
 }
 
+typedef struct {
+    uint64_t identifier;
+    uint64_t type;
+} fdi_api_event_t;
+
+fdi_api_event_t fdi_api_event_history[256];
+uint32_t fdi_api_event_history_index = 0;
+
 void fdi_api_dispatch(uint64_t identifier, uint64_t type, fd_binary_t *binary) {
+    fdi_api_event_t *event = &fdi_api_event_history[fdi_api_event_history_index++ & 0xff];
+    event->identifier = identifier;
+    event->type = type;
+    
     fdi_api_function_t function = fdi_api_lookup(identifier, type);
     if (function) {
         function(identifier, type, binary);
@@ -106,7 +118,7 @@ bool fdi_api_process_rx(void) {
     uint32_t length = fdi_api_rx_length;
     fdi_interrupt_restore(primask);
 
-    if (length == 0) {
+    if (index >= length) {
         return false;
     }
 
@@ -129,7 +141,8 @@ bool fdi_api_process_rx(void) {
 
     primask = fdi_interrupt_disable();
     fdi_api_rx_index += 2 + function_length;
-    if (fdi_api_rx_index >= fdi_api_rx_length) {
+    // if buffer is empty and there isn't a transfer occurring reset the buffer
+    if ((fdi_api_rx_index >= fdi_api_rx_length) && (fdi_api_merge.length == 0)) {
         fdi_api_rx_index = 0;
         fdi_api_rx_length = 0;
     }
@@ -210,7 +223,7 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
         fdi_api_merge_clear();
         fdi_api_merge.length = (uint32_t)fd_binary_get_varuint(&binary);
         fd_binary_t binary_rx;
-        fd_binary_initialize(&binary_rx, &fdi_api_rx_buffer[fdi_api_rx_index], fdi_api_rx_size - fdi_api_rx_index);
+        fd_binary_initialize(&binary_rx, &fdi_api_rx_buffer[fdi_api_rx_length], fdi_api_rx_size - fdi_api_rx_length);
         fd_binary_put_uint16(&binary_rx, fdi_api_merge.length);
     } else {
         if (ordinal != (fdi_api_merge.ordinal + 1)) {
@@ -224,19 +237,19 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
     uint8_t *content_data = &data[binary.get_index];
     uint32_t content_length = length - binary.get_index;
 
-    uint32_t rx_free = fdi_api_rx_size - fdi_api_merge.offset;
+    uint32_t rx_free = fdi_api_rx_size - (fdi_api_rx_length + 2 + fdi_api_merge.offset + content_length);
     if (content_length > rx_free) {
         fd_log_assert_fail("overflow");
         fdi_api_merge_clear();
         return;
     }
 
-    memcpy(&fdi_api_rx_buffer[fdi_api_rx_index + 2 + fdi_api_merge.offset], content_data, content_length);
+    memcpy(&fdi_api_rx_buffer[fdi_api_rx_length + 2 + fdi_api_merge.offset], content_data, content_length);
     fdi_api_merge.offset += content_length;
 
     if (fdi_api_merge.offset >= fdi_api_merge.length) {
         // merge complete
-        fdi_api_rx_length = fdi_api_rx_index + 2 + fdi_api_merge.length;
+        fdi_api_rx_length += 2 + fdi_api_merge.length;
         fdi_api_merge_clear();
     }
 }

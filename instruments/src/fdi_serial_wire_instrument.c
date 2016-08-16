@@ -4,20 +4,11 @@
 #include "fdi_gpio.h"
 #include "fdi_instrument.h"
 #include "fdi_serial_wire.h"
+#include "fdi_serial_wire_debug.h"
 
 #include "fd_log.h"
 
-#define fdi_serial_wire_tx_data_size 256
-
-typedef struct {
-    fdi_instrument_t super;
-    fdi_serial_wire_t *serial_wire;
-    uint8_t tx_data[fdi_serial_wire_tx_data_size];
-    uint32_t tx_data_index;
-
-} fdi_serial_wire_instrument_t;
-
-#define fdi_serial_wire_instrument_count 2
+#include <string.h>
 
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSetOutputs = 1;
@@ -29,12 +20,23 @@ static const uint64_t apiTypeShiftInData = 6;
 static const uint64_t apiTypeFlush = 7;
 static const uint64_t apiTypeData = 8;
 static const uint64_t apiTypeSetEnabled = 9;
+static const uint64_t apiTypeWriteMemory = 10;
+static const uint64_t apiTypeReadMemory = 11;
 
 static const uint8_t outputIndicator = 0;
 static const uint8_t outputReset = 1;
 static const uint8_t outputDirection = 2;
 
+#define fdi_serial_wire_instrument_count 2
 fdi_serial_wire_instrument_t fdi_serial_wire_instruments[fdi_serial_wire_instrument_count];
+
+uint32_t fdi_serial_wire_instrument_get_count(void) {
+    return fdi_serial_wire_instrument_count;
+}
+
+fdi_serial_wire_instrument_t *fdi_serial_wire_instrument_get_at(uint32_t index) {
+    return &fdi_serial_wire_instruments[index];
+}
 
 fdi_serial_wire_instrument_t *fdi_serial_wire_instrument_get(uint64_t identifier) {
     for (int i = 0; i < fdi_serial_wire_instrument_count; ++i) {
@@ -54,7 +56,7 @@ void fdi_serial_wire_instrument_queue_byte(fdi_serial_wire_instrument_t *instrum
     }
 }
 
-void fdi_serial_wire_instrument_flush(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+void fdi_serial_wire_instrument_api_flush(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -69,7 +71,7 @@ void fdi_serial_wire_instrument_flush(uint64_t identifier, uint64_t type __attri
     }
 }
 
-void fdi_serial_wire_instrument_set_outputs(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+void fdi_serial_wire_instrument_api_set_outputs(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -93,7 +95,7 @@ void fdi_serial_wire_instrument_set_outputs(uint64_t identifier, uint64_t type _
     }
 }
 
-void fdi_serial_wire_instrument_get_inputs(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+void fdi_serial_wire_instrument_api_get_inputs(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -102,7 +104,7 @@ void fdi_serial_wire_instrument_get_inputs(uint64_t identifier __attribute__((un
     fdi_serial_wire_instrument_queue_byte(instrument, 0x00); // not supported currently -denis
 }
 
-void fdi_serial_wire_instrument_shift_out_bits(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+void fdi_serial_wire_instrument_api_shift_out_bits(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -114,7 +116,7 @@ void fdi_serial_wire_instrument_shift_out_bits(uint64_t identifier, uint64_t typ
     fdi_serial_wire_shift_out(instrument->serial_wire, byte, bit_count + 1);
 }
 
-void fdi_serial_wire_instrument_shift_out_data(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+void fdi_serial_wire_instrument_api_shift_out_data(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -128,7 +130,7 @@ void fdi_serial_wire_instrument_shift_out_data(uint64_t identifier, uint64_t typ
     } while (byte_count-- > 0);
 }
 
-void fdi_serial_wire_instrument_shift_in_bits(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+void fdi_serial_wire_instrument_api_shift_in_bits(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -140,7 +142,7 @@ void fdi_serial_wire_instrument_shift_in_bits(uint64_t identifier, uint64_t type
     fdi_serial_wire_instrument_queue_byte(instrument, byte);
 }
 
-void fdi_serial_wire_instrument_shift_in_data(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+void fdi_serial_wire_instrument_api_shift_in_data(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -154,7 +156,7 @@ void fdi_serial_wire_instrument_shift_in_data(uint64_t identifier, uint64_t type
     } while (byte_count-- > 0);
 }
 
-void fdi_serial_wire_instrument_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+void fdi_serial_wire_instrument_api_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -164,7 +166,7 @@ void fdi_serial_wire_instrument_reset(uint64_t identifier, uint64_t type __attri
     instrument->tx_data_index = 0;
 }
 
-void fdi_serial_wire_instrument_set_enabled(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+void fdi_serial_wire_instrument_api_set_enabled(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -175,23 +177,68 @@ void fdi_serial_wire_instrument_set_enabled(uint64_t identifier, uint64_t type _
     fdi_serial_wire_set_power(instrument->serial_wire, enabled);
 }
 
+void fdi_serial_wire_instrument_api_write_memory(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    uint32_t address = (uint32_t)fd_binary_get_varuint(binary);
+    uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
+    uint8_t *data = &binary->buffer[binary->get_index];
+
+    fdi_serial_wire_debug_error_t error;
+    memset(&error, 0, sizeof(error));
+    bool success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address, data, length, &error);
+
+    uint8_t response_data[32];
+    fd_binary_t response;
+    fd_binary_initialize(&response, response_data, sizeof(response_data));
+    fd_binary_put_varuint(&response, success ? 0 : error.code);
+    if (!fdi_api_send(instrument->super.identifier, apiTypeWriteMemory, response_data, response.put_index)) {
+        fd_log_assert_fail("can't send");
+    }
+}
+
+void fdi_serial_wire_instrument_api_read_memory(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    uint32_t address = (uint32_t)fd_binary_get_varuint(binary);
+    uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
+
+    uint8_t data[32 + 4096];
+    fdi_serial_wire_debug_error_t error;
+    memset(&error, 0, sizeof(error));
+    bool success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address, &data[1], length, &error);
+    data[0] = success ? 0 : error.code;
+
+    if (!fdi_api_send(instrument->super.identifier, apiTypeWriteMemory, data, 1 + length)) {
+        fd_log_assert_fail("can't send");
+    }
+}
+
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
         instrument->super.category = "SerialWire";
-        instrument->super.reset = fdi_serial_wire_instrument_reset;
+        instrument->super.reset = fdi_serial_wire_instrument_api_reset;
         instrument->serial_wire = &fdi_serial_wires[i];
         instrument->tx_data_index = 0;
         fdi_instrument_register(&instrument->super);
         uint64_t identifier = instrument->super.identifier;
-        fdi_api_register(identifier, apiTypeReset, fdi_serial_wire_instrument_reset);
-        fdi_api_register(identifier, apiTypeSetOutputs, fdi_serial_wire_instrument_set_outputs);
-        fdi_api_register(identifier, apiTypeGetInputs, fdi_serial_wire_instrument_get_inputs);
-        fdi_api_register(identifier, apiTypeShiftOutBits, fdi_serial_wire_instrument_shift_out_bits);
-        fdi_api_register(identifier, apiTypeShiftOutData, fdi_serial_wire_instrument_shift_out_data);
-        fdi_api_register(identifier, apiTypeShiftInBits, fdi_serial_wire_instrument_shift_in_bits);
-        fdi_api_register(identifier, apiTypeShiftInData, fdi_serial_wire_instrument_shift_in_data);
-        fdi_api_register(identifier, apiTypeFlush, fdi_serial_wire_instrument_flush);
-        fdi_api_register(identifier, apiTypeSetEnabled, fdi_serial_wire_instrument_set_enabled);
+        fdi_api_register(identifier, apiTypeReset, fdi_serial_wire_instrument_api_reset);
+        fdi_api_register(identifier, apiTypeSetOutputs, fdi_serial_wire_instrument_api_set_outputs);
+        fdi_api_register(identifier, apiTypeGetInputs, fdi_serial_wire_instrument_api_get_inputs);
+        fdi_api_register(identifier, apiTypeShiftOutBits, fdi_serial_wire_instrument_api_shift_out_bits);
+        fdi_api_register(identifier, apiTypeShiftOutData, fdi_serial_wire_instrument_api_shift_out_data);
+        fdi_api_register(identifier, apiTypeShiftInBits, fdi_serial_wire_instrument_api_shift_in_bits);
+        fdi_api_register(identifier, apiTypeShiftInData, fdi_serial_wire_instrument_api_shift_in_data);
+        fdi_api_register(identifier, apiTypeFlush, fdi_serial_wire_instrument_api_flush);
+        fdi_api_register(identifier, apiTypeSetEnabled, fdi_serial_wire_instrument_api_set_enabled);
+        fdi_api_register(identifier, apiTypeWriteMemory, fdi_serial_wire_instrument_api_write_memory);
+        fdi_api_register(identifier, apiTypeReadMemory, fdi_serial_wire_instrument_api_read_memory);
     }
 }

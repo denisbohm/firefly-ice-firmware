@@ -6,19 +6,19 @@
 
 #include "fd_binary.h"
 
-typedef struct {
-    fdi_instrument_t super;
-    uint32_t led_r;
-    uint32_t led_g;
-    uint32_t led_b;
-} fdi_indicator_instrument_t;
-
-#define fdi_indicator_instrument_count 1
-
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSetRGB = 1;
 
+#define fdi_indicator_instrument_count 1
 fdi_indicator_instrument_t fdi_indicator_instruments[fdi_indicator_instrument_count];
+
+uint32_t fdi_indicator_instrument_get_count(void) {
+    return fdi_indicator_instrument_count;
+}
+
+fdi_indicator_instrument_t *fdi_indicator_instrument_get_at(uint32_t index) {
+    return &fdi_indicator_instruments[index];
+}
 
 fdi_indicator_instrument_t *fdi_indicator_instrument_get(uint64_t identifier) {
     for (int i = 0; i < fdi_indicator_instrument_count; ++i) {
@@ -30,7 +30,28 @@ fdi_indicator_instrument_t *fdi_indicator_instrument_get(uint64_t identifier) {
     return 0;
 }
 
-void fdi_indicator_instrument_set_rgb(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary) {
+void fdi_indicator_instrument_reset(fdi_indicator_instrument_t *instrument) {
+    fdi_gpio_on(instrument->led_r); 
+    fdi_gpio_on(instrument->led_g); 
+    fdi_gpio_on(instrument->led_b); 
+}
+
+void fdi_indicator_instrument_api_reset(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
+    fdi_indicator_instrument_t *instrument = fdi_indicator_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_indicator_instrument_reset(instrument); 
+}
+
+void fdi_indicator_instrument_set_rgb(fdi_indicator_instrument_t *instrument, float r, float g, float b) {
+    fdi_gpio_set(instrument->led_r, r < 0.5f); 
+    fdi_gpio_set(instrument->led_g, g < 0.5f); 
+    fdi_gpio_set(instrument->led_b, b < 0.5f); 
+}
+
+void fdi_indicator_instrument_api_set_rgb(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary) {
     fdi_indicator_instrument_t *instrument = fdi_indicator_instrument_get(identifier);
     if (instrument == 0) {
         return;
@@ -39,30 +60,18 @@ void fdi_indicator_instrument_set_rgb(uint64_t identifier, uint64_t type __attri
     float r = fd_binary_get_float32(binary);
     float g = fd_binary_get_float32(binary);
     float b = fd_binary_get_float32(binary);
-    fdi_gpio_set(instrument->led_r, r < 0.5f); 
-    fdi_gpio_set(instrument->led_g, g < 0.5f); 
-    fdi_gpio_set(instrument->led_b, b < 0.5f); 
-}
 
-void fdi_indicator_instrument_reset(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
-    fdi_indicator_instrument_t *instrument = fdi_indicator_instrument_get(identifier);
-    if (instrument == 0) {
-        return;
-    }
-
-    fdi_gpio_on(instrument->led_r); 
-    fdi_gpio_on(instrument->led_g); 
-    fdi_gpio_on(instrument->led_b); 
+    fdi_indicator_instrument_set_rgb(instrument, r, g, b); 
 }
 
 void fdi_indicator_instrument_initialize(void) {
     fdi_indicator_instrument_t *instrument = &fdi_indicator_instruments[0];
     instrument->super.category = "Indicator";
-    instrument->super.reset = fdi_indicator_instrument_reset;
+    instrument->super.reset = fdi_indicator_instrument_api_reset;
     instrument->led_r = FDI_GPIO_LED_R;
     instrument->led_g = FDI_GPIO_LED_G;
     instrument->led_b = FDI_GPIO_LED_B;
     fdi_instrument_register(&instrument->super);
-    fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_indicator_instrument_reset);
-    fdi_api_register(instrument->super.identifier, apiTypeSetRGB, fdi_indicator_instrument_set_rgb);
+    fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_indicator_instrument_api_reset);
+    fdi_api_register(instrument->super.identifier, apiTypeSetRGB, fdi_indicator_instrument_api_set_rgb);
 }

@@ -19,6 +19,7 @@
 #include "fdi_mcp4726.h"
 #include "fdi_relay.h"
 #include "fdi_serial_wire.h"
+#include "fdi_serial_wire_debug.h"
 #include "fdi_tcs3471.h"
 #include "fdi_usb.h"
 
@@ -51,6 +52,26 @@ void fdi_main(void) {
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
     fdi_voltage_instrument_initialize();
+
+#if 0
+    fdi_battery_instrument_t *instrument = fdi_battery_instrument_get_at(0);
+    fdi_battery_instrument_set_voltage(instrument, 3.8);
+    fdi_battery_instrument_set_enabled(instrument, true);
+
+    fdi_delay_ms(500);
+
+    fdi_serial_wire_t *serial_wire = &fdi_serial_wires[0];
+    fdi_serial_wire_reset(serial_wire);
+    fdi_serial_wire_set_power(serial_wire, true);
+
+    fdi_serial_wire_set_reset(serial_wire, false);
+    fdi_delay_ms(500);
+    fdi_serial_wire_set_reset(serial_wire, true);
+
+    fdi_delay_ms(500);
+
+    fdi_serial_wire_debug_test(serial_wire);
+#endif
 
     while (true) {
         fdi_api_process();

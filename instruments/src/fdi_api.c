@@ -116,7 +116,7 @@ bool fdi_api_process_rx(void) {
     do {
         uint64_t identifier = fd_binary_get_varuint(&binary);
         uint64_t type = fd_binary_get_varuint(&binary);
-        uint64_t content_length = fd_binary_get_varuint(&binary);
+        uint32_t content_length = (uint32_t)fd_binary_get_varuint(&binary);
         uint32_t content_index = binary.get_index;
         if (binary.flags == 0) {
             fdi_api_dispatch_handler(identifier, type, &binary);
@@ -149,6 +149,7 @@ bool fdi_api_send(uint64_t identifier, uint64_t type, uint8_t *data, uint32_t le
     fd_binary_initialize(&binary, buffer, sizeof(buffer));
     fd_binary_put_varuint(&binary, identifier);
     fd_binary_put_varuint(&binary, type);
+    fd_binary_put_varuint(&binary, length);
     uint32_t header_length = binary.put_index;
     uint32_t content_length = header_length + length;
 
@@ -165,6 +166,7 @@ bool fdi_api_send(uint64_t identifier, uint64_t type, uint8_t *data, uint32_t le
             fd_binary_put_varuint(&binary, content_length);
             fd_binary_put_varuint(&binary, identifier);
             fd_binary_put_varuint(&binary, type);
+            fd_binary_put_varuint(&binary, length);
         }
         uint32_t available = 1 + fdi_api_usb_send_limit - binary.put_index;
         uint32_t amount = data_remaining;

@@ -27,6 +27,10 @@ void fdi_serial_wire_set_reset(fdi_serial_wire_t *serial_wire, bool reset) {
     }
 }
 
+bool fdi_serial_wire_get_reset(fdi_serial_wire_t *serial_wire) {
+    return fdi_gpio_get(serial_wire->gpio_sense_reset);
+}
+
 // SWDCLK has a pull down resistor
 // SWDIO has a pull up resistor
 // SWD Master writes and reads data on falling clock edge
@@ -97,6 +101,7 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->gpio_direction = FDI_GPIO_ATE_SWD1_DIR_TO_DUT;
         serial_wire->gpio_clock = FDI_GPIO_ATE_SWD1_SWDCLK;
         serial_wire->gpio_data = FDI_GPIO_ATE_SWD1_SWDIO;
+        serial_wire->gpio_sense_reset = FDI_GPIO_ATE_SWD1_SENSE_NRESET;
         serial_wire->overrun_detection_enabled = false;
         serial_wire->ack_wait_retry_count = 3;
     }
@@ -107,6 +112,7 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->gpio_direction = FDI_GPIO_ATE_SWD2_DIR_TO_DUT;
         serial_wire->gpio_clock = FDI_GPIO_ATE_SWD2_SWDCLK;
         serial_wire->gpio_data = FDI_GPIO_ATE_SWD2_SWDIO;
+        serial_wire->gpio_sense_reset = FDI_GPIO_ATE_SWD2_SENSE_NRESET;
         serial_wire->overrun_detection_enabled = false;
         serial_wire->ack_wait_retry_count = 3;
     }

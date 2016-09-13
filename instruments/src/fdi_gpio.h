@@ -29,6 +29,20 @@
 #define FDI_GPIO_LED_G               18
 #define FDI_GPIO_LED_B               19
 
+#define FDI_GPIO_SPI_SCLK            20
+#define FDI_GPIO_SPI_MOSI            21
+#define FDI_GPIO_SPI_MISO            22
+
+#define FDI_GPIO_S25FL116K_CSN       23
+
+#define FDI_GPIO_ATE_SWD1_SENSE_NRESET 24
+#define FDI_GPIO_ATE_SWD2_SENSE_NRESET 25
+
+#define FDI_GPIO_ATE_FILL_EN    26
+#define FDI_GPIO_ATE_DRAIN_EN   27
+#define FDI_GPIO_ATE_BAT_CAP_EN 28
+#define FDI_GPIO_ATE_BAT_ADJ_EN 29
+
 void fdi_gpio_initialize(void);
 
 void fdi_gpio_set(uint32_t identifier, bool value);

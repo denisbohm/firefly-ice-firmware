@@ -16,6 +16,7 @@ const uint64_t fdi_serial_wire_debug_error_unexpected_ack = 1;
 const uint64_t fdi_serial_wire_debug_error_too_many_wait_retries = 2;
 const uint64_t fdi_serial_wire_debug_error_sticky = 3;
 const uint64_t fdi_serial_wire_debug_error_parity = 4;
+const uint64_t fdi_serial_wire_debug_error_mismatch = 5;
 
 #define SWD_DP_IDCODE 0x00
 #define SWD_DP_ABORT  0x00
@@ -580,7 +581,7 @@ bool fdi_serial_wire_debug_write_memory_uint32(
     return fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_DRW, value, error);
 }
 
-void fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
+bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
     fdi_serial_wire_debug_error_t error;
     bool result;
 
@@ -601,4 +602,5 @@ void fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
     result = fdi_serial_wire_debug_write_data(serial_wire, address, data, sizeof(data), &error);
     uint8_t verify[] = {0, 0, 0, 0};
     result = fdi_serial_wire_debug_read_data(serial_wire, address, verify, sizeof(verify), &error);
+    return result;
 }

@@ -8,6 +8,7 @@
 #include "fdi_indicator_instrument.h"
 #include "fdi_relay_instrument.h"
 #include "fdi_serial_wire_instrument.h"
+#include "fdi_storage_instrument.h"
 #include "fdi_voltage_instrument.h"
 
 #include "fdi_adc.h"
@@ -20,6 +21,7 @@
 #include "fdi_relay.h"
 #include "fdi_serial_wire.h"
 #include "fdi_serial_wire_debug.h"
+#include "fdi_spi.h"
 #include "fdi_tcs3471.h"
 #include "fdi_usb.h"
 
@@ -37,6 +39,7 @@ void fdi_main(void) {
     fdi_gpio_initialize();
     fdi_relay_initialize();
     fdi_i2c_initialize();
+    fdi_spi_initialize();
     fdi_serial_wire_initialize();
     fdi_adc_initialize();
     fdi_adc_power_up();
@@ -52,6 +55,7 @@ void fdi_main(void) {
     fdi_indicator_instrument_initialize();
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
+    fdi_storage_instrument_initialize();
     fdi_voltage_instrument_initialize();
 
 #if 0

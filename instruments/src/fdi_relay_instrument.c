@@ -10,7 +10,7 @@
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSet = 1;
 
-#define fdi_relay_instrument_count 5
+#define fdi_relay_instrument_count 9
 fdi_relay_instrument_t fdi_relay_instruments[fdi_relay_instrument_count];
 
 uint32_t fdi_relay_instrument_get_count(void) {
@@ -65,6 +65,10 @@ void fdi_relay_instrument_initialize(void) {
         FDI_RELAY_ATE_USB_D_EN,
         FDI_RELAY_ATE_MCU_VCC_SENSE,
         FDI_RELAY_ATE_BATTERY_SENSE,
+        FDI_RELAY_ATE_FILL_EN,
+        FDI_RELAY_ATE_DRAIN_EN,
+        FDI_RELAY_ATE_BAT_CAP_EN,
+        FDI_RELAY_ATE_BAT_ADJ_EN,
     };
 
     for (int i = 0; i < fdi_relay_instrument_count; ++i) {

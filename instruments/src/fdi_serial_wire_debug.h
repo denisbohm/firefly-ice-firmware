@@ -7,11 +7,14 @@ extern const uint64_t fdi_serial_wire_debug_error_unexpected_ack;
 extern const uint64_t fdi_serial_wire_debug_error_too_many_wait_retries;
 extern const uint64_t fdi_serial_wire_debug_error_sticky;
 extern const uint64_t fdi_serial_wire_debug_error_parity;
+extern const uint64_t fdi_serial_wire_debug_error_mismatch;
 
 typedef struct {
     uint64_t code;
     uint64_t detail;
 } fdi_serial_wire_debug_error_t;
+
+bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail);
 
 bool fdi_serial_wire_debug_write_data(
     fdi_serial_wire_t *serial_wire,
@@ -68,6 +71,6 @@ bool fdi_serial_wire_debug_write_port(
     fdi_serial_wire_debug_error_t *error
 );
 
-void fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire);
+bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire);
 
 #endif

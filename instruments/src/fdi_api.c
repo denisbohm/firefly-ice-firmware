@@ -24,7 +24,7 @@ typedef struct {
     fdi_api_function_t function;
 } fdi_api_entry_t;
 
-#define fdi_api_entry_size 64
+#define fdi_api_entry_size 256
 fdi_api_entry_t fdi_api_entrys[fdi_api_entry_size];
 uint32_t fdi_api_entry_count;
 

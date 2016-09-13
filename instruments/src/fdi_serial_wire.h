@@ -10,6 +10,7 @@ typedef struct {
     uint32_t gpio_direction;
     uint32_t gpio_clock;
     uint32_t gpio_data;
+    uint32_t gpio_sense_reset;
 
     bool overrun_detection_enabled;
     uint32_t ack_wait_retry_count;
@@ -28,6 +29,8 @@ void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire);
 void fdi_serial_wire_set_power(fdi_serial_wire_t *serial_wire, bool power);
 
 void fdi_serial_wire_set_reset(fdi_serial_wire_t *serial_wire, bool nreset);
+
+bool fdi_serial_wire_get_reset(fdi_serial_wire_t *serial_wire);
 
 void fdi_serial_wire_set_direction_to_read(fdi_serial_wire_t *serial_wire);
 

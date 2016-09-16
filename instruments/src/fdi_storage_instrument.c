@@ -60,6 +60,7 @@ void fdi_storage_instrument_api_erase(uint64_t identifier, uint64_t type __attri
  
     uint32_t end = address + length;
     while (address < end) {
+        fdi_s25fl116k_enable_write();
         fdi_s25fl116k_erase_sector(address);
         address += fdi_s25fl116k_sector_size;
     }
@@ -74,7 +75,20 @@ void fdi_storage_instrument_api_write(uint64_t identifier, uint64_t type __attri
     uint32_t address = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
 
-    fdi_s25fl116k_write_page(address, &binary->buffer[binary->get_index], length);
+    uint32_t offset = 0;
+    while (offset < length) {
+        uint32_t sublength = length - offset;
+        uint32_t lower_address = address + offset;
+        uint32_t lower_page = lower_address >> 8;
+        uint32_t upper_page = (lower_address + sublength - 1) >> 8;
+        if (upper_page != lower_page) {
+            sublength = ((lower_page + 1) << 8) - lower_address;
+        }
+        fdi_s25fl116k_enable_write();
+        fdi_s25fl116k_write_page(lower_address, &binary->buffer[binary->get_index], sublength);
+        binary->get_index += sublength;
+        offset += sublength;
+    }
 }
 
 void fdi_storage_instrument_api_read(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -87,15 +101,15 @@ void fdi_storage_instrument_api_read(uint64_t identifier, uint64_t type __attrib
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t sublength = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t substride = (uint32_t)fd_binary_get_varuint(binary);
-    fd_log_assert(length <= 256);
-    if (length > 256) {
-        length = 256;
+    fd_log_assert(length <= 1024);
+    if (length > 1024) {
+        length = 1024;
     }
     if (sublength == 0) {
         sublength = length;
     }
 
-    uint8_t buffer[256];
+    uint8_t buffer[1024];
     uint32_t total = 0;
     while (total < length) {
         fdi_s25fl116k_read(address, &buffer[total], sublength);

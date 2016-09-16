@@ -17,7 +17,9 @@ static uint32_t fdi_instrument_count;
 static fdi_instrument_t *fdi_instruments[FDI_INSTRUMENT_LIMIT];
 
 void fdi_instrument_echo(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary) {
-    if (!fdi_api_send(apiIdentifierInstrumentManager, apiTypeEcho, binary->buffer, binary->put_index)) {
+    uint8_t *data = &binary->buffer[binary->get_index];
+    uint32_t length = binary->size - binary->get_index;
+    if (!fdi_api_send(apiIdentifierInstrumentManager, apiTypeEcho, data, length)) {
         fd_log_assert_fail("can't send");
     }
 }

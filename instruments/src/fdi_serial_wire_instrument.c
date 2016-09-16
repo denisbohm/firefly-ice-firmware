@@ -247,7 +247,7 @@ void fdi_serial_wire_instrument_api_write_from_storage(uint64_t identifier, uint
     uint8_t buffer[256];
     for (uint32_t offset = 0; offset < length; offset += sizeof(buffer)) {
         fdi_s25fl116k_read(storage_address + offset, buffer, sizeof(buffer));
-        success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address, buffer, sizeof(buffer), &error);
+        success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address + offset, buffer, sizeof(buffer), &error);
         if (!success) {
             break;
         }

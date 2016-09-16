@@ -222,6 +222,7 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
         fd_log_assert(fdi_api_merge.ordinal == 0);
         fdi_api_merge_clear();
         fdi_api_merge.length = (uint32_t)fd_binary_get_varuint(&binary);
+        fd_log_assert(fdi_api_merge.length < fdi_api_rx_size);
         fd_binary_t binary_rx;
         fd_binary_initialize(&binary_rx, &fdi_api_rx_buffer[fdi_api_rx_length], fdi_api_rx_size - fdi_api_rx_length);
         fd_binary_put_uint16(&binary_rx, fdi_api_merge.length);

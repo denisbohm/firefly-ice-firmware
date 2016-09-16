@@ -19,7 +19,7 @@
 #define WEL 0x02
 #define BUSY 0x01
 
-#define WINBOND_MANUFACTURER_ID 0xef
+#define S25FL116K_MANUFACTURER_ID 0x01
 #define S25FL116K_DEVICE_ID 0x14
 
 const uint32_t fdi_s25fl116k_sector_size = 4096;
@@ -33,6 +33,9 @@ void fdi_s25fl116k_wake(void) {
 
 //#define S25FL116K_TEST
 #ifdef S25FL116K_TEST
+
+void fdi_s25fl116k_enable_write(void);
+
 void fdi_s25fl116k_test(void) {
     fdi_s25fl116k_wake();
     uint32_t address = 0;
@@ -58,7 +61,7 @@ void fdi_s25fl116k_initialize(void) {
     fdi_spi_txn_then_rxn(FDI_GPIO_S25FL116K_CSN, txdata, sizeof(txdata), rxdata, sizeof(rxdata));
     uint8_t manufacturer_id = rxdata[0];
     uint8_t device_id = rxdata[1];
-    if (manufacturer_id != WINBOND_MANUFACTURER_ID) {
+    if (manufacturer_id != S25FL116K_MANUFACTURER_ID) {
         fd_log_assert_fail("");
     }
     if (device_id != S25FL116K_DEVICE_ID) {

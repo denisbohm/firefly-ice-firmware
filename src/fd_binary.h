@@ -46,6 +46,7 @@ void fd_binary_initialize(fd_binary_t *binary, uint8_t *buffer, uint32_t size);
 
 uint32_t fd_binary_remaining_length(fd_binary_t *binary);
 
+bool fd_binary_get_check(fd_binary_t *binary, uint32_t length);
 void fd_binary_get_bytes(fd_binary_t *binary, uint8_t *data, uint32_t length);
 uint8_t fd_binary_get_uint8(fd_binary_t *binary);
 uint16_t fd_binary_get_uint16(fd_binary_t *binary);
@@ -59,6 +60,7 @@ uint64_t fd_binary_get_varuint(fd_binary_t *binary);
 int64_t fd_binary_get_varint(fd_binary_t *binary);
 fd_binary_string_t fd_binary_get_string(fd_binary_t *binary);
 
+bool fd_binary_put_check(fd_binary_t *binary, uint32_t length);
 void fd_binary_put_bytes(fd_binary_t *binary, const uint8_t *data, uint32_t length);
 void fd_binary_put_uint8(fd_binary_t *binary, uint8_t value);
 void fd_binary_put_uint16(fd_binary_t *binary, uint16_t value);

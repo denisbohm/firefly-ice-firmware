@@ -17,6 +17,8 @@ const uint64_t fdi_serial_wire_debug_error_too_many_wait_retries = 2;
 const uint64_t fdi_serial_wire_debug_error_sticky = 3;
 const uint64_t fdi_serial_wire_debug_error_parity = 4;
 const uint64_t fdi_serial_wire_debug_error_mismatch = 5;
+const uint64_t fdi_serial_wire_debug_error_invalid = 6;
+const uint64_t fdi_serial_wire_debug_error_not_ready = 7;
 
 #define SWD_DP_IDCODE 0x00
 #define SWD_DP_ABORT  0x00
@@ -579,6 +581,59 @@ bool fdi_serial_wire_debug_write_memory_uint32(
         return false;
     }
     return fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_DRW, value, error);
+}
+
+bool fdi_serial_wire_debug_wait_for_register_ready(
+    fdi_serial_wire_t *serial_wire,
+    fdi_serial_wire_debug_error_t *error
+) {
+    uint32_t retry_count = serial_wire->register_retry_count;
+    for (uint32_t retry = 0; retry < retry_count; ++retry) {
+        uint32_t dhscr;
+        if (!fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dhscr, error)) {
+            return false;
+        }
+        if (dhscr & SWD_DHCSR_STAT_REGRDY) {
+            return true;
+        }
+    }
+    return fdi_serial_wire_debug_error_return(error, fdi_serial_wire_debug_error_not_ready, 0);
+}
+
+bool fdi_serial_wire_debug_read_register(
+    fdi_serial_wire_t *serial_wire,
+    uint16_t register_id,
+    uint32_t *value,
+    fdi_serial_wire_debug_error_t *error
+) {
+    if (!fdi_serial_wire_debug_write_memory_uint32(serial_wire, SWD_MEMORY_DCRSR, register_id, error)) {
+        return false;
+    }
+    if (!fdi_serial_wire_debug_wait_for_register_ready(serial_wire, error)) {
+        return false;
+    }
+    if (!fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DCRDR, value, error)) {
+        return false;
+    }
+    return true;
+}
+
+bool fdi_serial_wire_debug_write_register(
+    fdi_serial_wire_t *serial_wire,
+    uint16_t register_id,
+    uint32_t value,
+    fdi_serial_wire_debug_error_t *error
+) {
+    if (!fdi_serial_wire_debug_write_memory_uint32(serial_wire, SWD_MEMORY_DCRDR, value, error)) {
+        return false;
+    }
+    if (!fdi_serial_wire_debug_write_memory_uint32(serial_wire, SWD_MEMORY_DCRSR, 0x00010000 | register_id, error)) {
+        return false;
+    }
+    if (!fdi_serial_wire_debug_wait_for_register_ready(serial_wire, error)) {
+        return false;
+    }
+    return true;
 }
 
 bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {

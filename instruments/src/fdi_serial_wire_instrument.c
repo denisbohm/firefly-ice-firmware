@@ -25,6 +25,7 @@ static const uint64_t apiTypeWriteMemory = 10;
 static const uint64_t apiTypeReadMemory = 11;
 static const uint64_t apiTypeWriteFromStorage = 12;
 static const uint64_t apiTypeCompareToStorage = 13;
+static const uint64_t apiTypeTransfer = 14;
 
 static const uint8_t outputIndicator = 0;
 static const uint8_t outputReset = 1;
@@ -111,7 +112,13 @@ void fdi_serial_wire_instrument_api_get_inputs(uint64_t identifier __attribute__
         values |= 1 << inputReset;
     }
 
-    fdi_serial_wire_instrument_queue_byte(instrument, values);
+    uint8_t response_data[16];
+    fd_binary_t response;
+    fd_binary_initialize(&response, response_data, sizeof(response_data));
+    fd_binary_put_varuint(&response, values);
+    if (!fdi_api_send(instrument->super.identifier, apiTypeGetInputs, response_data, response.put_index)) {
+        fd_log_assert_fail("can't send");
+    }
 }
 
 void fdi_serial_wire_instrument_api_shift_out_bits(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -299,6 +306,88 @@ void fdi_serial_wire_instrument_api_compare_memory_to_storage(uint64_t identifie
     }
 }
 
+#define FDSerialWireDebugTransferTypeReadRegister 0
+#define FDSerialWireDebugTransferTypeWriteRegister 1
+#define FDSerialWireDebugTransferTypeReadMemory 2
+#define FDSerialWireDebugTransferTypeWriteMemory 3
+
+void fdi_serial_wire_instrument_api_transfer(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    uint32_t count = (uint32_t)fd_binary_get_varuint(binary);
+
+    uint8_t response_count = 0;
+    uint8_t response_data[512];
+    fd_binary_t response;
+    fd_binary_initialize(&response, response_data, sizeof(response_data));
+    fd_binary_put_varuint(&response, 0 /* assume success for now, replace with error code if an error is encountered */);
+    fd_binary_put_varuint(&response, 0 /* placeholder for response count */);
+
+    bool success = true;
+    fdi_serial_wire_debug_error_t error;
+    memset(&error, 0, sizeof(error));
+    for (uint32_t i = 0; i < count; ++i) {
+        uint32_t type = (uint32_t)fd_binary_get_varuint(binary);
+        switch (type) {
+        case FDSerialWireDebugTransferTypeReadRegister: {
+            ++response_count;
+            fd_binary_put_varuint(&response, type);
+            uint16_t register_id = (uint16_t)fd_binary_get_varuint(binary);
+            fd_binary_put_varuint(&response, register_id);
+            uint32_t value;
+            success = fdi_serial_wire_debug_read_register(instrument->serial_wire, register_id, &value, &error);
+            fd_binary_put_uint32(&response, value);
+        } break;
+        case FDSerialWireDebugTransferTypeWriteRegister: {
+            uint32_t register_id = (uint16_t)fd_binary_get_varuint(binary);
+            uint32_t value = fd_binary_get_uint32(binary);
+            success = fdi_serial_wire_debug_write_register(instrument->serial_wire, register_id, value, &error);
+        } break;
+        case FDSerialWireDebugTransferTypeReadMemory: {
+            ++response_count;
+            fd_binary_put_varuint(&response, type);
+            uint32_t address = fd_binary_get_uint32(binary);
+            fd_binary_put_uint32(&response, address);
+            uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
+            fd_binary_put_varuint(&response, length);
+            success = fd_binary_put_check(&response, length);
+            if (success) {
+                success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address, &response_data[response.put_index], length, &error);
+                response.put_index += length;
+            }
+        } break;
+        case FDSerialWireDebugTransferTypeWriteMemory: {
+            uint32_t address = fd_binary_get_uint32(binary);
+            uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
+            success = fd_binary_get_check(binary, length);
+            if (success) {
+                success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address, &binary->buffer[binary->get_index], length, &error);
+                binary->get_index += length;
+            }
+        } break;
+        default:
+            fdi_serial_wire_debug_error_return(&error, fdi_serial_wire_debug_error_invalid, 0);
+            success = false;
+        }
+        if (!success) {
+            break;
+        }
+    }
+    fd_log_assert(response_count <= 127);
+    response_data[1] = response_count;
+
+    if (!success) {
+        fd_binary_initialize(&response, response_data, sizeof(response_data));
+        fd_binary_put_varuint(&response, error.code);
+    }
+    if (!fdi_api_send(instrument->super.identifier, apiTypeTransfer, response_data, response.put_index)) {
+        fd_log_assert_fail("can't send");
+    }
+}
+
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
@@ -321,5 +410,6 @@ void fdi_serial_wire_instrument_initialize(void) {
         fdi_api_register(identifier, apiTypeReadMemory, fdi_serial_wire_instrument_api_read_memory);
         fdi_api_register(identifier, apiTypeWriteFromStorage, fdi_serial_wire_instrument_api_write_from_storage);
         fdi_api_register(identifier, apiTypeCompareToStorage, fdi_serial_wire_instrument_api_compare_memory_to_storage);
+        fdi_api_register(identifier, apiTypeTransfer, fdi_serial_wire_instrument_api_transfer);
     }
 }

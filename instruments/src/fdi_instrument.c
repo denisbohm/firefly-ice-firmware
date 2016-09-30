@@ -62,6 +62,6 @@ void fdi_instrument_initialize(void) {
     fdi_instrument_count = 0;
 
     fdi_api_register(apiIdentifierInstrumentManager, apiTypeResetInstruments, fdi_instrument_reset_instruments);
-    fdi_api_register(apiIdentifierInstrumentManager, apiTypeEcho, fdi_instrument_echo);
     fdi_api_register(apiIdentifierInstrumentManager, apiTypeDiscoverInstruments, fdi_instrument_discover_instruments);
+    fdi_api_register(apiIdentifierInstrumentManager, apiTypeEcho, fdi_instrument_echo);
 }

@@ -104,6 +104,7 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->gpio_sense_reset = FDI_GPIO_ATE_SWD1_SENSE_NRESET;
         serial_wire->overrun_detection_enabled = false;
         serial_wire->ack_wait_retry_count = 3;
+        serial_wire->register_retry_count = 3;
     }
     {
         fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
@@ -115,5 +116,6 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->gpio_sense_reset = FDI_GPIO_ATE_SWD2_SENSE_NRESET;
         serial_wire->overrun_detection_enabled = false;
         serial_wire->ack_wait_retry_count = 3;
+        serial_wire->register_retry_count = 3;
     }
 }

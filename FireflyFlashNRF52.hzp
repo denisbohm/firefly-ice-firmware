@@ -1,0 +1,70 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="FireflyFlashNRF52" target="8" version="2">
+  <project Name="FireflyFlashNRF52">
+    <configuration
+      Name="Common"
+      Placement="RAM"
+      Target="nRF52832_xxAA"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_linker_heap_size="0"
+      arm_linker_stack_size="5120"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/nRF51/nRF51SimulatorMemory.dll"
+      arm_simulator_memory_simulation_parameter="nRF52832;0x40000;0x8000"
+      arm_target_interface_type="Default"
+      arm_target_loader_applicable_loaders=""
+      arm_target_loader_default_loader=""
+      c_additional_options="-fms-extensions"
+      c_user_include_directories="$(TargetsDir)/nRF51/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include"
+      debug_register_definition_file="$(TargetsDir)/nRF51/nRF52_Peripherals.xml"
+      linker_memory_map_file="$(TargetsDir)/nRF51/nRF52832_MemoryMap.xml"
+      linker_printf_fmt_level="int"
+      linker_printf_fp_enabled="No"
+      linker_printf_width_precision_supported="No"
+      linker_scanf_character_group_matching_enabled="No"
+      linker_scanf_fmt_level="int"
+      linker_scanf_fp_enabled="No"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      linker_section_placement_macros=""
+      package_dependencies="nRF51"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/nRF51/propertyGroups.xml"
+      target_get_partname_script="GetPartName()"
+      target_reset_script="Reset()"
+      target_script_file="$(TargetsDir)/nRF51/nRF51_Target.js" />
+    <configuration
+      Name="Flash"
+      arm_target_flash_loader_file_path="$(TargetsDir)/nRF51/Release/Loader.elf"
+      arm_target_loader_can_erase_all="Yes"
+      arm_target_loader_can_lock_all="No"
+      arm_target_loader_can_lock_range="No"
+      arm_target_loader_can_unlock_all="No"
+      arm_target_loader_can_unlock_range="No"
+      target_reset_script="FLASHReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="nrf52/FireflyFlash.c" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/nRF51/nRF51_Startup.s" />
+    </folder>
+  </project>
+  <configuration Name="THUMB Debug" inherited_configurations="THUMB;Debug" />
+  <configuration
+    Name="THUMB"
+    Platform="ARM"
+    arm_instruction_set="Thumb"
+    arm_library_instruction_set="Thumb"
+    c_preprocessor_definitions="__THUMB"
+    hidden="Yes" />
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+</solution>

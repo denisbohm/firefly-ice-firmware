@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+void fdi_delay_ns(uint32_t ns);
 void fdi_delay_us(uint32_t us);
 void fdi_delay_ms(uint32_t ms);
 

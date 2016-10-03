@@ -225,6 +225,7 @@ void fdi_serial_wire_instrument_api_read_memory(uint64_t identifier, uint64_t ty
 
     uint32_t address = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
+    fd_log_assert(length <= 4096);
 
     uint8_t data[32 + 4096];
     fdi_serial_wire_debug_error_t error;
@@ -287,7 +288,7 @@ void fdi_serial_wire_instrument_api_compare_memory_to_storage(uint64_t identifie
     for (uint32_t offset = 0; offset < length; offset += sizeof(buffer)) {
         fdi_s25fl116k_read(storage_address + offset, buffer, sizeof(buffer));
         uint8_t verify[256];
-        success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address, verify, sizeof(buffer), &error);
+        success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address + offset, verify, sizeof(buffer), &error);
         if (!success) {
             break;
         }

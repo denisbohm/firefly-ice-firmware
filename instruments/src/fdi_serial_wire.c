@@ -37,7 +37,7 @@ bool fdi_serial_wire_get_reset(fdi_serial_wire_t *serial_wire) {
 
 static
 void fdi_serial_wire_half_bit_delay(void) {
-    fdi_delay_us(1);
+    fdi_delay_ns(50);
 }
 
 void fdi_serial_wire_shift_out(fdi_serial_wire_t *serial_wire, uint8_t byte, int bit_count) {

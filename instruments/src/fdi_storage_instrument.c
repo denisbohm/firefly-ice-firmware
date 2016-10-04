@@ -101,15 +101,15 @@ void fdi_storage_instrument_api_read(uint64_t identifier, uint64_t type __attrib
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t sublength = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t substride = (uint32_t)fd_binary_get_varuint(binary);
-    fd_log_assert(length <= 1024);
-    if (length > 1024) {
-        length = 1024;
+    fd_log_assert(length <= 4096);
+    if (length > 4096) {
+        length = 4096;
     }
     if (sublength == 0) {
         sublength = length;
     }
 
-    uint8_t buffer[1024];
+    uint8_t buffer[4096];
     uint32_t total = 0;
     while (total < length) {
         fdi_s25fl116k_read(address, &buffer[total], sublength);

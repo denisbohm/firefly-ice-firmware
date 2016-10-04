@@ -338,11 +338,26 @@ bool fdi_serial_wire_debug_set_overrun_detection(
     return true;
 }
 
+#define tar_increment_bits 0x3f
+
 bool fdi_serial_wire_debug_before_memory_transfer(
     fdi_serial_wire_t *serial_wire,
     uint32_t address,
+    uint32_t length,
     fdi_serial_wire_debug_error_t *error
 ) {
+    if ((address & 0x3) != 0) {
+        return fdi_serial_wire_debug_error_return(error, fdi_serial_wire_debug_error_invalid, address);
+    }
+    if ((length == 0) || ((length & 0x3) != 0)) {
+        return fdi_serial_wire_debug_error_return(error, fdi_serial_wire_debug_error_invalid, length);
+    }
+    // TAR auto increment is only guaranteed in the first 10-bits (beyond that is implementation defined)
+    uint32_t end_address = address + length - 1;
+    if ((address & ~tar_increment_bits) != (end_address & ~tar_increment_bits)) {
+        return fdi_serial_wire_debug_error_return(error, fdi_serial_wire_debug_error_invalid, length);
+    }
+
     if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_TAR, address, error)) {
         return false;
     }
@@ -408,14 +423,14 @@ static void pack_little_endian_uint32(uint8_t *bytes, uint32_t value) {
     bytes[3] = value >> 24;
 }
 
-bool fdi_serial_wire_debug_write_data(
+bool fdi_serial_wire_debug_write_memory_transfer(
     fdi_serial_wire_t *serial_wire,
     uint32_t address,
     uint8_t *data,
     uint32_t length,
     fdi_serial_wire_debug_error_t *error
 ) {
-    if (!fdi_serial_wire_debug_before_memory_transfer(serial_wire, address, error)) {
+    if (!fdi_serial_wire_debug_before_memory_transfer(serial_wire, address, length, error)) {
         return false;
     }
     
@@ -435,14 +450,14 @@ bool fdi_serial_wire_debug_write_data(
     return success;
 }
 
-bool fdi_serial_wire_debug_read_data(
+bool fdi_serial_wire_debug_read_memory_transfer(
     fdi_serial_wire_t *serial_wire,
     uint32_t address,
     uint8_t *data,
     uint32_t length,
     fdi_serial_wire_debug_error_t *error
 ) {
-    if (!fdi_serial_wire_debug_before_memory_transfer(serial_wire, address, error)) {
+    if (!fdi_serial_wire_debug_before_memory_transfer(serial_wire, address, length, error)) {
         return false;
     }
     
@@ -470,6 +485,58 @@ bool fdi_serial_wire_debug_read_data(
     }
 
     return success;
+}
+
+bool fdi_serial_wire_debug_write_data(
+    fdi_serial_wire_t *serial_wire,
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length,
+    fdi_serial_wire_debug_error_t *error
+) {
+    uint32_t offset = 0;
+    while (length > 0) {
+        uint32_t sublength = (tar_increment_bits + 1) - (address & tar_increment_bits);
+        if (length < sublength) {
+            sublength = length;
+        }
+        
+        if (!fdi_serial_wire_debug_write_memory_transfer(serial_wire, address, data, sublength, error)) {
+            return false;
+        }
+        
+        address += sublength;
+        data += sublength;
+        length -= sublength;
+        offset += sublength;
+    }
+    return true;
+}
+
+bool fdi_serial_wire_debug_read_data(
+    fdi_serial_wire_t *serial_wire,
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length,
+    fdi_serial_wire_debug_error_t *error
+) {
+    uint32_t offset = 0;
+    while (length > 0) {
+        uint32_t sublength = (tar_increment_bits + 1) - (address & tar_increment_bits);
+        if (length < sublength) {
+            sublength = length;
+        }
+        
+        if (!fdi_serial_wire_debug_read_memory_transfer(serial_wire, address, data, sublength, error)) {
+            return false;
+        }
+        
+        address += sublength;
+        data += sublength;
+        length -= sublength;
+        offset += sublength;
+    }
+    return true;
 }
 
 #define SWD_DP_SELECT_APSEL_NRF52_CTRL_AP 1

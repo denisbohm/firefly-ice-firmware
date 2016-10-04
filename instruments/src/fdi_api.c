@@ -30,12 +30,12 @@ uint32_t fdi_api_entry_count;
 
 uint32_t fdi_api_tx_index;
 uint32_t fdi_api_tx_length;
-#define fdi_api_tx_size 4096
+#define fdi_api_tx_size 5120
 uint8_t fdi_api_tx_buffer[fdi_api_tx_size];
 
 uint32_t fdi_api_rx_index;
 uint32_t fdi_api_rx_length;
-#define fdi_api_rx_size 4096
+#define fdi_api_rx_size 5120
 uint8_t fdi_api_rx_buffer[fdi_api_rx_size];
 
 fdi_api_can_transmit_handler_t fdi_api_can_transmit_handler;

@@ -82,5 +82,6 @@ void fdi_main(void) {
 
     while (true) {
         fdi_api_process();
+        fdi_battery_instrument_send_conversions();
     }
 }

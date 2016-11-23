@@ -22,4 +22,6 @@ float fdi_battery_instrument_convert(fdi_battery_instrument_t *instrument);
 void fdi_battery_instrument_set_voltage(fdi_battery_instrument_t *instrument, float voltage);
 void fdi_battery_instrument_set_enabled(fdi_battery_instrument_t *instrument, bool enabled);
 
+void fdi_battery_instrument_send_conversions(void);
+
 #endif

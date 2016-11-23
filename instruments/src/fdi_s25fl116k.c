@@ -106,12 +106,8 @@ void fdi_s25fl116k_write_page(uint32_t address, uint8_t *data, uint32_t length) 
 
     uint8_t tx_bytes[] = {PAGE_PROGRAM, address >> 16, address >> 8, address};
     fdi_spi_enable(FDI_GPIO_S25FL116K_CSN);
-    for (uint32_t i = 0; i < sizeof(tx_bytes); ++i) {
-        fdi_spi_io(tx_bytes[i]);
-    }
-    for (uint32_t i = 0; i < length; ++i) {
-        fdi_spi_io(data[i]);
-    }
+    fdi_spi_out(tx_bytes, sizeof(tx_bytes));
+    fdi_spi_out(data, length);
     fdi_spi_disable(FDI_GPIO_S25FL116K_CSN);
 }
 

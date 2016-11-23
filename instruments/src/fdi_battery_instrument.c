@@ -5,6 +5,7 @@
 #include "fdi_current.h"
 #include "fdi_gpio.h"
 #include "fdi_instrument.h"
+#include "fdi_interrupt.h"
 #include "fdi_mcp4726.h"
 #include "fdi_relay.h"
 
@@ -15,6 +16,8 @@ static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
 static const uint64_t apiTypeSetVoltage = 2;
 static const uint64_t apiTypeSetEnabled = 3;
+static const uint64_t apiTypeConvertContinuous = 4;
+static const uint64_t apiTypeConvertContinuousSample = 5;
 
 #define fdi_battery_instrument_count 1
 fdi_battery_instrument_t fdi_battery_instruments[fdi_battery_instrument_count];
@@ -39,6 +42,7 @@ fdi_battery_instrument_t *fdi_battery_instrument_get(uint64_t identifier) {
 
 void fdi_battery_instrument_reset(fdi_battery_instrument_t *instrument) {
     fdi_gpio_off(instrument->enable);
+//    fdi_adc_power_down(); // turn off any continuous conversions
 }
 
 void fdi_battery_instrument_api_reset(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
@@ -71,6 +75,150 @@ void fdi_battery_instrument_api_convert(uint64_t identifier, uint64_t type __att
     fd_binary_put_float32(&response, current);
 
     if (!fdi_api_send(instrument->super.identifier, apiTypeConvert, response.buffer, response.put_index)) {
+        fd_log_assert_fail("can't send");
+    }
+}
+
+#define fdi_battery_instrument_sample_size 2048
+#define fdi_battery_instrument_sample_mask (fdi_battery_instrument_sample_size - 1)
+volatile float fdi_battery_instrument_sample_buffer[fdi_battery_instrument_sample_size];
+volatile uint32_t fdi_battery_instrument_sample_head_index;
+volatile uint32_t fdi_battery_instrument_sample_count;
+volatile bool fdi_battery_instrument_overflow;
+float fdi_battery_instrument_multiplier_high;
+float fdi_battery_instrument_multiplier_low;
+volatile double fdi_battery_instrument_total_current;
+volatile uint32_t fdi_battery_instrument_total_count;
+double fdi_battery_instrument_interval_current;
+uint32_t fdi_battery_instrument_interval_count;
+uint32_t fdi_battery_instrument_interval_size;
+
+void fdi_battery_instrument_sample_inititialize(fdi_battery_instrument_t *instrument) {
+    fdi_battery_instrument_sample_head_index = 0;
+    fdi_battery_instrument_sample_count = 0;
+    fdi_battery_instrument_overflow = false;
+    fdi_battery_instrument_multiplier_high = (3.3f / 4096.0f) * instrument->multiplier_high;
+    fdi_battery_instrument_multiplier_low = (3.3f / 4096.0f) * instrument->multiplier_low;
+    fdi_battery_instrument_total_current = 0.0;
+    fdi_battery_instrument_total_count = 0;
+    fdi_battery_instrument_interval_current = 0.0;
+    fdi_battery_instrument_interval_count = 0;
+    fdi_battery_instrument_interval_size = 1000;
+}
+
+bool fdi_battery_instrument_sample_is_empty(void) {
+    return fdi_battery_instrument_sample_count == 0;
+}
+
+bool fdi_battery_instrument_sample_is_full(void) {
+    return fdi_battery_instrument_sample_count == fdi_battery_instrument_sample_size;
+}
+
+void fdi_battery_instrument_queue(float value) {
+    fd_log_assert(!fdi_battery_instrument_sample_is_full());
+
+    fdi_battery_instrument_sample_buffer[fdi_battery_instrument_sample_head_index] = value;
+    fdi_battery_instrument_sample_head_index = ((fdi_battery_instrument_sample_head_index + 1) & fdi_battery_instrument_sample_mask);
+    ++fdi_battery_instrument_sample_count;
+}
+
+float fdi_battery_instrument_dequeue(void) {
+    fd_log_assert(!fdi_battery_instrument_sample_is_empty());
+
+    uint32_t index;
+    if (fdi_battery_instrument_sample_count <= fdi_battery_instrument_sample_head_index) {
+        index = fdi_battery_instrument_sample_head_index - fdi_battery_instrument_sample_count;
+    } else {
+        index = fdi_battery_instrument_sample_size + fdi_battery_instrument_sample_head_index - fdi_battery_instrument_sample_count;
+    }
+    float value = fdi_battery_instrument_sample_buffer[index];
+    --fdi_battery_instrument_sample_count;
+
+    return value;
+}
+
+void fdi_battery_instrument_convert_continuous_callback(volatile uint16_t *results) {
+    if (!fdi_battery_instrument_sample_is_full()) {
+        uint16_t high_result = *results++;
+        uint16_t low_result = *results;
+        float current_high = high_result * fdi_battery_instrument_multiplier_high;
+        float current_low = low_result * fdi_battery_instrument_multiplier_low;
+        float current = current_high > 0.000250f ? current_high : current_low;
+
+        fdi_battery_instrument_total_current += (double)current;
+        ++fdi_battery_instrument_total_count;
+
+        fdi_battery_instrument_interval_current += (double)current;
+        ++fdi_battery_instrument_interval_count;
+        if (fdi_battery_instrument_interval_count >= fdi_battery_instrument_interval_size) {
+            fdi_battery_instrument_interval_current = 0.0;
+            fdi_battery_instrument_interval_count = 0;
+            fdi_battery_instrument_queue(current);
+        }
+    } else {
+        fdi_battery_instrument_overflow = true;
+    }
+}
+
+void fdi_battery_instrument_send_conversions(void) {
+    uint32_t count = fdi_battery_instrument_sample_count;
+    if (count <= 0) {
+        return;
+    }
+
+    uint8_t buffer[300];
+    fd_binary_t response;
+    fd_binary_initialize(&response, buffer, sizeof(buffer));
+    fd_binary_put_uint32(&response, (1 /* enabled */) | (fdi_battery_instrument_overflow >> 1));
+    if (count > 64) {
+        count = 64;
+    }
+    fd_binary_put_varuint(&response, count);
+    fdi_battery_instrument_t *instrument = &fdi_battery_instruments[0];
+    while (count-- != 0) {
+        uint32_t primask = fdi_interrupt_disable();
+        float current = fdi_battery_instrument_dequeue();
+        fdi_interrupt_restore(primask);
+        fd_binary_put_float32(&response, current);
+    }
+
+    if (!fdi_api_send(instrument->super.identifier, apiTypeConvertContinuousSample, response.buffer, response.put_index)) {
+        fdi_battery_instrument_overflow = true;
+        fd_log_assert_fail("can't send");
+    }
+}
+
+#define FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_START 0b01
+#define FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_STOP  0b10
+
+void fdi_battery_instrument_api_convert_continuous(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_battery_instrument_t *instrument = fdi_battery_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    uint32_t flags = fd_binary_get_uint32(binary);
+
+    // !!! note that the code below doesn't share the ADC with others...  API user must beware... -denis
+    if (flags & FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_START) {
+        fdi_battery_instrument_sample_inititialize(&fdi_battery_instruments[0]);
+
+        fdi_adc_power_up();
+        uint8_t channels[2] = { instrument->channel_high, instrument->channel_low };
+        fdi_adc_convert_continuous(channels, sizeof(channels), fdi_battery_instrument_convert_continuous_callback);
+    }
+    if (flags & FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_STOP) {
+        fdi_adc_power_down();
+    }
+
+    uint8_t buffer[32];
+    fd_binary_t response;
+    fd_binary_initialize(&response, buffer, sizeof(buffer));
+    fd_binary_put_uint32(&response, flags);
+    fd_binary_put_uint32(&response, fdi_battery_instrument_total_count);
+    fd_binary_put_double64(&response, fdi_battery_instrument_total_current);
+
+    if (!fdi_api_send(instrument->super.identifier, apiTypeConvertContinuous, response.buffer, response.put_index)) {
         fd_log_assert_fail("can't send");
     }
 }
@@ -128,4 +276,5 @@ void fdi_battery_instrument_initialize(void) {
     fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_battery_instrument_api_convert);
     fdi_api_register(instrument->super.identifier, apiTypeSetVoltage, fdi_battery_instrument_api_set_voltage);
     fdi_api_register(instrument->super.identifier, apiTypeSetEnabled, fdi_battery_instrument_api_set_enabled);
+    fdi_api_register(instrument->super.identifier, apiTypeConvertContinuous, fdi_battery_instrument_api_convert_continuous);
 }

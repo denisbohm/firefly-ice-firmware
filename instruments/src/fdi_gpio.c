@@ -400,3 +400,151 @@ void fdi_gpio_set_mode_out(uint32_t identifier) {
     fdi_gpio_t *gpio = &fdi_gpios[identifier];
     fdi_gpio_set_mode(gpio->port, gpio->pin, fdi_gpio_mode_output);
 }
+
+// optimized spi bit-bang transfer out -denis
+void fdi_gpio_spi_out(uint32_t clock, uint32_t mosi, uint32_t miso __attribute((unused)), uint8_t *out, uint32_t length) {
+    fdi_gpio_t *clock_gpio = &fdi_gpios[clock];
+    __IO uint16_t *clock_on_address = &clock_gpio->port->BSRRL;
+    __IO uint16_t *clock_off_address = &clock_gpio->port->BSRRH;
+    uint16_t clock_bit = 1 << clock_gpio->pin;
+
+    fdi_gpio_t *mosi_gpio = &fdi_gpios[mosi];
+    __IO uint16_t *mosi_on_address = &mosi_gpio->port->BSRRL;
+    __IO uint16_t *mosi_off_address = &mosi_gpio->port->BSRRH;
+    uint16_t mosi_bit = 1 << mosi_gpio->pin;
+
+//    fdi_gpio_t *miso_gpio = &fdi_gpios[miso];
+//    __IO uint32_t *miso_in_address = &miso_gpio->port->IDR;
+//    uint32_t miso_shift = miso_gpio->pin;
+
+    for (uint32_t i = 0; i < length; ++i) {
+        uint8_t data = *out++;
+//        uint8_t in = 0;
+        for (int j = 0; j < 8; ++j) {
+            *clock_off_address = clock_bit;
+//            fdi_gpio_off(FDI_GPIO_SPI_SCLK);
+            if (data & 0x80) {
+                *mosi_on_address = mosi_bit;
+//                fdi_gpio_on(FDI_GPIO_SPI_MOSI);
+            } else {
+                *mosi_off_address = mosi_bit;
+//                fdi_gpio_off(FDI_GPIO_SPI_MOSI);
+            }
+            data = data << 1;
+//            fdi_spi_delay();
+
+            *clock_on_address = clock_bit;
+            fdi_gpio_on(FDI_GPIO_SPI_SCLK);
+//            fdi_spi_delay();
+//            in = (in << 1) | ((*miso_in_address >> miso_shift) & 0b1);
+//            in = (in << 1) | fdi_gpio_get(FDI_GPIO_SPI_MISO);
+        }
+    }
+}
+
+// optimized spi bit-bang transfer in -denis
+void fdi_gpio_spi_in(uint32_t clock, uint32_t mosi, uint32_t miso, uint8_t *in, uint32_t length) {
+    fdi_gpio_t *clock_gpio = &fdi_gpios[clock];
+    __IO uint16_t *clock_on_address = &clock_gpio->port->BSRRL;
+    __IO uint16_t *clock_off_address = &clock_gpio->port->BSRRH;
+    uint16_t clock_bit = 1 << clock_gpio->pin;
+
+    fdi_gpio_t *mosi_gpio = &fdi_gpios[mosi];
+//    __IO uint16_t *mosi_on_address = &mosi_gpio->port->BSRRL;
+    __IO uint16_t *mosi_off_address = &mosi_gpio->port->BSRRH;
+    uint16_t mosi_bit = 1 << mosi_gpio->pin;
+
+    fdi_gpio_t *miso_gpio = &fdi_gpios[miso];
+    __IO uint32_t *miso_in_address = &miso_gpio->port->IDR;
+    uint32_t miso_shift = miso_gpio->pin;
+
+    *mosi_off_address = mosi_bit;
+    for (uint32_t i = 0; i < length; ++i) {
+//        uint8_t data = *out++;
+        uint8_t in_byte = 0;
+        for (int j = 0; j < 8; ++j) {
+            *clock_off_address = clock_bit;
+//            fdi_gpio_off(FDI_GPIO_SPI_SCLK);
+//            if (data & 0x80) {
+//                *mosi_on_address = mosi_bit;
+//                fdi_gpio_on(FDI_GPIO_SPI_MOSI);
+//            } else {
+//                *mosi_off_address = mosi_bit;
+//                fdi_gpio_off(FDI_GPIO_SPI_MOSI);
+//            }
+//            data = data << 1;
+//            fdi_spi_delay();
+
+            *clock_on_address = clock_bit;
+            fdi_gpio_on(FDI_GPIO_SPI_SCLK);
+//            fdi_spi_delay();
+            in_byte = (in_byte << 1) | ((*miso_in_address >> miso_shift) & 0b1);
+//            in = (in << 1) | fdi_gpio_get(FDI_GPIO_SPI_MISO);
+        }
+        *in++ = in_byte;
+    }
+}
+
+void fdi_gpio_serial_wire_debug_out(uint32_t clock, uint32_t data, uint8_t *out, uint32_t length) {
+    fdi_gpio_t *clock_gpio = &fdi_gpios[clock];
+    __IO uint16_t *clock_on_address = &clock_gpio->port->BSRRL;
+    __IO uint16_t *clock_off_address = &clock_gpio->port->BSRRH;
+    uint16_t clock_bit = 1 << clock_gpio->pin;
+
+    fdi_gpio_t *data_gpio = &fdi_gpios[data];
+    __IO uint16_t *data_on_address = &data_gpio->port->BSRRL;
+    __IO uint16_t *data_off_address = &data_gpio->port->BSRRH;
+    uint16_t data_bit = 1 << data_gpio->pin;
+
+    for (uint32_t i = 0; i < length; ++i) {
+        uint8_t byte = *out++;
+        for (int j = 0; j < 8; ++j) {
+//            fdi_serial_wire_half_bit_delay();
+            *clock_on_address = clock_bit;
+//            fdi_gpio_on(serial_wire->gpio_clock);
+//            fdi_serial_wire_half_bit_delay();
+
+            if (byte & 1) {
+                *data_on_address = data_bit;
+//                fdi_gpio_on(serial_wire->gpio_data);
+            } else {
+                *data_off_address = data_bit;
+//                fdi_gpio_off(serial_wire->gpio_data);
+            }
+            byte >>= 1;
+
+            *clock_off_address = clock_bit;
+//            fdi_gpio_off(serial_wire->gpio_clock);
+        }
+    }
+}
+
+void fdi_gpio_serial_wire_debug_in(uint32_t clock, uint32_t data, uint8_t *in, uint32_t length) {
+    fdi_gpio_t *clock_gpio = &fdi_gpios[clock];
+    __IO uint16_t *clock_on_address = &clock_gpio->port->BSRRL;
+    __IO uint16_t *clock_off_address = &clock_gpio->port->BSRRH;
+    uint16_t clock_bit = 1 << clock_gpio->pin;
+
+    fdi_gpio_t *data_gpio = &fdi_gpios[data];
+    __IO uint32_t *data_in_address = &data_gpio->port->IDR;
+    uint32_t data_bit = 1 << data_gpio->pin;
+
+    for (uint32_t i = 0; i < length; ++i) {
+        uint8_t byte = 0;
+        for (int j = 0; j < 8; ++j) {
+//            fdi_serial_wire_half_bit_delay();
+            *clock_on_address = clock_bit;
+//            fdi_gpio_on(serial_wire->gpio_clock);
+//            fdi_serial_wire_half_bit_delay();
+
+            byte >>= 1;
+            if (*data_in_address & data_bit) {
+                byte |= 0b10000000;
+            }
+
+            *clock_off_address = clock_bit;
+//            fdi_gpio_off(serial_wire->gpio_clock);
+        }
+        *in++ = byte;
+    }
+}

@@ -29,6 +29,7 @@
       c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/../src;STM32F4-Discovery_FW_V1.1.0/Libraries/CMSIS/Include;STM32F4-Discovery_FW_V1.1.0/Libraries/CMSIS/ST/STM32F4xx/Include;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32_USB_Device_Library/Core/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32_USB_Device_Library/Class/hid/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32_USB_OTG_Driver/inc;$(TargetsDir)/not/STM32/include;$(PackagesDir)/not/CMSIS_4/CMSIS/Include"
       debug_register_definition_file="$(TargetsDir)/STM32/STM32F411xx_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/STM32/STM32F411RE_MemoryMap.xml"
+      linker_output_format="hex"
       linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
       project_directory=""
       project_type="Executable"
@@ -202,6 +203,8 @@
       <file file_name="src/fdi_s25fl116k.h" />
       <file file_name="src/fdi_storage_instrument.c" />
       <file file_name="src/fdi_storage_instrument.h" />
+      <file file_name="src/fdi_smbus.c" />
+      <file file_name="src/fdi_smbus.h" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />
@@ -227,7 +230,7 @@
     inherited_configurations="THUMB;Release" />
   <configuration
     Name="Release"
-    c_preprocessor_definitions="NDEBUG"
+    c_preprocessor_definitions="NDEBUG;STARTUP_FROM_RESET"
     gcc_debugging_level="Level 1"
     gcc_optimization_level="Level 1"
     hidden="Yes" />

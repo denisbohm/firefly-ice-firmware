@@ -42,6 +42,17 @@ float fd_binary_unpack_float32(uint8_t *buffer) {
     return u.as_float32;
 }
 
+typedef union {
+    uint64_t as_uint64;
+    double as_double64;
+} fd_int64_double64_t;
+
+double fd_binary_unpack_double64(uint8_t *buffer) {
+    fd_int64_double64_t u;
+    u.as_uint64 = fd_binary_unpack_uint64(buffer);
+    return u.as_double64;
+}
+
 fd_time_t fd_binary_unpack_time64(uint8_t *buffer) {
     fd_time_t time;
     time.seconds = fd_binary_unpack_uint32(buffer);
@@ -85,6 +96,12 @@ void fd_binary_pack_float32(uint8_t *buffer, float value) {
     fd_int32_float32_t u;
     u.as_float32 = value;
     fd_binary_pack_uint32(buffer, u.as_uint32);
+}
+
+void fd_binary_pack_double64(uint8_t *buffer, double value) {
+    fd_int64_double64_t u;
+    u.as_double64 = value;
+    fd_binary_pack_uint64(buffer, u.as_uint64);
 }
 
 void fd_binary_pack_time64(uint8_t *buffer, fd_time_t value) {
@@ -183,6 +200,15 @@ float fd_binary_get_float32(fd_binary_t *binary) {
     uint8_t *buffer = &binary->buffer[binary->get_index];
     binary->get_index += 4;
     return fd_binary_unpack_float32(buffer);
+}
+
+double fd_binary_get_float64(fd_binary_t *binary) {
+    if (!fd_binary_get_check(binary, 8)) {
+        return 0;
+    }
+    uint8_t *buffer = &binary->buffer[binary->get_index];
+    binary->get_index += 8;
+    return fd_binary_unpack_double64(buffer);
 }
 
 fd_time_t fd_binary_get_time64(fd_binary_t *binary) {
@@ -310,6 +336,14 @@ void fd_binary_put_float32(fd_binary_t *binary, float value) {
         uint8_t *buffer = &binary->buffer[binary->put_index];
         binary->put_index += 4;
         fd_binary_pack_float32(buffer, value);
+    }
+}
+
+void fd_binary_put_double64(fd_binary_t *binary, double value) {
+    if (fd_binary_put_check(binary, 8)) {
+        uint8_t *buffer = &binary->buffer[binary->put_index];
+        binary->put_index += 8;
+        fd_binary_pack_double64(buffer, value);
     }
 }
 

@@ -54,4 +54,12 @@ bool fdi_gpio_get(uint32_t identifier);
 void fdi_gpio_set_mode_in(uint32_t identifier);
 void fdi_gpio_set_mode_out(uint32_t identifier);
 
+// optimized spi bit-bang transfers -denis
+void fdi_gpio_spi_out(uint32_t clock, uint32_t mosi, uint32_t miso, uint8_t *out, uint32_t length);
+void fdi_gpio_spi_in(uint32_t clock, uint32_t mosi, uint32_t miso, uint8_t *in, uint32_t length);
+
+// optimized swd bit-bang transfers -denis
+void fdi_gpio_serial_wire_debug_out(uint32_t clock, uint32_t data, uint8_t *out, uint32_t length);
+void fdi_gpio_serial_wire_debug_in(uint32_t clock, uint32_t data, uint8_t *in, uint32_t length);
+
 #endif

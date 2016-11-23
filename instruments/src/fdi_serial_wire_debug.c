@@ -4,6 +4,8 @@
 
 #include <stddef.h>
 
+#define FDI_SERIAL_WIRE_DEBUG_FAST
+
 bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail) {
     if (error) {
         error->code = code;
@@ -85,9 +87,7 @@ void fdi_serial_wire_debug_reset_debug_port(fdi_serial_wire_t *serial_wire) {
         0xff,
         0x00,
     };
-    for (size_t i = 0; i < sizeof(bytes); ++i) {
-        fdi_serial_wire_shift_out(serial_wire, bytes[i], 8);
-    }
+    fdi_serial_wire_shift_out_bytes(serial_wire, bytes, sizeof(bytes));
 }
 
 uint8_t fdi_serial_wire_debug_get_parity_uint8(uint8_t v) {
@@ -116,7 +116,7 @@ uint8_t fdi_serial_wire_debug_encode_request(fdi_serial_wire_debug_port_t port, 
 }
 
 fdi_serial_wire_debug_ack_t fdi_serial_wire_debug_request(fdi_serial_wire_t *serial_wire, uint8_t request) {
-    fdi_serial_wire_shift_out(serial_wire, request, 8);
+    fdi_serial_wire_shift_out_bytes(serial_wire, &request, 1);
     fdi_serial_wire_set_direction_to_read(serial_wire);
     uint8_t ack = fdi_serial_wire_shift_in(serial_wire, 4) >> 5;
     if (ack != 1) {
@@ -127,12 +127,16 @@ fdi_serial_wire_debug_ack_t fdi_serial_wire_debug_request(fdi_serial_wire_t *ser
 }
 
 bool fdi_serial_wire_debug_read_uint32(fdi_serial_wire_t *serial_wire, uint32_t *value) {
+#if defined(FDI_SERIAL_WIRE_DEBUG_FAST)
+    fdi_serial_wire_shift_in_bytes(serial_wire, (uint8_t *)value, sizeof(uint32_t));
+#else
     uint8_t byte_0 = fdi_serial_wire_shift_in(serial_wire, 8);
     uint8_t byte_1 = fdi_serial_wire_shift_in(serial_wire, 8);
     uint8_t byte_2 = fdi_serial_wire_shift_in(serial_wire, 8);
     uint8_t byte_3 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint8_t parity = fdi_serial_wire_shift_in(serial_wire, 1) >> 7;
     *value = (byte_3 << 24) | (byte_2 << 16) | (byte_1 << 8) | byte_0;
+#endif
+    uint8_t parity = fdi_serial_wire_shift_in(serial_wire, 1) >> 7;
     if (parity != fdi_serial_wire_debug_get_parity_uint32(*value)) {
         return false;
     }
@@ -140,10 +144,14 @@ bool fdi_serial_wire_debug_read_uint32(fdi_serial_wire_t *serial_wire, uint32_t 
 }
 
 void fdi_serial_wire_debug_write_uint32(fdi_serial_wire_t *serial_wire, uint32_t value) {
+#if defined(FDI_SERIAL_WIRE_DEBUG_FAST)
+    fdi_serial_wire_shift_out_bytes(serial_wire, (uint8_t *)&value, sizeof(uint32_t));
+#else
     fdi_serial_wire_shift_out(serial_wire, value, 8);
     fdi_serial_wire_shift_out(serial_wire, value >> 8, 8);
     fdi_serial_wire_shift_out(serial_wire, value >> 16, 8);
     fdi_serial_wire_shift_out(serial_wire, value >> 24, 8);
+#endif
     uint8_t parity = fdi_serial_wire_debug_get_parity_uint32(value);
     fdi_serial_wire_shift_out(serial_wire, parity, 1);
 }
@@ -292,7 +300,8 @@ bool fdi_serial_wire_debug_select_and_read_access_port(
 }
 
 void fdi_serial_wire_debug_flush(fdi_serial_wire_t *serial_wire) {
-    fdi_serial_wire_shift_out(serial_wire, 0, 8);
+    uint8_t data = 0;
+    fdi_serial_wire_shift_out_bytes(serial_wire, &data, 1);
 }
 
 bool fdi_serial_wire_debug_select_and_write_access_port(
@@ -385,7 +394,7 @@ bool fdi_serial_wire_debug_after_memory_transfer(
 }
 
 bool fdi_serial_wire_debug_request_write(fdi_serial_wire_t *serial_wire, uint8_t request, uint32_t value, fdi_serial_wire_debug_error_t *error) {
-    fdi_serial_wire_shift_out(serial_wire, request, 8);
+    fdi_serial_wire_shift_out_bytes(serial_wire, &request, 1);
     fdi_serial_wire_set_direction_to_read(serial_wire);
     fdi_serial_wire_debug_ack_t ack = fdi_serial_wire_shift_in(serial_wire, 4) >> 5;
     // !!! is this the right error handling?  to bail at this point or finish the sequence below? -denis
@@ -398,7 +407,7 @@ bool fdi_serial_wire_debug_request_write(fdi_serial_wire_t *serial_wire, uint8_t
 }
 
 bool fdi_serial_wire_debug_request_read(fdi_serial_wire_t *serial_wire, uint8_t request, uint32_t *value, fdi_serial_wire_debug_error_t *error) {
-    fdi_serial_wire_shift_out(serial_wire, request, 8);
+    fdi_serial_wire_shift_out_bytes(serial_wire, &request, 1);
     fdi_serial_wire_set_direction_to_read(serial_wire);
     fdi_serial_wire_debug_ack_t ack = fdi_serial_wire_shift_in(serial_wire, 4) >> 5;
     // !!! is this the right error handling?  to bail at this point or finish the sequence below? -denis

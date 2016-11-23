@@ -41,4 +41,8 @@ void fdi_serial_wire_shift_out(fdi_serial_wire_t *serial_wire, uint8_t byte, int
 
 uint8_t fdi_serial_wire_shift_in(fdi_serial_wire_t *serial_wire, int bit_count);
 
+void fdi_serial_wire_shift_out_bytes(fdi_serial_wire_t *serial_wire, uint8_t *data, uint32_t length);
+
+void fdi_serial_wire_shift_in_bytes(fdi_serial_wire_t *serial_wire, uint8_t *data, uint32_t length);
+
 #endif

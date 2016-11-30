@@ -232,6 +232,6 @@
     Name="Release"
     c_preprocessor_definitions="NDEBUG;STARTUP_FROM_RESET"
     gcc_debugging_level="Level 1"
-    gcc_optimization_level="Level 1"
+    gcc_optimization_level="None"
     hidden="Yes" />
 </solution>

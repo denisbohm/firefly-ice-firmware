@@ -8,16 +8,19 @@
 #include "fdi_interrupt.h"
 #include "fdi_mcp4726.h"
 #include "fdi_relay.h"
+#include "fdi_s25fl116k.h"
 
 #include "fd_binary.h"
 #include "fd_log.h"
+
+#include <float.h>
 
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
 static const uint64_t apiTypeSetVoltage = 2;
 static const uint64_t apiTypeSetEnabled = 3;
 static const uint64_t apiTypeConvertContinuous = 4;
-static const uint64_t apiTypeConvertContinuousSample = 5;
+static const uint64_t apiTypeConvertContinuousComplete = 5;
 
 #define fdi_battery_instrument_count 1
 fdi_battery_instrument_t fdi_battery_instruments[fdi_battery_instrument_count];
@@ -79,32 +82,39 @@ void fdi_battery_instrument_api_convert(uint64_t identifier, uint64_t type __att
     }
 }
 
-#define fdi_battery_instrument_sample_size 2048
+uint32_t fdi_battery_instrument_sample_decimation;
+uint32_t fdi_battery_instrument_sample_total;
+uint32_t fdi_battery_instrument_sample_address;
+
+double fdi_battery_instrument_multiplier_high;
+double fdi_battery_instrument_multiplier_low;
+
+typedef struct {
+    uint32_t count;
+    double minimum;
+    double maximum;
+    double mean;
+    double S;
+} fdi_battery_instrument_sample_t;
+
+void fdi_battery_instrument_sample_clear(fdi_battery_instrument_sample_t *sample) {
+    sample->count = 0;
+    sample->minimum = DBL_MAX;
+    sample->maximum = 0.0;
+    sample->mean = 0.0;
+    sample->S = 0.0;
+}
+
+fdi_battery_instrument_sample_t fdi_battery_instrument_sample;
+
+uint32_t fdi_battery_instrument_total_count;
+
+#define fdi_battery_instrument_sample_size 32
 #define fdi_battery_instrument_sample_mask (fdi_battery_instrument_sample_size - 1)
-volatile float fdi_battery_instrument_sample_buffer[fdi_battery_instrument_sample_size];
+volatile fdi_battery_instrument_sample_t fdi_battery_instrument_sample_buffer[fdi_battery_instrument_sample_size];
 volatile uint32_t fdi_battery_instrument_sample_head_index;
 volatile uint32_t fdi_battery_instrument_sample_count;
-volatile bool fdi_battery_instrument_overflow;
-float fdi_battery_instrument_multiplier_high;
-float fdi_battery_instrument_multiplier_low;
-volatile double fdi_battery_instrument_total_current;
-volatile uint32_t fdi_battery_instrument_total_count;
-double fdi_battery_instrument_interval_current;
-uint32_t fdi_battery_instrument_interval_count;
-uint32_t fdi_battery_instrument_interval_size;
-
-void fdi_battery_instrument_sample_inititialize(fdi_battery_instrument_t *instrument) {
-    fdi_battery_instrument_sample_head_index = 0;
-    fdi_battery_instrument_sample_count = 0;
-    fdi_battery_instrument_overflow = false;
-    fdi_battery_instrument_multiplier_high = (3.3f / 4096.0f) * instrument->multiplier_high;
-    fdi_battery_instrument_multiplier_low = (3.3f / 4096.0f) * instrument->multiplier_low;
-    fdi_battery_instrument_total_current = 0.0;
-    fdi_battery_instrument_total_count = 0;
-    fdi_battery_instrument_interval_current = 0.0;
-    fdi_battery_instrument_interval_count = 0;
-    fdi_battery_instrument_interval_size = 1000;
-}
+volatile bool fdi_battery_instrument_sample_overflow;
 
 bool fdi_battery_instrument_sample_is_empty(void) {
     return fdi_battery_instrument_sample_count == 0;
@@ -114,7 +124,7 @@ bool fdi_battery_instrument_sample_is_full(void) {
     return fdi_battery_instrument_sample_count == fdi_battery_instrument_sample_size;
 }
 
-void fdi_battery_instrument_queue(float value) {
+void fdi_battery_instrument_sample_queue(fdi_battery_instrument_sample_t value) {
     fd_log_assert(!fdi_battery_instrument_sample_is_full());
 
     fdi_battery_instrument_sample_buffer[fdi_battery_instrument_sample_head_index] = value;
@@ -122,7 +132,7 @@ void fdi_battery_instrument_queue(float value) {
     ++fdi_battery_instrument_sample_count;
 }
 
-float fdi_battery_instrument_dequeue(void) {
+fdi_battery_instrument_sample_t fdi_battery_instrument_sample_dequeue(void) {
     fd_log_assert(!fdi_battery_instrument_sample_is_empty());
 
     uint32_t index;
@@ -131,65 +141,119 @@ float fdi_battery_instrument_dequeue(void) {
     } else {
         index = fdi_battery_instrument_sample_size + fdi_battery_instrument_sample_head_index - fdi_battery_instrument_sample_count;
     }
-    float value = fdi_battery_instrument_sample_buffer[index];
+    fdi_battery_instrument_sample_t value = fdi_battery_instrument_sample_buffer[index];
     --fdi_battery_instrument_sample_count;
-
     return value;
 }
 
 void fdi_battery_instrument_convert_continuous_callback(volatile uint16_t *results) {
-    if (!fdi_battery_instrument_sample_is_full()) {
-        uint16_t high_result = *results++;
-        uint16_t low_result = *results;
-        float current_high = high_result * fdi_battery_instrument_multiplier_high;
-        float current_low = low_result * fdi_battery_instrument_multiplier_low;
-        float current = current_high > 0.000250f ? current_high : current_low;
-
-        fdi_battery_instrument_total_current += (double)current;
-        ++fdi_battery_instrument_total_count;
-
-        fdi_battery_instrument_interval_current += (double)current;
-        ++fdi_battery_instrument_interval_count;
-        if (fdi_battery_instrument_interval_count >= fdi_battery_instrument_interval_size) {
-            fdi_battery_instrument_interval_current = 0.0;
-            fdi_battery_instrument_interval_count = 0;
-            fdi_battery_instrument_queue(current);
-        }
-    } else {
-        fdi_battery_instrument_overflow = true;
+#if 0
+    fdi_battery_instrument_total_count += 8;
+    if (fdi_battery_instrument_total_count >= 1000000) {
+        fdi_adc_power_down();
     }
+#else
+    for (int i = 0; i < 8; ++i) {
+        if (fdi_battery_instrument_sample_is_full()) {
+            fdi_battery_instrument_sample_overflow = true;
+            return;
+        }
+
+        uint16_t high_result = *results++;
+        uint16_t low_result = *results++;
+        double current_high = high_result * fdi_battery_instrument_multiplier_high;
+        double current_low = low_result * fdi_battery_instrument_multiplier_low;
+        double current = current_high > 0.000250 ? current_high : current_low;
+
+        fdi_battery_instrument_sample.count += 1;
+        double n = fdi_battery_instrument_sample.count;
+        double mean = fdi_battery_instrument_sample.mean;
+        double next_mean = mean + (current - mean) / n;
+        fdi_battery_instrument_sample.S += (current - mean) * (current - next_mean);
+        fdi_battery_instrument_sample.mean = next_mean;
+        if (current < fdi_battery_instrument_sample.minimum) {
+            fdi_battery_instrument_sample.minimum = current;
+        }
+        if (current > fdi_battery_instrument_sample.maximum) {
+            fdi_battery_instrument_sample.maximum = current;
+        }
+
+        if (fdi_battery_instrument_sample.count >= fdi_battery_instrument_sample_decimation) {
+            fdi_battery_instrument_sample_queue(fdi_battery_instrument_sample);
+            fdi_battery_instrument_sample_clear(&fdi_battery_instrument_sample);
+
+            fdi_battery_instrument_total_count += 1;
+            if (fdi_battery_instrument_total_count >= fdi_battery_instrument_sample_total) {
+                fdi_adc_power_down();
+            }
+        }
+    }
+#endif
 }
 
-void fdi_battery_instrument_send_conversions(void) {
+void fdi_battery_instrument_sample_start(fdi_battery_instrument_t *instrument, uint32_t decimation, uint32_t total, uint32_t address) {
+    fdi_battery_instrument_sample_decimation = decimation;
+    fdi_battery_instrument_sample_total = total;
+    fdi_battery_instrument_sample_address = address;
+
+    fdi_battery_instrument_multiplier_high = (3.3 / 4096.0) * (double)instrument->multiplier_high;
+    fdi_battery_instrument_multiplier_low = (3.3 / 4096.0) * (double)instrument->multiplier_low;
+
+    fdi_battery_instrument_sample_clear(&fdi_battery_instrument_sample);
+
+    fdi_battery_instrument_total_count = 0;
+
+    fdi_battery_instrument_sample_head_index = 0;
+    fdi_battery_instrument_sample_count = 0;
+    fdi_battery_instrument_sample_overflow = false;
+
+    fdi_adc_power_up();
+    uint8_t channels[2] = { instrument->channel_high, instrument->channel_low };
+    fdi_adc_convert_continuous(channels, sizeof(channels), fdi_battery_instrument_convert_continuous_callback);
+
+    // !!! use timer to kick off each round of conversions at given rate? -denis
+}
+
+void fdi_battery_instrument_sample_stop(fdi_battery_instrument_t *instrument __attribute__((unused))) {
+    fdi_adc_power_down();
+}
+
+void fdi_battery_instrument_save_conversions(void) {
     uint32_t count = fdi_battery_instrument_sample_count;
     if (count <= 0) {
         return;
     }
 
-    uint8_t buffer[300];
-    fd_binary_t response;
-    fd_binary_initialize(&response, buffer, sizeof(buffer));
-    fd_binary_put_uint32(&response, (1 /* enabled */) | (fdi_battery_instrument_overflow >> 1));
-    if (count > 64) {
-        count = 64;
-    }
-    fd_binary_put_varuint(&response, count);
-    fdi_battery_instrument_t *instrument = &fdi_battery_instruments[0];
-    while (count-- != 0) {
+    for (; count != 0; --count) {
         uint32_t primask = fdi_interrupt_disable();
-        float current = fdi_battery_instrument_dequeue();
+        fdi_battery_instrument_sample_t sample = fdi_battery_instrument_sample_dequeue();
         fdi_interrupt_restore(primask);
-        fd_binary_put_float32(&response, current);
+        
+#if 0
+        uint8_t buffer[16];
+        fd_binary_t binary;
+        fd_binary_initialize(&binary, buffer, sizeof(buffer));
+        fd_binary_put_float32(&binary, sample.mean);
+        fd_binary_put_float32(&binary, sample.minimum);
+        fd_binary_put_float32(&binary, sample.maximum);
+        float variance = sample.S / (sample.count - 1);
+        fd_binary_put_float32(&binary, variance);
+        fdi_s25fl116k_enable_write();
+        fdi_s25fl116k_write_page(fdi_battery_instrument_sample_address, buffer, sizeof(buffer));
+        fdi_battery_instrument_sample_address += sizeof(buffer);
+#endif
     }
 
-    if (!fdi_api_send(instrument->super.identifier, apiTypeConvertContinuousSample, response.buffer, response.put_index)) {
-        fdi_battery_instrument_overflow = true;
-        fd_log_assert_fail("can't send");
+    if ((count == 0) && (fdi_battery_instrument_total_count >= fdi_battery_instrument_sample_total)) {
+        uint8_t buffer[32];
+        fd_binary_t response;
+        fd_binary_initialize(&response, buffer, sizeof(buffer));
+        fdi_battery_instrument_t *instrument = &fdi_battery_instruments[0]; // !!!
+        if (!fdi_api_send(instrument->super.identifier, apiTypeConvertContinuousComplete, response.buffer, response.put_index)) {
+            fd_log_assert_fail("can't send");
+        }
     }
 }
-
-#define FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_START 0b01
-#define FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_STOP  0b10
 
 void fdi_battery_instrument_api_convert_continuous(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
     fdi_battery_instrument_t *instrument = fdi_battery_instrument_get(identifier);
@@ -197,27 +261,21 @@ void fdi_battery_instrument_api_convert_continuous(uint64_t identifier, uint64_t
         return;
     }
 
-    uint32_t flags = fd_binary_get_uint32(binary);
+    float rate = fd_binary_get_float32(binary);
+    uint32_t decimation = (uint32_t)fd_binary_get_varuint(binary);
+    uint32_t total = (uint32_t)fd_binary_get_varuint(binary);
+    uint32_t address = fd_binary_get_uint32(binary);
 
-    // !!! note that the code below doesn't share the ADC with others...  API user must beware... -denis
-    if (flags & FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_START) {
-        fdi_battery_instrument_sample_inititialize(&fdi_battery_instruments[0]);
-
-        fdi_adc_power_up();
-        uint8_t channels[2] = { instrument->channel_high, instrument->channel_low };
-        fdi_adc_convert_continuous(channels, sizeof(channels), fdi_battery_instrument_convert_continuous_callback);
-    }
-    if (flags & FDI_BATTERY_INSTRUMENT_CONVERT_CONTINUOUS_FLAGS_STOP) {
-        fdi_adc_power_down();
+    if (rate >= 0.0f) {
+        fdi_battery_instrument_sample_stop(instrument);
+        fdi_battery_instrument_sample_start(instrument, decimation, total, address);
+    } else {
+        fdi_battery_instrument_sample_stop(instrument);
     }
 
     uint8_t buffer[32];
     fd_binary_t response;
     fd_binary_initialize(&response, buffer, sizeof(buffer));
-    fd_binary_put_uint32(&response, flags);
-    fd_binary_put_uint32(&response, fdi_battery_instrument_total_count);
-    fd_binary_put_double64(&response, fdi_battery_instrument_total_current);
-
     if (!fdi_api_send(instrument->super.identifier, apiTypeConvertContinuous, response.buffer, response.put_index)) {
         fd_log_assert_fail("can't send");
     }

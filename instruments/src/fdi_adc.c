@@ -47,6 +47,8 @@ void fdi_adc_power_down(void) {
     ADC_Cmd(ADC1, DISABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, DISABLE);
     ADC_DeInit();
+    DMA_DeInit(DMA2_Stream0);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, DISABLE);               
 }
 
 float fdi_adc_convert(uint32_t channel) {
@@ -101,10 +103,6 @@ void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_a
 
     ADC_CommonInitTypeDef adc_common_init;
     ADC_CommonStructInit(&adc_common_init);
-    adc_common_init.ADC_Mode = ADC_Mode_Independent;
-    adc_common_init.ADC_Prescaler = ADC_Prescaler_Div2;
-    adc_common_init.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;
-    adc_common_init.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
     ADC_CommonInit(&adc_common_init);
 
     ADC_InitTypeDef adc_init;
@@ -121,8 +119,14 @@ void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_a
     /* Configure channels */
     for (uint32_t i = 0; i < channel_count; ++i) {
         uint32_t channel = channels[i];
-        ADC_RegularChannelConfig(ADC1, channel, i + 1, ADC_SampleTime_15Cycles);
+        ADC_RegularChannelConfig(ADC1, channel, i + 1, ADC_SampleTime_28Cycles);
     }
+
+    // ADC Rate:
+    // Conversion Clocks = 28 sample cycles + 12 bit conversion cycles = 40 cycles
+    // Conversion Count = 1 high current range + 1 low current range
+    // ADC Clock Rate = 84 MHz
+    // 84 MHz / (40 cycles * 2) = 1.05 M samples per second
 
     /* Enable ADC interrupts */
 //    ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);

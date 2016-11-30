@@ -8,4 +8,3 @@
 float fdi_current_sense_gain(float rs, float ri, float ro, float rf, float rg) {
     return 1.0f / (rs * (ro / ri) * ((rg + rf) / rg));
 }
-

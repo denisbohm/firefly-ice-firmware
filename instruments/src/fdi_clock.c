@@ -10,7 +10,7 @@ void fdi_clock_start_high_speed_internal(void) {
     FLASH_SetLatency(FLASH_Latency_2);
 
     RCC_PLLCmd(DISABLE);
-    RCC_PLLConfig(RCC_PLLSource_HSI, 16, 336, 4, 7); // 84MHz & 48MHz
+    RCC_PLLConfig(RCC_PLLSource_HSI, 16, 336, 4, 7); // SYSCLK 84MHz & USB 48MHz
     RCC_PLLCmd(ENABLE);
     while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
 

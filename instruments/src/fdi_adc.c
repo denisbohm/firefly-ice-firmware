@@ -133,14 +133,14 @@ void fdi_adc_convert_continuous(
     /* Configure channels */
     for (uint32_t i = 0; i < channel_count; ++i) {
         uint32_t channel = channels[i];
-        ADC_RegularChannelConfig(ADC1, channel, i + 1, ADC_SampleTime_15Cycles);
+        ADC_RegularChannelConfig(ADC1, channel, i + 1, ADC_SampleTime_28Cycles);
     }
 
     // ADC Rate:
-    // Conversion Clocks = 3 sample cycles + 12 bit conversion cycles = 15 cycles
+    // Conversion Clocks = 28 sample cycles + 12 bit conversion cycles = 40 cycles
     // Conversion Count = 1 high current range + 1 low current range
-    // ADC Clock Rate = 48 MHz
-    // 48 MHz / (15 cycles * 2) = 1.6 M samples per second
+    // ADC Clock Rate = 84 MHz
+    // 84 MHz / (40 cycles * 2) = 1.05 M samples per second
 
     /* Enable ADC interrupts */
 //    ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);

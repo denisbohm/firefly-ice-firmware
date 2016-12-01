@@ -70,9 +70,21 @@ float fdi_adc_convert(uint32_t channel) {
     return value * 3.3f / 4096.0f / conversions;
 }
 
-volatile uint16_t fdi_adc_dma_buffer[16] = {0xAAAA};
+volatile uint16_t *fdi_adc_dma_buffer_0;
+volatile uint16_t *fdi_adc_dma_buffer_1;
+uint32_t fdi_adc_dma_buffer_length;
 
-void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_adc_callback_t callback) {
+void fdi_adc_convert_continuous(
+    uint8_t *channels,
+    uint32_t channel_count,
+    volatile uint16_t *buffer_0,
+    volatile uint16_t *buffer_1,
+    uint32_t buffer_length,
+    fdi_adc_callback_t callback
+) {
+    fdi_adc_dma_buffer_0 = buffer_0;
+    fdi_adc_dma_buffer_1 = buffer_1;
+    fdi_adc_dma_buffer_length = buffer_length;
     fdi_adc_callback = callback;
 
     /* Enable DMA2, thats where ADC is hooked on -> see Table 20 (RM00090) */
@@ -80,7 +92,7 @@ void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_a
     DMA_InitTypeDef dma_init;
     DMA_StructInit(&dma_init);
     dma_init.DMA_Channel = DMA_Channel_0;                     
-    dma_init.DMA_BufferSize = sizeof(fdi_adc_dma_buffer) / sizeof(fdi_adc_dma_buffer[0]);
+    dma_init.DMA_BufferSize = buffer_length;
     dma_init.DMA_DIR = DMA_DIR_PeripheralToMemory;
     dma_init.DMA_FIFOMode = DMA_FIFOMode_Disable;
     dma_init.DMA_FIFOThreshold = 0;
@@ -88,13 +100,15 @@ void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_a
     dma_init.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
     dma_init.DMA_Mode = DMA_Mode_Circular;
     dma_init.DMA_Priority = DMA_Priority_High;
-    dma_init.DMA_Memory0BaseAddr = (uint32_t)fdi_adc_dma_buffer;
+    dma_init.DMA_Memory0BaseAddr = (uint32_t)fdi_adc_dma_buffer_0;
     dma_init.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
     dma_init.DMA_MemoryInc = DMA_MemoryInc_Enable;
     dma_init.DMA_PeripheralBaseAddr = (uint32_t)&ADC1->DR;
     dma_init.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
     dma_init.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
     DMA_Init(DMA2_Stream0, &dma_init);
+    DMA_DoubleBufferModeConfig(DMA2_Stream0, (uint32_t)fdi_adc_dma_buffer_1, DMA_Memory_0);
+    DMA_DoubleBufferModeCmd(DMA2_Stream0, ENABLE);
     DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
     DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
     DMA_Cmd(DMA2_Stream0, ENABLE);
@@ -119,14 +133,14 @@ void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_a
     /* Configure channels */
     for (uint32_t i = 0; i < channel_count; ++i) {
         uint32_t channel = channels[i];
-        ADC_RegularChannelConfig(ADC1, channel, i + 1, ADC_SampleTime_28Cycles);
+        ADC_RegularChannelConfig(ADC1, channel, i + 1, ADC_SampleTime_15Cycles);
     }
 
     // ADC Rate:
-    // Conversion Clocks = 28 sample cycles + 12 bit conversion cycles = 40 cycles
+    // Conversion Clocks = 3 sample cycles + 12 bit conversion cycles = 15 cycles
     // Conversion Count = 1 high current range + 1 low current range
-    // ADC Clock Rate = 84 MHz
-    // 84 MHz / (40 cycles * 2) = 1.05 M samples per second
+    // ADC Clock Rate = 48 MHz
+    // 48 MHz / (15 cycles * 2) = 1.6 M samples per second
 
     /* Enable ADC interrupts */
 //    ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
@@ -149,7 +163,8 @@ void fdi_adc_convert_continuous(uint8_t *channels, uint32_t channel_count, fdi_a
 void DMA2_Stream0_IRQHandler(void) {
     if (DMA_GetITStatus(DMA2_Stream0, DMA_IT_TCIF0) != RESET) {
         if (fdi_adc_callback) {
-            (*fdi_adc_callback)(fdi_adc_dma_buffer);
+            volatile uint16_t *buffer = (DMA_GetCurrentMemoryTarget(DMA2_Stream0) == 0) ? fdi_adc_dma_buffer_1 : fdi_adc_dma_buffer_0;
+            (*fdi_adc_callback)(buffer, fdi_adc_dma_buffer_length);
         }
         DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
     }

@@ -64,6 +64,7 @@ void fdi_storage_instrument_api_erase(uint64_t identifier, uint64_t type __attri
         fdi_s25fl116k_erase_sector(address);
         address += fdi_s25fl116k_sector_size;
     }
+    fdi_s25fl116k_wait_while_busy();
 }
 
 void fdi_storage_instrument_api_write(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -89,6 +90,7 @@ void fdi_storage_instrument_api_write(uint64_t identifier, uint64_t type __attri
         binary->get_index += sublength;
         offset += sublength;
     }
+    fdi_s25fl116k_wait_while_busy();
 }
 
 void fdi_storage_instrument_api_read(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {

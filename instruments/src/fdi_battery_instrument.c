@@ -212,6 +212,8 @@ void fdi_battery_instrument_save_conversions(void) {
     }
 
     if ((count == 0) && (fdi_battery_instrument_total_count >= fdi_battery_instrument_sample_total)) {
+        fdi_s25fl116k_wait_while_busy();
+
         uint8_t buffer[32];
         fd_binary_t response;
         fd_binary_initialize(&response, buffer, sizeof(buffer));

@@ -294,7 +294,7 @@
       target_reset_script="SRAMReset()" />
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
-      <file file_name="FireflyFlash.c" />
+      <file file_name="efm32/FireflyFlash.c" />
     </folder>
     <folder Name="CMSIS Files">
       <file file_name="$(TargetsDir)/EFM32/include/CMSIS/efm32.h" />

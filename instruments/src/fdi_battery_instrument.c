@@ -256,6 +256,15 @@ void fdi_battery_instrument_api_convert_continuous(uint64_t identifier, uint64_t
     }
 }
 
+/*
+The output voltage of the LDO (VOUT) can be calculated by noting the following:
+VOUT = VREF + i1R1	(Eq. 1)
+i1 = i2 + i3	(Eq. 2)
+i2 = VREF/R2	(Eq. 3)
+i3 = (VREF - VDAC)/R3	(Eq. 4)
+Substituting Equations 2 through 4 into Equation 1 yields:
+VOUT = VREF(1 + (R1/R2)) + (VREF - VDAC) (R1/R3)	(Eq. 5)
+*/
 void fdi_battery_instrument_set_voltage(fdi_battery_instrument_t *instrument __attribute__((unused)), float voltage) {
     if (voltage < 2.75f) {
         voltage = 2.75f;
@@ -263,8 +272,9 @@ void fdi_battery_instrument_set_voltage(fdi_battery_instrument_t *instrument __a
     if (voltage > 4.2f) {
         voltage = 4.2f;
     }
-    // 0x0222 = 2.75 V (battery cut-off)
-    // 0x010d = 4.2 V (max value)
+    // 12-bit ADC w/ 3.3V VDD reference, 0.4 V Reference in LDO, 650k over 100k (3 V)
+    // 0x0222 = 546 = 2.75 V (battery cut-off) = 0.440 V ADC output
+    // 0x010d = 269 = 4.2 V (max value) = 0.217 V ADC output
     float multiplier = ((float)(0x0222 - 0x010d)) / (4.2f - 2.75f);
     uint16_t value = 0x0222 - (int)((voltage - 2.75f) * multiplier);
     fdi_mcp4726_write_volatile_dac_register(value);

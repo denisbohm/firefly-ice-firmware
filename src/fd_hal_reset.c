@@ -11,8 +11,7 @@
 
 #define MAGIC 0xa610efcc
 
-uint32_t fd_hal_reset_last_cause;
-fd_time_t fd_hal_reset_last_time;
+fd_hal_reset_state_t fd_hal_reset_last;
 
 fd_hal_reset_retained_t fd_hal_reset_retained_at_initialize;
 static bool retain_was_valid;
@@ -55,24 +54,24 @@ bool is_ram_retained_reset(uint32_t cause) {
 }
 
 void fd_hal_reset_initialize(void) {
-    fd_hal_reset_last_cause = RMU_ResetCauseGet();
+    fd_hal_reset_last.cause = RMU_ResetCauseGet();
     RMU_ResetCauseClear();
 
-    fd_hal_reset_retained_t *retained = RETAINED;
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
     memcpy(&fd_hal_reset_retained_at_initialize, retained, sizeof(fd_hal_reset_retained_t));
     retain_was_valid =
         (retained->magic == MAGIC) &&
         (retained->power_battery_level >= 0.0) && (retained->power_battery_level <= 1.0) &&
         (retained->rtc.seconds > 1381363200) && (retained->rtc.seconds < 2328048000) &&
         (retained->rtc.microseconds < 1000000) &&
-        is_ram_retained_reset(fd_hal_reset_last_cause);
+        is_ram_retained_reset(fd_hal_reset_last.cause);
 
     if (!retain_was_valid) {
         memset(retained, 0, sizeof(fd_hal_reset_retained_t));
         retained->magic = MAGIC;
     }
 
-    fd_hal_reset_last_time = retained->rtc;
+    fd_hal_reset_last.time = retained->rtc;
 }
 
 void fd_hal_reset_start_watchdog(void) {
@@ -109,19 +108,22 @@ void fd_hal_reset_feed_watchdog(void) {
 #endif
 }
 
-void fd_hal_reset_push_watchdog_context(char *context) {
+void fd_hal_reset_push_watchdog_context(const char *context, char *save) {
+    const int context_size = FD_HAL_RESET_CONTEXT_SIZE;
     int length = strlen(context);
-    if (length > 4) {
-        length = 4;
+    if (length > context_size - 1) {
+        length = context_size - 1;
     }
-    fd_hal_reset_retained_t *retained = RETAINED;
-    memset(retained->context, 0, 4);
-    memcpy(retained->context, context, length);
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
+    char *retained_context = retained->context;
+    memcpy(save, retained_context, context_size);
+    memset(retained_context, 0, context_size);
+    memmove(retained_context, context, length);
 }
 
-void fd_hal_reset_pop_watchdog_context(void) {
-    fd_hal_reset_retained_t *retained = RETAINED;
-    memset(retained->context, 0, 4);
+void fd_hal_reset_pop_watchdog_context(const char* save) {
+    fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
+    memcpy(retained->context, save, FD_HAL_RESET_CONTEXT_SIZE);
 }
 
 #ifdef DEBUG_WATCHDOG
@@ -160,9 +162,10 @@ void fd_hal_reset_by(uint8_t type) {
             NVIC_SystemReset();
         } break;
         case FD_HAL_RESET_WATCHDOG: {
-            fd_hal_reset_push_watchdog_context("rwdt");
+            char save[FD_HAL_RESET_CONTEXT_SIZE];
+            fd_hal_reset_push_watchdog_context("rwdt", save);
             fd_hal_processor_delay_ms(120000);
-            fd_hal_reset_pop_watchdog_context();
+            fd_hal_reset_pop_watchdog_context(save);
         } break;
         case FD_HAL_RESET_HARD_FAULT: {
             void (*null_fn)(void) = 0;

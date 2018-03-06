@@ -148,6 +148,7 @@ int main(void) {
     fd_pins_events_initialize();
     fd_timer_initialize();
     fd_lock_initialize();
+    fd_detour_startup_initialize();
     fd_control_initialize();
 
     GPIO_PinOutClear(LED0_PORT_PIN);

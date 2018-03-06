@@ -9,6 +9,8 @@
  */
 
 #include "fd_binary.h"
+#include "fd_control.h"
+#include "fd_control_codes.h"
 #include "fd_crc.h"
 #include "fd_hal_external_flash.h"
 #include "fd_hal_reset.h"
@@ -176,6 +178,8 @@ void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t
     if (area->free_page == area->first_page) {
         fd_storage_free_first_page(area);
     }
+    
+    fd_control_notify(FD_CONTROL_PROPERTY_STORAGE);
 }
 
 void fd_storage_area_read_nth_page(fd_storage_area_t *area, uint32_t n, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {

@@ -26,6 +26,7 @@
 #define FD_EVENT_COMMAND (1 << 17)
 #define FD_EVENT_LOCK_STATE (1 << 18)
 #define FD_EVENT_USB_POWER (1 << 19)
+#define FD_EVENT_NOTIFY (1 << 20)
 
 typedef void (*fd_event_callback_t)(void);
 

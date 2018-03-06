@@ -4,6 +4,8 @@
 
 #include <string.h>
 
+fd_detour_source_collection_t *fd_detour_source_collection_head;
+
 void fd_detour_initialize(fd_detour_t *detour, uint8_t *data, uint32_t size) {
     detour->data = data;
     detour->size = size;
@@ -125,13 +127,28 @@ bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t le
     return true;
 }
 
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, fd_lock_owner_t owner, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize) {
+void fd_detour_startup_initialize(void) {
+    fd_detour_source_collection_head = 0;
+}
+
+void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, fd_lock_owner_t owner, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize, fd_detour_source_is_available_t is_available) {
     collection->owner = owner;
     collection->packetSize = packetSize;
     collection->buffer = buffer;
     collection->bufferSize = bufferSize;
     collection->bufferCount = 0;
     collection->callback = 0;
+    collection->is_available = is_available;
+    collection->subscribed_properties = 0;
+    collection->notify_properties = 0;
+    collection->next = fd_detour_source_collection_head;
+    fd_detour_source_collection_head = collection;
+}
+
+void fd_detour_source_collection_unavailable(fd_detour_source_collection_t *collection) {
+    collection->bufferCount = 0;
+    collection->subscribed_properties = 0;
+    collection->notify_properties = 0;
 }
 
 bool fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {

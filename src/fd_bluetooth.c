@@ -112,6 +112,10 @@ void fd_bluetooth_ready(void) {
     fd_bluetooth_step();
 }
 
+bool fd_bluetooth_is_connected(void) {
+    return fd_nrf8001_did_connect;
+}
+
 void fd_bluetooth_initialize(void) {
     fd_bluetooth_system_steps = 0;
     fd_bluetooth_data_steps = 0;
@@ -131,6 +135,7 @@ void fd_bluetooth_initialize(void) {
         MAX_CHARACTERISTIC_SIZE,
         fd_bluetooth_detour_source_collection_data,
         DETOUR_SOURCE_COLLECTION_SIZE
+
     );
 
     fd_bluetooth_disconnect_action = fd_bluetooth_disconnect_action_connect;
@@ -499,6 +504,8 @@ void fd_nrf8001_disconnected_event(
     uint8_t btle_status __attribute__((unused))
 ) {
     fd_lock_close(fd_lock_owner_ble);
+
+    fd_detour_source_collection_unavailable(&fd_bluetooth_detour_source_collection);
 
     fd_bluetooth_system_steps = 0;
     fd_bluetooth_data_steps = 0;

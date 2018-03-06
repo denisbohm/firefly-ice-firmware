@@ -2,6 +2,7 @@
 #include "fd_bluetooth.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
+#include "fd_detour.h"
 #include "fd_event.h"
 #include "fd_hal_aes.h"
 #include "fd_hal_ble.h"
@@ -108,12 +109,9 @@ fd_binary_t *fd_control_send_start(fd_detour_source_collection_t *detour_source_
     return &fd_control_detour_binary;
 }
 
-void fd_control_send_complete(fd_detour_source_collection_t *detour_source_collection) {
+bool fd_control_send_complete(fd_detour_source_collection_t *detour_source_collection) {
     fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, fd_control_detour_binary.put_index);
-    bool result = fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
-    if (!result) {
-        fd_log_assert_fail("");
-    }
+    return fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
 }
 
 void fd_control_ping(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
@@ -451,6 +449,15 @@ void fd_control_set_property_recognition(fd_binary_t *binary) {
 
 #endif
 
+void fd_control_get_property_subscribe(fd_binary_t *binary, fd_detour_source_collection_t *collection) {
+    fd_binary_put_uint32(binary, collection->subscribed_properties);
+}
+
+void fd_control_set_property_subscribe(fd_binary_t *binary, fd_detour_source_collection_t *collection) {
+    uint32_t properties = fd_binary_get_uint32(binary);
+    collection->subscribed_properties = properties;
+}
+
 #define GET_PROPERTY_MASK \
  (FD_CONTROL_PROPERTY_VERSION |\
  FD_CONTROL_PROPERTY_HARDWARE_ID |\
@@ -472,12 +479,8 @@ void fd_control_set_property_recognition(fd_binary_t *binary) {
  FD_CONTROL_PROPERTY_RECOGNITION |\
  FD_CONTROL_PROPERTY_HARDWARE_VERSION)
 
-void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, data, length);
-    uint32_t properties = fd_binary_get_uint32(&binary);
-
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_GET_PROPERTIES);
+bool fd_control_send_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t type, uint32_t properties) {
+    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, type);
     fd_binary_put_uint32(binary_out, properties & GET_PROPERTY_MASK);
     for (uint32_t property = 1; property != 0; property <<= 1) {
         if (property & properties) {
@@ -544,10 +547,20 @@ void fd_control_get_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_HARDWARE_VERSION: {
                     fd_control_get_property_hardware_version(binary_out);
                 } break;
+                case FD_CONTROL_PROPERTY_SUBSCRIBE: {
+                    fd_control_get_property_subscribe(binary_out, detour_source_collection);
+                }
             }
         }
     }
-    fd_control_send_complete(detour_source_collection);
+    return fd_control_send_complete(detour_source_collection);
+}
+
+void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, data, length);
+    uint32_t properties = fd_binary_get_uint32(&binary);
+    fd_control_send_properties(detour_source_collection, FD_CONTROL_GET_PROPERTIES, properties);
 }
 
 void fd_control_set_properties(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
@@ -595,6 +608,9 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 case FD_CONTROL_PROPERTY_INDICATE: {
                     fd_control_set_property_indicate(&binary, detour_source_collection->owner);
                 } break;
+                case FD_CONTROL_PROPERTY_SUBSCRIBE: {
+                    fd_control_set_property_subscribe(&binary, detour_source_collection);
+                }
             }
         }
     }
@@ -946,6 +962,35 @@ void fd_control_initialize_commands(void) {
 #ifndef FD_NO_SENSING
     fd_control_commands[FD_CONTROL_SENSING_SYNTHESIZE] = fd_sensing_synthesize;
 #endif
+}
+
+void fd_control_check_notify_properties(void) {
+    fd_detour_source_collection_t *collection = fd_detour_source_collection_head;
+    while (collection != 0) {
+        uint32_t properties = collection->subscribed_properties & collection->notify_properties;
+        if ((properties != 0) && collection->is_available()) {
+            if (fd_control_send_properties(collection, FD_CONTROL_NOTIFY_PROPERTIES, properties)) {
+                collection->notify_properties = 0;
+            } else {
+                fd_event_set_exclusive(FD_EVENT_NOTIFY);
+            }
+        }
+        
+        collection = collection->next;
+    }
+}
+
+void fd_control_notify(uint32_t properties) {
+    fd_detour_source_collection_t *collection = fd_detour_source_collection_head;
+    while (collection != 0) {
+        uint32_t notify_properties = collection->subscribed_properties & properties;
+        if (notify_properties != 0) {
+            collection->notify_properties |= notify_properties;
+            fd_event_set_exclusive(FD_EVENT_NOTIFY);
+        }
+        
+        collection = collection->next;
+    }
 }
 
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis

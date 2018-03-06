@@ -66,7 +66,6 @@ void fd_w25q16dw_initialize(void) {
     fd_w25q16dw_test();
 }
 
-static
 void fd_w25q16dw_wait_while_busy(void) {
     uint8_t status;
     do {
@@ -98,7 +97,8 @@ void fd_w25q16dw_erase_sector(uint32_t address) {
 void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
 //    memcpy(&simulation_buffer[address], data, length);
 
-    fd_hal_reset_push_watchdog_context("mwp");
+    uint8_t save[FD_HAL_RESET_CONTEXT_SIZE] = {0};
+    fd_hal_reset_push_watchdog_context("mwp", save);
 
     fd_w25q16dw_wait_while_busy();
 
@@ -136,7 +136,7 @@ void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
     fd_spi_io(FD_SPI_BUS_0_SLAVE_W25Q16DW, &io);
     fd_spi_wait(FD_SPI_BUS_0);
 
-    fd_hal_reset_pop_watchdog_context();
+    fd_hal_reset_pop_watchdog_context(save);
 }
 
 void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {

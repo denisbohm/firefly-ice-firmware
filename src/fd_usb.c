@@ -215,7 +215,8 @@ void fd_usb_initialize(void) {
         fd_lock_owner_usb,
         USB_MAX_EP_SIZE,
         fd_usb_detour_source_collection_data,
-        DETOUR_SOURCE_COLLECTION_SIZE
+        DETOUR_SOURCE_COLLECTION_SIZE,
+        fd_usb_is_connected
     );
 
     fd_event_add_em2_check(fd_usb_is_safe_to_enter_em2);
@@ -391,6 +392,9 @@ static
 void fd_usb_state_change(USBD_State_TypeDef oldState __attribute__((unused)), USBD_State_TypeDef newState) {
     fd_lock_close(fd_lock_owner_usb);
 
+    if (oldState == USBD_STATE_CONFIGURED) {
+        fd_detour_source_collection_unavailable(&fd_usb_detour_source_collection);
+    }
     if (newState == USBD_STATE_CONFIGURED) {
         fd_detour_clear(&fd_usb_detour);
     }

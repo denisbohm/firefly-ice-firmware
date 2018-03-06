@@ -102,7 +102,9 @@ void fd_sensing_sample_callback(int16_t x, int16_t y, int16_t z) {
     fd_activity_accumulate(x, y, z);
     ++fd_sensing_samples;
 
+#ifdef FD_SENSING_STREAM_ENABLE
     fd_sensing_stream(x, y, z);
+#endif
 
     fd_recognition_sensing(x, y, z);
 }

@@ -198,6 +198,10 @@ void fd_hal_processor_set_debug_lock(void) {
     }
 }
 
+uint32_t fd_hal_processor_get_model_number(void) {
+    return 100;
+}
+
 // 16 byte hardware id: vendor, product, version (major, minor), unique id
 void fd_hal_processor_get_hardware_id(fd_binary_t *binary) {
     fd_binary_put_uint16(binary, fd_usb_get_vendor_id());

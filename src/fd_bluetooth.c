@@ -231,7 +231,8 @@ bool fd_bluetooth_spi_transfer(void) {
         return false;
     }
 
-    fd_hal_reset_push_watchdog_context("bspi");
+    char save[FD_HAL_RESET_CONTEXT_SIZE];
+    fd_hal_reset_push_watchdog_context("bspi", save);
 
     uint8_t rx_buffer[FD_NRF8001_SPI_RX_BUFFER_SIZE];
     fd_spi_transfer_t transfers[] = {
@@ -256,7 +257,7 @@ bool fd_bluetooth_spi_transfer(void) {
     fd_spi_io(FD_SPI_BUS_1_SLAVE_NRF8001, &io);
     fd_spi_wait(FD_SPI_BUS_1);
 
-    fd_hal_reset_pop_watchdog_context();
+    fd_hal_reset_pop_watchdog_context(save);
 
     fd_nrf8001_spi_tx_clear();
 

@@ -77,6 +77,7 @@ void fd_sensing_history_save(void) {
     fd_sensing_history_count = 0;
 }
 
+#ifdef FD_SENSING_STREAM_ENABLE
 static
 void fd_sensing_stream(int16_t x, int16_t y, int16_t z) {
     // 8G range, 10-bit accuracy
@@ -96,6 +97,7 @@ void fd_sensing_stream(int16_t x, int16_t y, int16_t z) {
         fd_sensing_history_add(xyz);
     }
 }
+#endif
 
 static
 void fd_sensing_sample_callback(int16_t x, int16_t y, int16_t z) {

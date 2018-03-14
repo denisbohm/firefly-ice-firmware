@@ -54,6 +54,7 @@ fd_binary_t fd_control_detour_binary;
 
 void fd_control_initialize_commands(void);
 void fd_control_command(void);
+void fd_control_check_notify_properties(void);
 
 fd_control_command_t fd_control_commands[256];
 
@@ -70,6 +71,7 @@ void fd_control_initialize(void) {
     fd_control_initialize_commands();
 
     fd_event_add_callback(FD_EVENT_COMMAND, fd_control_command);
+    fd_event_add_callback(FD_EVENT_NOTIFY, fd_control_check_notify_properties);
 
     fd_control_before_callback = 0;
     fd_control_after_callback = 0;

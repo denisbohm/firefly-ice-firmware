@@ -20,8 +20,6 @@
 
 #include <string.h>
 
-// static uint8_t simulation_buffer[2 * FD_W25Q16DW_PAGES * FD_W25Q16DW_PAGE_SIZE];
-
 void fd_w25q16dw_wake(void) {
     uint8_t txdata[] = {RELEASE_POWER_DOWN, 0, 0, 0};
     uint8_t device_id;
@@ -29,29 +27,7 @@ void fd_w25q16dw_wake(void) {
     fd_hal_processor_delay_us(30); // tRES2
 }
 
-void fd_w25q16dw_test(void) {
-    fd_w25q16dw_wake();
-    uint32_t address = 0;
-    fd_w25q16dw_enable_write();
-    fd_w25q16dw_erase_sector(address);
-    uint8_t write_data[2] = {0x01, 0x02};
-    fd_w25q16dw_enable_write();
-    fd_w25q16dw_write_page(address, write_data, sizeof(write_data));
-    uint8_t read_data[2] = {0x00, 0x00};
-    fd_w25q16dw_read(address, read_data, sizeof(read_data));
-
-    if (write_data[0] != read_data[0]) {
-        return;
-    }
-}
-
 void fd_w25q16dw_initialize(void) {
-//    memset(simulation_buffer, 0xff, sizeof(simulation_buffer));
-
-    while (1) {
-        fd_w25q16dw_wake();
-    }
-
     fd_w25q16dw_wake();
 
     uint8_t txdata[] = {READ_MANUFACTURER_DEVICE_ID, 0x00, 0x00, 0x00};
@@ -62,8 +38,6 @@ void fd_w25q16dw_initialize(void) {
     if (manufacturer_id != WINBOND_MANUFACTURER_ID) {
         fd_log_assert_fail("");
     }
-
-    fd_w25q16dw_test();
 }
 
 void fd_w25q16dw_wait_while_busy(void) {
@@ -87,16 +61,12 @@ void fd_w25q16dw_enable_write(void) {
 
 // erase a 4K-byte sector
 void fd_w25q16dw_erase_sector(uint32_t address) {
-//    memset(&simulation_buffer[address], 0xff, FD_W25Q16DW_PAGE_SIZE * FD_W25Q16DW_PAGES_PER_SECTOR);
-
     uint8_t buffer[] = {SECTOR_ERASE, address >> 16, address >> 8, address};
     fd_spi_sync_txn(FD_SPI_BUS_0_SLAVE_W25Q16DW, buffer, sizeof(buffer));
 }
 
 // write up to 256-bytes to a page
 void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
-//    memcpy(&simulation_buffer[address], data, length);
-
     uint8_t save[FD_HAL_RESET_CONTEXT_SIZE] = {0};
     fd_hal_reset_push_watchdog_context("mwp", save);
 
@@ -140,8 +110,6 @@ void fd_w25q16dw_write_page(uint32_t address, uint8_t *data, uint32_t length) {
 }
 
 void fd_w25q16dw_read(uint32_t address, uint8_t *data, uint32_t length) {
-//    memcpy(data, &simulation_buffer[address], length);
-
     fd_w25q16dw_wait_while_busy();
 
     uint8_t tx_bytes[] = {FAST_READ, address >> 16, address >> 8, address, 0};

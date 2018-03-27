@@ -1,0 +1,130 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="firefly_test_suite" target="8" version="2">
+  <project Name="firefly_test_suite">
+    <configuration
+      Name="Common"
+      Placement="RAM"
+      Target="nRF52840_xxAA"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_linker_heap_size="2048"
+      arm_linker_stack_size="2048"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/nRF51/nRF51SimulatorMemory$(HostDLL)"
+      arm_simulator_memory_simulation_parameter="nRF52840;0x100000;0x40000"
+      arm_target_interface_type="Default"
+      arm_target_loader_applicable_loaders=""
+      arm_target_loader_default_loader=""
+      c_additional_options="-fms-extensions"
+      c_preprocessor_definitions="NRF52840_XXAA;USE_APP_CONFIG;SOFTDEVICE_PRESENT;S140"
+      c_user_include_directories="$(TargetsDir)/nRF51/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include;$(ProjectDir);$(ProjectDir)/../src;$(ProjectDir)/nRF5_SDK/components/ble/ble_dtm;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_bas;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_dis;$(ProjectDir)/nRF5_SDK/components/ble/common;$(ProjectDir)/nRF5_SDK/components/device;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ble_flash;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/clock;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/common;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/comp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/delay;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/gpiote;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/hal;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/i2s;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/lpcomp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pdm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/power;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ppi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pwm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qdec;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qspi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/radio_config;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rng;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rtc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/saadc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/sdio;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/swi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/systick;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/timer;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twis_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/uart;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/usbd;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/wdt;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log/src;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_section_vars;$(ProjectDir)/nRF5_SDK/components/libraries/gpiote;$(ProjectDir)/nRF5_SDK/components/libraries/scheduler;$(ProjectDir)/nRF5_SDK/components/libraries/timer;$(ProjectDir)/nRF5_SDK/components/libraries/util;$(ProjectDir)/nRF5_SDK/components/softdevice/common;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers/nrf52;$(ProjectDir)/nRF5_SDK/config"
+      debug_register_definition_file="$(TargetsDir)/nRF51/nRF52840_Peripherals.xml"
+      linker_memory_map_file="$(TargetsDir)/nRF51/nRF52840_xxAA_MemoryMap.xml"
+      linker_output_format="None"
+      linker_printf_fmt_level="int"
+      linker_printf_fp_enabled="No"
+      linker_printf_width_precision_supported="No"
+      linker_scanf_character_group_matching_enabled="No"
+      linker_scanf_fmt_level="int"
+      linker_scanf_fp_enabled="No"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      linker_section_placement_macros=""
+      package_dependencies="nRF51"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/nRF51/propertyGroups.xml"
+      target_get_partname_script="GetPartName()"
+      target_reset_script="Reset()"
+      target_script_file="$(TargetsDir)/nRF51/nRF51_Target.js" />
+    <configuration
+      Name="Flash"
+      Placement="RAM"
+      arm_target_flash_loader_file_path="$(TargetsDir)/nRF51/Release/Loader.elf"
+      arm_target_loader_applicable_loaders=""
+      arm_target_loader_can_erase_all="Yes"
+      arm_target_loader_can_lock_all="No"
+      arm_target_loader_can_lock_range="No"
+      arm_target_loader_can_unlock_all="No"
+      arm_target_loader_can_unlock_range="No"
+      arm_target_loader_default_loader=""
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="main.c" />
+      <file file_name="../src/fd_delay.h" />
+      <file file_name="../src/fd_gpio.h" />
+      <file file_name="../src/fd_i2cm.h" />
+      <file file_name="../src/fd_spim.h" />
+      <file file_name="../src/nrf5/fd_delay_nrf5.c" />
+      <file file_name="../src/nrf5/fd_gpio_nrf5.c" />
+      <file file_name="../src/nrf5/fd_i2cm_nrf5.c" />
+      <file file_name="../src/nrf5/fd_nrf5.h" />
+      <file file_name="../src/nrf5/fd_spim_nrf5.c" />
+      <folder Name="nRF5_SDK">
+        <folder Name="components">
+          <folder Name="drivers_nrf">
+            <folder Name="hal">
+              <file file_name="nRF5_SDK/components/drivers_nrf/hal/nrf_nvmc.c" />
+              <file file_name="nRF5_SDK/components/drivers_nrf/hal/nrf_nvmc.h" />
+              <file file_name="nRF5_SDK/components/drivers_nrf/hal/nrf_gpiote.h" />
+            </folder>
+            <folder Name="twi_master">
+              <file file_name="nRF5_SDK/components/drivers_nrf/twi_master/nrf_drv_twi.c" />
+              <file file_name="nRF5_SDK/components/drivers_nrf/twi_master/nrf_drv_twi.h" />
+            </folder>
+            <folder Name="common">
+              <file file_name="nRF5_SDK/components/drivers_nrf/common/nrf_drv_common.c" />
+              <file file_name="nRF5_SDK/components/drivers_nrf/common/nrf_drv_common.h" />
+            </folder>
+          </folder>
+          <folder Name="libraries">
+            <folder Name="util">
+              <file file_name="nRF5_SDK/components/libraries/util/app_util_platform.c" />
+              <file file_name="nRF5_SDK/components/libraries/util/app_util_platform.h" />
+            </folder>
+            <folder Name="experimental_log" />
+            <folder Name="timer">
+              <file file_name="nRF5_SDK/components/libraries/timer/app_timer.c" />
+              <file file_name="nRF5_SDK/components/libraries/timer/app_timer.h" />
+            </folder>
+          </folder>
+          <folder Name="toolchain">
+            <file file_name="nRF5_SDK/components/toolchain/system_nrf52840.c" />
+          </folder>
+          <folder Name="ble">
+            <folder Name="ble_dtm">
+              <file file_name="nRF5_SDK/components/ble/ble_dtm/ble_dtm.c" />
+              <file file_name="nRF5_SDK/components/ble/ble_dtm/ble_dtm.h" />
+              <file file_name="nRF5_SDK/components/ble/ble_dtm/ble_dtm_hw_nrf52.c" />
+              <file file_name="nRF5_SDK/components/ble/ble_dtm/ble_dtm_hw.h" />
+            </folder>
+          </folder>
+        </folder>
+      </folder>
+      <file file_name="app_config.h" />
+      <file file_name="../src/nrf5/fd_nrf5.c" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/nRF51/nRF51_Startup.s" />
+    </folder>
+  </project>
+  <configuration Name="THUMB Debug" inherited_configurations="THUMB;Debug" />
+  <configuration
+    Name="THUMB"
+    Platform="ARM"
+    arm_instruction_set="Thumb"
+    arm_library_instruction_set="Thumb"
+    c_preprocessor_definitions="__THUMB"
+    hidden="Yes" />
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+</solution>

@@ -1,0 +1,12 @@
+#ifndef APP_CONFIG_H
+#define APP_CONFIG_H
+
+#define TWI_ENABLED 1
+#define TWI0_ENABLED 1
+#define TWI_CONFIG_LOG_ENABLED 0
+
+#define APP_TIMER_ENABLED 1
+
+#define BLE_DTM_ENABLED 1
+
+#endif

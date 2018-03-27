@@ -106,6 +106,12 @@
       </folder>
       <file file_name="app_config.h" />
       <file file_name="../src/nrf5/fd_nrf5.c" />
+      <file file_name="../src/fd_bq25120.c" />
+      <file file_name="../src/fd_bq25120.h" />
+      <file file_name="../src/fd_spi_flash.c" />
+      <file file_name="../src/fd_spi_flash.h" />
+      <file file_name="../src/fd_lsm6dsl.c" />
+      <file file_name="../src/fd_lsm6dsl.h" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />

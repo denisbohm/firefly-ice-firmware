@@ -60,6 +60,12 @@ void fd_spi_flash_erase_sector(fd_spim_device_t *device, uint32_t address) {
     }
 }
 
+void fd_spi_flash_chip_erase(fd_spim_device_t *device) {
+    fd_spi_flash_wait_while_busy(device);
+
+    fd_spim_device_tx1(device, FD_SPI_FLASH_CHIP_ERASE);
+}
+
 void fd_spi_flash_write_page(fd_spim_device_t *device, uint32_t address, uint8_t *data, uint32_t length) {
     fd_spi_flash_wait_while_busy(device);
 

@@ -290,6 +290,7 @@ typedef union {
 bool fd_bq25120_read(fd_i2cm_device_t *device, uint8_t location, uint8_t *byte);
 bool fd_bq25120_write(fd_i2cm_device_t *device, uint8_t location, uint8_t byte);
 
+bool fd_bq25120_set_system_voltage(fd_i2cm_device_t *device, float voltage);
 bool fd_bq25120_read_battery_voltage(fd_i2cm_device_t *device, float *battery_voltage);
 
 #endif

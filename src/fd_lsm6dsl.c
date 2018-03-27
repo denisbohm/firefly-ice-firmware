@@ -110,7 +110,7 @@ void fd_lsm6dsl_fifo_flush(fd_spim_device_t *device) {
     fd_spim_device_deselect(device);
 }
 
-void lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t configuration) {
+void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t configuration) {
     uint8_t who_am_i = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_WHO_AM_I);
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL4_C, 0b00000100); // disable I2C

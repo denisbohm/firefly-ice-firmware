@@ -13,11 +13,21 @@ void fd_spim_initialize(
     }
     for (uint32_t i = 0; i < bus_count; ++i) {
         fd_spim_bus_t *bus = &buses[i];
+        fd_gpio_configure_output(bus->sclk);
+        fd_gpio_set(bus->sclk, true);
+        fd_gpio_configure_output(bus->mosi);
+        fd_gpio_set(bus->mosi, true);
+        fd_gpio_configure_input(bus->miso);
+
         fd_spim_bus_disable(bus);
     }
 }
 
 void fd_spim_bus_enable(fd_spim_bus_t *bus) {
+    if (fd_spim_bus_is_enabled(bus)) {
+        return;
+    }
+
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
     spim->CONFIG = (SPIM_CONFIG_CPOL_ActiveLow << SPIM_CONFIG_CPOL_Pos) | (SPIM_CONFIG_CPHA_Trailing << SPIM_CONFIG_CPHA_Pos);
@@ -30,6 +40,10 @@ void fd_spim_bus_enable(fd_spim_bus_t *bus) {
 }
 
 void fd_spim_bus_disable(fd_spim_bus_t *bus) {
+    if (!fd_spim_bus_is_enabled(bus)) {
+        return;
+    }
+
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
 //    NVIC_DisableIRQ(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn);
     spim->INTENCLR = SPIM_INTENCLR_END_Msk;

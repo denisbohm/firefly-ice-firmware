@@ -9,29 +9,16 @@
 
 #include "nrf_soc.h"
 #include "nrf_delay.h"
-#include "nrf_drv_twi.h"
 #include "nrf_gpio.h"
-#include "nrf_gpiote.h"
-#include "nrf_mbr.h"
-#include "nrf_nvmc.h"
-#include "nrf_sdh.h"
-#include "nrf_sdm.h"
-#include "nrf_soc.h"
-#include "nrf_temp.h"
 
-#include "app_error.h"
-#include "app_gpiote.h"
-#include "app_scheduler.h"
-#include "app_timer.h"
-#include "app_util.h"
-#include "app_util_platform.h"
-
-#include "ble_hci.h"
-#include "ble_advdata.h"
-#include "ble_bas.h"
-#include "ble_conn_params.h"
-#include "ble_dis.h"
-#include "ble_dtm.h"
+// !!! missing from nRF SDK 15 -denis
+#ifndef TWIM_SHORTS_LASTRX_SUSPEND_Msk
+/* Bit 8 : Shortcut between LASTTX event and SUSPEND task */
+#define TWIM_SHORTS_LASTRX_SUSPEND_Pos (8UL) /*!< Position of LASTRX_SUSPEND field. */
+#define TWIM_SHORTS_LASTRX_SUSPEND_Msk (0x1UL << TWIM_SHORTS_LASTRX_SUSPEND_Pos) /*!< Bit mask of LASTRX_SUSPEND field. */
+#define TWIM_SHORTS_LASTRX_SUSPEND_Disabled (0UL) /*!< Disable shortcut */
+#define TWIM_SHORTS_LASTRX_SUSPEND_Enabled (1UL) /*!< Enable shortcut */
+#endif
 
 #pragma GCC diagnostic pop
 

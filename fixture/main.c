@@ -4,6 +4,8 @@
 #include "fd_lsm6dsl.h"
 #include "fd_spim.h"
 
+#include "system_nrf52840.h"
+
 static
 void halt(void) {
     __asm("BKPT   #0");
@@ -12,6 +14,8 @@ void halt(void) {
 void main(void) {
     void* tasks[] = {
         halt,
+
+        SystemInit,
 
         fd_gpio_configure_default,
         fd_gpio_configure_output,

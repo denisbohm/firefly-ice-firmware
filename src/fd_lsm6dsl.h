@@ -177,7 +177,7 @@ typedef struct {
     bool gyro_enable;
 } fd_lsm6dsl_configuration_t;
 
-void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t configuration);
+void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t *configuration);
 
 void fd_lsm6dsl_fifo_flush(fd_spim_device_t *device);
 uint32_t fd_lsm6dsl_read_fifo_word_count(fd_spim_device_t *device);

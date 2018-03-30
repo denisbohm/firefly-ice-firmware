@@ -31,9 +31,9 @@ void fd_spim_bus_enable(fd_spim_bus_t *bus) {
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
     spim->CONFIG = (SPIM_CONFIG_CPOL_ActiveLow << SPIM_CONFIG_CPOL_Pos) | (SPIM_CONFIG_CPHA_Trailing << SPIM_CONFIG_CPHA_Pos);
-    spim->PSEL.SCK  = bus->sclk.pin;
-    spim->PSEL.MOSI = bus->mosi.pin;
-    spim->PSEL.MISO = bus->miso.pin;
+    spim->PSEL.SCK  = NRF_GPIO_PIN_MAP(bus->sclk.port, bus->sclk.pin);
+    spim->PSEL.MOSI = NRF_GPIO_PIN_MAP(bus->mosi.port, bus->mosi.pin);
+    spim->PSEL.MISO = NRF_GPIO_PIN_MAP(bus->miso.port, bus->miso.pin);
     spim->TXD.LIST = SPIM_RXD_LIST_LIST_ArrayList << SPIM_RXD_LIST_LIST_Pos;
     spim->RXD.LIST = SPIM_RXD_LIST_LIST_ArrayList << SPIM_RXD_LIST_LIST_Pos;
     spim->ENABLE = SPIM_ENABLE_ENABLE_Enabled << SPIM_ENABLE_ENABLE_Pos;
@@ -81,9 +81,9 @@ void fd_spim_transfer(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_t tx_byte_co
     size_t tx_remaining = tx_byte_count;
     size_t rx_remaining = rx_byte_count;
     while ((tx_remaining > 0) || (rx_remaining > 0)) {
-        uint32_t tx_amount = tx_remaining > 255 ? 255 : tx_remaining;
+        uint32_t tx_amount = tx_remaining > 0xffff ? 0xffff : tx_remaining;
         spim->TXD.MAXCNT = tx_amount;
-        uint32_t rx_amount = rx_remaining > 255 ? 255 : rx_remaining;
+        uint32_t rx_amount = rx_remaining > 0xffff ? 0xffff : rx_remaining;
         spim->RXD.MAXCNT = rx_amount;
         spim->EVENTS_END = 0;
         spim->TASKS_START = 1;

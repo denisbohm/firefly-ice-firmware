@@ -25,7 +25,7 @@ float fd_lsm6dsl_gyro_scale(uint32_t fs) {
 }
 
 uint8_t fd_lsm6dsl_read(fd_spim_device_t *device, uint8_t location) {
-    return fd_spim_device_sequence_tx1_rx1(device, location);
+    return fd_spim_device_sequence_tx1_rx1(device, FD_LSM6DSL_READ | location);
 }
 
 void fd_lsm6dsl_write(fd_spim_device_t *device, uint8_t location, uint8_t byte) {
@@ -78,7 +78,7 @@ uint32_t fd_lsm6dsl_read_fifo_samples(fd_spim_device_t *device, fd_lsm6dsl_sampl
     }
 
     fd_spim_device_select(device);
-    fd_spim_bus_tx1(device->bus, FD_LSM6DSL_SPI_READ_ADDRESS | FD_LSM6DSL_REGISTER_FIFO_DATA_OUT_L);
+    fd_spim_bus_tx1(device->bus, FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_DATA_OUT_L);
     fd_spim_bus_wait(device->bus);
     for (int i = 0; i < count; ++i) {
         uint8_t bytes[12];
@@ -100,7 +100,7 @@ void fd_lsm6dsl_fifo_flush(fd_spim_device_t *device) {
     uint32_t word_count = fd_lsm6dsl_read_fifo_word_count(device);
 
     fd_spim_device_select(device);
-    fd_spim_bus_tx1(device->bus, FD_LSM6DSL_SPI_READ_ADDRESS | FD_LSM6DSL_REGISTER_FIFO_DATA_OUT_L);
+    fd_spim_bus_tx1(device->bus, FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_DATA_OUT_L);
     fd_spim_bus_wait(device->bus);
     for (uint32_t i = 0; i < word_count; ++i) {
         uint8_t bytes[2];

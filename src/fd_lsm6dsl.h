@@ -154,7 +154,7 @@ typedef struct {
 #define FD_LSM6DSL_GHPF_2P07_HZ     0b110
 #define FD_LSM6DSL_GHPF_16P32_HZ    0b111
 
-#define FD_LSM6DSL_SPI_READ_ADDRESS 0x80
+#define FD_LSM6DSL_READ 0x80
 
 float fd_lsm6dsl_accelerometer_scale(uint32_t fs);
 float fd_lsm6dsl_gyro_scale(uint32_t fs);

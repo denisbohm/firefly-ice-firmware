@@ -47,7 +47,7 @@ uint16_t fd_lsm6dsl_to_uint16(uint8_t *bytes, uint32_t offset) {
 uint32_t fd_lsm6dsl_read_fifo_word_count(fd_spim_device_t *device) {
     for (int retry = 0; retry < 10; ++retry) {
         fd_spim_device_select(device);
-        uint8_t location = FD_LSM6DSL_REGISTER_FIFO_STATUS1;
+        uint8_t location = FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_STATUS1;
         uint8_t buffer[4];
         fd_spim_bus_sequence_txn_rxn(device->bus, &location, 1, buffer, sizeof(buffer));
         fd_spim_bus_wait(device->bus);
@@ -135,7 +135,7 @@ void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t *
         configuration->accelerometer_low_power ? 0b00010000 : 0b00000000
     );
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL9_XL,
-        configuration->accelerometer_enable ? 0b00111000 : 0b00000000
+        configuration->accelerometer_enable ? 0b11100000 : 0b00000000
     );
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL2_G,

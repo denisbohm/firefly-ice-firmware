@@ -3,16 +3,16 @@
 #include "fd_nrf5.h"
 
 void fd_i2cm_initialize(
-    fd_i2cm_bus_t *buses, uint32_t bus_count,
-    fd_i2cm_device_t *devices, uint32_t device_count
+    const fd_i2cm_bus_t *buses, uint32_t bus_count,
+    const fd_i2cm_device_t *devices, uint32_t device_count
 ) {
     for (uint32_t i = 0; i < bus_count; ++i) {
-        fd_i2cm_bus_t *bus = &buses[i];
+        const fd_i2cm_bus_t *bus = &buses[i];
         fd_i2cm_bus_disable(bus);
     }
 }
 
-void fd_i2cm_bus_enable(fd_i2cm_bus_t *bus) {
+void fd_i2cm_bus_enable(const fd_i2cm_bus_t *bus) {
     if (fd_i2cm_bus_is_enabled(bus)) {
         return;
     }
@@ -33,7 +33,7 @@ void fd_i2cm_bus_enable(fd_i2cm_bus_t *bus) {
     twim->ENABLE = TWIM_ENABLE_ENABLE_Enabled << TWIM_ENABLE_ENABLE_Pos;
 }
 
-void fd_i2cm_bus_disable(fd_i2cm_bus_t *bus) {
+void fd_i2cm_bus_disable(const fd_i2cm_bus_t *bus) {
     if (!fd_i2cm_bus_is_enabled(bus)) {
         return;
     }
@@ -48,13 +48,13 @@ void fd_i2cm_bus_disable(fd_i2cm_bus_t *bus) {
     twim->PSEL.SDA = 0xFFFFFFFF;
 }
 
-bool fd_i2cm_bus_is_enabled(fd_i2cm_bus_t *bus) {
+bool fd_i2cm_bus_is_enabled(const fd_i2cm_bus_t *bus) {
     NRF_TWIM_Type *twim = (NRF_TWIM_Type *)bus->instance;
     const uint32_t mask = TWIM_ENABLE_ENABLE_Enabled << TWIM_ENABLE_ENABLE_Pos;
     return (twim->ENABLE & mask) == mask;
 }
 
-bool fd_i2cm_device_io(fd_i2cm_device_t *device, fd_i2cm_io_t *io) {
+bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
     NRF_TWIM_Type *twim = (NRF_TWIM_Type *)device->bus->instance;
     twim->ADDRESS = device->address;
     twim->EVENTS_ERROR = 0;
@@ -63,7 +63,7 @@ bool fd_i2cm_device_io(fd_i2cm_device_t *device, fd_i2cm_io_t *io) {
     for (uint32_t i = 0; i < io->transfer_count; ++i) {
         bool last = i == (io->transfer_count - 1);
         twim->EVENTS_SUSPENDED = 0;
-        fd_i2cm_transfer_t *transfer = &io->transfers[i];
+        const fd_i2cm_transfer_t *transfer = &io->transfers[i];
         if (transfer->direction == fd_i2cm_direction_tx) {
             twim->TXD.MAXCNT = transfer->byte_count;
             twim->TXD.PTR = (uint32_t)transfer->bytes;
@@ -88,11 +88,11 @@ bool fd_i2cm_device_io(fd_i2cm_device_t *device, fd_i2cm_io_t *io) {
     return twim->EVENTS_ERROR == 0;
 }
 
-bool fd_i2cm_bus_wait(fd_i2cm_bus_t *bus) {
+bool fd_i2cm_bus_wait(const fd_i2cm_bus_t *bus) {
     return true;
 }
 
-bool fd_i2cm_device_sequence_tx1_rx1(fd_i2cm_device_t *device, uint8_t tx_byte, uint8_t *rx_byte) {
+bool fd_i2cm_device_sequence_tx1_rx1(const fd_i2cm_device_t *device, uint8_t tx_byte, uint8_t *rx_byte) {
     fd_i2cm_transfer_t transfers[] = {
         {
             .direction = fd_i2cm_direction_tx,
@@ -119,7 +119,7 @@ bool fd_i2cm_device_sequence_tx1_rx1(fd_i2cm_device_t *device, uint8_t tx_byte, 
     return true;
 }
 
-bool fd_i2cm_device_sequence_tx1_tx1(fd_i2cm_device_t *device, uint8_t tx_byte0, uint8_t tx_byte1) {
+bool fd_i2cm_device_sequence_tx1_tx1(const fd_i2cm_device_t *device, uint8_t tx_byte0, uint8_t tx_byte1) {
     uint8_t tx_bytes[] = {tx_byte0, tx_byte1};
     fd_i2cm_transfer_t transfers[] = {
         {

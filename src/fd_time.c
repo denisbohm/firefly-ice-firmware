@@ -1,5 +1,19 @@
 #include "fd_time.h"
 
+fd_time_t fd_time_from_float(float f) {
+    uint32_t seconds = (uint32_t)f;
+    uint32_t microseconds = (uint32_t)((f - seconds) * 1000000.0f);
+    fd_time_t time = {
+        .seconds = seconds,
+        .microseconds = microseconds
+    };
+    return time;
+}
+
+float fd_time_to_float(fd_time_t time) {
+    return time.seconds + time.microseconds / 1000000.0f;
+}
+
 bool fd_time_eq(fd_time_t a, fd_time_t b) {
     return (a.seconds == b.seconds) && (a.microseconds == b.microseconds);
 }

@@ -9,6 +9,9 @@ typedef struct {
     uint32_t microseconds;
 } fd_time_t;
 
+fd_time_t fd_time_from_float(float f);
+float fd_time_to_float(fd_time_t time);
+
 bool fd_time_eq(fd_time_t a, fd_time_t b);
 bool fd_time_lt(fd_time_t a, fd_time_t b);
 bool fd_time_gt(fd_time_t a, fd_time_t b);

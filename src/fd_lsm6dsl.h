@@ -159,8 +159,8 @@ typedef struct {
 float fd_lsm6dsl_accelerometer_scale(uint32_t fs);
 float fd_lsm6dsl_gyro_scale(uint32_t fs);
 
-uint8_t fd_lsm6dsl_read(fd_spim_device_t *device, uint8_t location);
-void fd_lsm6dsl_write(fd_spim_device_t *device, uint8_t location, uint8_t byte);
+uint8_t fd_lsm6dsl_read(const fd_spim_device_t *device, uint8_t location);
+void fd_lsm6dsl_write(const fd_spim_device_t *device, uint8_t location, uint8_t byte);
 
 typedef struct {
     uint16_t fifo_threshold;
@@ -177,10 +177,10 @@ typedef struct {
     bool gyro_enable;
 } fd_lsm6dsl_configuration_t;
 
-void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t *configuration);
+void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration);
 
-void fd_lsm6dsl_fifo_flush(fd_spim_device_t *device);
-uint32_t fd_lsm6dsl_read_fifo_word_count(fd_spim_device_t *device);
-uint32_t fd_lsm6dsl_read_fifo_samples(fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count);
+void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device);
+uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device);
+uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count);
 
 #endif

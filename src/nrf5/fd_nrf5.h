@@ -7,9 +7,15 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+#include "nrf_sdh.h"
+#include "nrf_sdm.h"
 #include "nrf_soc.h"
 #include "nrf_delay.h"
 #include "nrf_gpio.h"
+#include "nrf_nvmc.h"
+#include "nrf_temp.h"
+
+#include "app_scheduler.h"
 
 // !!! missing from nRF SDK 15 -denis
 #ifndef TWIM_SHORTS_LASTRX_SUSPEND_Msk

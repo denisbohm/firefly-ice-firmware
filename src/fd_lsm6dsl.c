@@ -24,15 +24,15 @@ float fd_lsm6dsl_gyro_scale(uint32_t fs) {
     return fd_lsm6dsl_gyro_scales[fs & 0x3];
 }
 
-uint8_t fd_lsm6dsl_read(fd_spim_device_t *device, uint8_t location) {
+uint8_t fd_lsm6dsl_read(const fd_spim_device_t *device, uint8_t location) {
     return fd_spim_device_sequence_tx1_rx1(device, FD_LSM6DSL_READ | location);
 }
 
-void fd_lsm6dsl_write(fd_spim_device_t *device, uint8_t location, uint8_t byte) {
+void fd_lsm6dsl_write(const fd_spim_device_t *device, uint8_t location, uint8_t byte) {
     fd_spim_device_tx2(device, location, byte);
 }
 
-void fd_lsm6dsl_write16(fd_spim_device_t *device, uint8_t location, uint16_t word) {
+void fd_lsm6dsl_write16(const fd_spim_device_t *device, uint8_t location, uint16_t word) {
     uint8_t bytes[] = {location, word, word >> 8};
     fd_spim_device_txn(device, bytes, sizeof(bytes));
 }
@@ -44,7 +44,7 @@ uint16_t fd_lsm6dsl_to_uint16(uint8_t *bytes, uint32_t offset) {
     return (uint16_t)((b1 << 8) | b0);
 }
 
-uint32_t fd_lsm6dsl_read_fifo_word_count(fd_spim_device_t *device) {
+uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
     for (int retry = 0; retry < 10; ++retry) {
         fd_spim_device_select(device);
         uint8_t location = FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_STATUS1;
@@ -69,7 +69,7 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(fd_spim_device_t *device) {
     return 0; // failed to align pattern
 }
 
-uint32_t fd_lsm6dsl_read_fifo_samples(fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count) {
+uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count) {
     uint32_t word_count = fd_lsm6dsl_read_fifo_word_count(device);
     const uint32_t axis_count = 6;
     uint32_t count = word_count / axis_count;
@@ -96,7 +96,7 @@ uint32_t fd_lsm6dsl_read_fifo_samples(fd_spim_device_t *device, fd_lsm6dsl_sampl
     return count;
 }
 
-void fd_lsm6dsl_fifo_flush(fd_spim_device_t *device) {
+void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device) {
     uint32_t word_count = fd_lsm6dsl_read_fifo_word_count(device);
 
     fd_spim_device_select(device);
@@ -110,24 +110,26 @@ void fd_lsm6dsl_fifo_flush(fd_spim_device_t *device) {
     fd_spim_device_deselect(device);
 }
 
-void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t *configuration) {
+void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration) {
     uint8_t who_am_i = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_WHO_AM_I);
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL4_C, 0b00000100); // disable I2C
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL3_C, 0b01010100); // block data update, int1/2 open drain, address automatically incremented
 
     uint32_t lsm6ds3_axis_count = 6;
+    uint32_t accelerometer_output_data_rate = configuration->accelerometer_output_data_rate;
     if (!configuration->accelerometer_enable) {
-        configuration->accelerometer_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
+        accelerometer_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
         lsm6ds3_axis_count -= 3;
     }
+    uint32_t gyro_output_data_rate = configuration->gyro_output_data_rate;
     if (!configuration->gyro_enable) {
-        configuration->gyro_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
+        gyro_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
         lsm6ds3_axis_count -= 3;
     }
     
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL1_XL,
-        (configuration->accelerometer_output_data_rate << 4) |
+        (accelerometer_output_data_rate << 4) |
         (configuration->accelerometer_full_scale_range << 2) |
         configuration->accelerometer_bandwidth_filter
     );
@@ -139,7 +141,7 @@ void fd_lsm6ds3_configure(fd_spim_device_t *device, fd_lsm6dsl_configuration_t *
     );
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL2_G,
-        (configuration->gyro_output_data_rate << 4) |
+        (gyro_output_data_rate << 4) |
         (configuration->gyro_full_scale_range << 1)
     );
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL7_G,

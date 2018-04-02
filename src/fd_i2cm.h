@@ -50,6 +50,8 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io);
 bool fd_i2cm_bus_wait(const fd_i2cm_bus_t *bus);
 
 // synchronous convenience functions
+bool fd_i2cm_device_txn(const fd_i2cm_device_t *device, const uint8_t *tx_bytes, uint32_t tx_byte_count);
+bool fd_i2cm_device_rxn(const fd_i2cm_device_t *device, uint8_t *rx_bytes, uint32_t rx_byte_count);
 bool fd_i2cm_device_sequence_tx1_rx1(const fd_i2cm_device_t *device, uint8_t tx_byte, uint8_t *rx_byte);
 bool fd_i2cm_device_sequence_tx1_tx1(const fd_i2cm_device_t *device, uint8_t tx_byte0, uint8_t tx_byte1);
 

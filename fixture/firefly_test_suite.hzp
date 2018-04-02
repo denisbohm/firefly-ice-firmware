@@ -82,6 +82,8 @@
       <file file_name="../src/fd_lsm6dsl.c" />
       <file file_name="../src/fd_lsm6dsl.h" />
       <file file_name="nrfx_config.h" />
+      <file file_name="../src/fd_pwm.h" />
+      <file file_name="../src/nrf5/fd_pwm_nrf5.c" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />

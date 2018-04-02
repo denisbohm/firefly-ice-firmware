@@ -3,16 +3,16 @@
 #include "fd_nrf5.h"
 
 void fd_spim_initialize(
-    fd_spim_bus_t *buses, uint32_t bus_count,
-    fd_spim_device_t *devices, uint32_t device_count
+    const fd_spim_bus_t *buses, uint32_t bus_count,
+    const fd_spim_device_t *devices, uint32_t device_count
 ) {
     for (uint32_t i = 0; i < device_count; ++i) {
-        fd_spim_device_t *device = &devices[i];
+        const fd_spim_device_t *device = &devices[i];
         fd_gpio_configure_output(device->csn);
         fd_gpio_set(device->csn, true);
     }
     for (uint32_t i = 0; i < bus_count; ++i) {
-        fd_spim_bus_t *bus = &buses[i];
+        const fd_spim_bus_t *bus = &buses[i];
         fd_gpio_configure_output(bus->sclk);
         fd_gpio_set(bus->sclk, true);
         fd_gpio_configure_output(bus->mosi);
@@ -23,7 +23,7 @@ void fd_spim_initialize(
     }
 }
 
-void fd_spim_bus_enable(fd_spim_bus_t *bus) {
+void fd_spim_bus_enable(const fd_spim_bus_t *bus) {
     if (fd_spim_bus_is_enabled(bus)) {
         return;
     }
@@ -39,7 +39,7 @@ void fd_spim_bus_enable(fd_spim_bus_t *bus) {
     spim->ENABLE = SPIM_ENABLE_ENABLE_Enabled << SPIM_ENABLE_ENABLE_Pos;
 }
 
-void fd_spim_bus_disable(fd_spim_bus_t *bus) {
+void fd_spim_bus_disable(const fd_spim_bus_t *bus) {
     if (!fd_spim_bus_is_enabled(bus)) {
         return;
     }
@@ -55,26 +55,26 @@ void fd_spim_bus_disable(fd_spim_bus_t *bus) {
     spim->ENABLE = SPIM_ENABLE_ENABLE_Disabled << SPIM_ENABLE_ENABLE_Pos;
 }
 
-bool fd_spim_bus_is_enabled(fd_spim_bus_t *bus) {
+bool fd_spim_bus_is_enabled(const fd_spim_bus_t *bus) {
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     const uint32_t mask = SPIM_ENABLE_ENABLE_Enabled << SPIM_ENABLE_ENABLE_Pos;
     return (spim->ENABLE & mask) == mask;
 }
 
-void fd_spim_device_select(fd_spim_device_t *device) {
+void fd_spim_device_select(const fd_spim_device_t *device) {
     fd_gpio_set(device->csn, false);
 }
 
-void fd_spim_device_deselect(fd_spim_device_t *device) {
+void fd_spim_device_deselect(const fd_spim_device_t *device) {
     fd_gpio_set(device->csn, true);
 }
 
-bool fd_spim_device_is_selected(fd_spim_device_t *device) {
+bool fd_spim_device_is_selected(const fd_spim_device_t *device) {
     return !fd_gpio_get(device->csn);
 }
 
 static
-void fd_spim_transfer(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_t tx_byte_count, uint8_t *rx_bytes, uint32_t rx_byte_count) {
+void fd_spim_transfer(const fd_spim_bus_t *bus, const uint8_t *tx_bytes, uint32_t tx_byte_count, uint8_t *rx_bytes, uint32_t rx_byte_count) {
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     spim->TXD.PTR = (uint32_t)tx_bytes;
     spim->RXD.PTR = (uint32_t)rx_bytes;
@@ -94,17 +94,17 @@ void fd_spim_transfer(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_t tx_byte_co
     }
 }
 
-void fd_spim_bus_io(fd_spim_bus_t *bus, fd_spim_io_t *io) {
+void fd_spim_bus_io(const fd_spim_bus_t *bus, const fd_spim_io_t *io) {
     for (uint32_t i = 0; i < io->transfer_count; ++i) {
         fd_spim_transfer_t *transfer = &io->transfers[i];
         fd_spim_transfer(bus, transfer->tx_bytes, transfer->tx_byte_count, transfer->rx_bytes, transfer->rx_byte_count);
     }
 }
 
-void fd_spim_bus_wait(fd_spim_bus_t *bus) {
+void fd_spim_bus_wait(const fd_spim_bus_t *bus) {
 }
 
-void fd_spim_bus_sequence_txn_rxn(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_t tx_byte_count, uint8_t *rx_bytes, uint32_t rx_byte_count) {
+void fd_spim_bus_sequence_txn_rxn(const fd_spim_bus_t *bus, const uint8_t *tx_bytes, uint32_t tx_byte_count, uint8_t *rx_bytes, uint32_t rx_byte_count) {
     fd_spim_transfer_t transfers[] = {
         {
             .tx_bytes = tx_bytes,
@@ -127,7 +127,7 @@ void fd_spim_bus_sequence_txn_rxn(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_
     fd_spim_bus_io(bus, &io);
 }
 
-void fd_spim_bus_tx1(fd_spim_bus_t *bus, uint8_t tx_byte) {
+void fd_spim_bus_tx1(const fd_spim_bus_t *bus, uint8_t tx_byte) {
     fd_spim_transfer_t transfer = {
         .tx_bytes = &tx_byte,
         .tx_byte_count = 1,
@@ -142,7 +142,7 @@ void fd_spim_bus_tx1(fd_spim_bus_t *bus, uint8_t tx_byte) {
     fd_spim_bus_io(bus, &io);
 }
 
-void fd_spim_bus_rxn(fd_spim_bus_t *bus, uint8_t *rx_bytes, uint32_t rx_byte_count) {
+void fd_spim_bus_rxn(const fd_spim_bus_t *bus, uint8_t *rx_bytes, uint32_t rx_byte_count) {
     fd_spim_transfer_t transfer = {
         .tx_bytes = 0,
         .tx_byte_count = 0,
@@ -157,7 +157,7 @@ void fd_spim_bus_rxn(fd_spim_bus_t *bus, uint8_t *rx_bytes, uint32_t rx_byte_cou
     fd_spim_bus_io(bus, &io);
 }
 
-void fd_spim_bus_txn(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_t tx_byte_count) {
+void fd_spim_bus_txn(const fd_spim_bus_t *bus, const uint8_t *tx_bytes, uint32_t tx_byte_count) {
     fd_spim_transfer_t transfer = {
         .tx_bytes = tx_bytes,
         .tx_byte_count = tx_byte_count,
@@ -172,14 +172,14 @@ void fd_spim_bus_txn(fd_spim_bus_t *bus, uint8_t *tx_bytes, uint32_t tx_byte_cou
     fd_spim_bus_io(bus, &io);
 }
 
-void fd_spim_device_io(fd_spim_device_t *device, fd_spim_io_t *io) {
+void fd_spim_device_io(const fd_spim_device_t *device, const fd_spim_io_t *io) {
     fd_spim_device_select(device);
     fd_spim_bus_io(device->bus, io);
     fd_spim_bus_wait(device->bus);
     fd_spim_device_deselect(device);
 }
 
-void fd_spim_device_txn_rxn(fd_spim_device_t *device, uint8_t* tx_bytes, uint32_t tx_byte_count, uint8_t* rx_bytes, uint32_t rx_byte_count) {
+void fd_spim_device_txn_rxn(const fd_spim_device_t *device, const uint8_t* tx_bytes, uint32_t tx_byte_count, uint8_t* rx_bytes, uint32_t rx_byte_count) {
     fd_spim_transfer_t transfer = {
         .tx_bytes = tx_bytes,
         .tx_byte_count = tx_byte_count,
@@ -194,7 +194,7 @@ void fd_spim_device_txn_rxn(fd_spim_device_t *device, uint8_t* tx_bytes, uint32_
     fd_spim_device_io(device, &io);
 }
 
-void fd_spim_device_sequence_txn_rxn(fd_spim_device_t *device, uint8_t* tx_bytes, uint32_t tx_byte_count, uint8_t* rx_bytes, uint32_t rx_byte_count) {
+void fd_spim_device_sequence_txn_rxn(const fd_spim_device_t *device, const uint8_t* tx_bytes, uint32_t tx_byte_count, uint8_t* rx_bytes, uint32_t rx_byte_count) {
     fd_spim_transfer_t transfers[] = {
         {
             .tx_bytes = tx_bytes,
@@ -217,27 +217,27 @@ void fd_spim_device_sequence_txn_rxn(fd_spim_device_t *device, uint8_t* tx_bytes
     fd_spim_device_io(device, &io);
 }
 
-uint8_t fd_spim_device_sequence_tx1_rx1(fd_spim_device_t *device, uint8_t tx_byte) {
+uint8_t fd_spim_device_sequence_tx1_rx1(const fd_spim_device_t *device, uint8_t tx_byte) {
     uint8_t rx_byte;
     fd_spim_device_sequence_txn_rxn(device, &tx_byte, 1, &rx_byte, 1);
     return rx_byte;
 }
 
-uint8_t fd_spim_device_tx1_rx1(fd_spim_device_t *device, uint8_t tx_byte) {
+uint8_t fd_spim_device_tx1_rx1(const fd_spim_device_t *device, uint8_t tx_byte) {
     uint8_t rx_byte;
     fd_spim_device_txn_rxn(device, &tx_byte, 1, &rx_byte, 1);
     return rx_byte;
 }
 
-void fd_spim_device_tx1(fd_spim_device_t *device, uint8_t tx_byte) {
+void fd_spim_device_tx1(const fd_spim_device_t *device, uint8_t tx_byte) {
     fd_spim_device_txn_rxn(device, &tx_byte, 1, 0, 0);
 }
 
-void fd_spim_device_tx2(fd_spim_device_t *device, uint8_t byte0, uint8_t byte1) {
+void fd_spim_device_tx2(const fd_spim_device_t *device, uint8_t byte0, uint8_t byte1) {
     uint8_t tx_bytes[] = {byte0, byte1};
     fd_spim_device_txn_rxn(device, tx_bytes, sizeof(tx_bytes), 0, 0);
 }
 
-void fd_spim_device_txn(fd_spim_device_t *device, uint8_t *tx_bytes, uint32_t tx_byte_count) {
+void fd_spim_device_txn(const fd_spim_device_t *device, const uint8_t *tx_bytes, uint32_t tx_byte_count) {
     fd_spim_device_txn_rxn(device, tx_bytes, tx_byte_count, 0, 0);
 }

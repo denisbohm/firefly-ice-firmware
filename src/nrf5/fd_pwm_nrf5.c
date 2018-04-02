@@ -58,7 +58,7 @@ void fd_pwm_module_disable(const fd_pwm_module_t *module) {
     pwm->ENABLE = PWM_ENABLE_ENABLE_Disabled << PWM_ENABLE_ENABLE_Pos;
 }
 
-void fd_pwm_start(const fd_pwm_channel_t *channel, float duty_cycle) {
+void fd_pwm_channel_start(const fd_pwm_channel_t *channel, float duty_cycle) {
     const fd_pwm_module_t *module = channel->module;
     NRF_PWM_Type *pwm = (NRF_PWM_Type *)module->instance;
     fd_pwm_module_state_t *state = fd_pwm_get_state(module->instance);
@@ -71,18 +71,13 @@ void fd_pwm_start(const fd_pwm_channel_t *channel, float duty_cycle) {
     pwm->PSEL.OUT[channel->instance] = NRF_GPIO_PIN_MAP(channel->gpio.port, channel->gpio.pin);
 }
 
-bool fd_pwm_is_running(const fd_pwm_channel_t *channel) {
+bool fd_pwm_channel_is_running(const fd_pwm_channel_t *channel) {
     const fd_pwm_module_t *module = channel->module;
     NRF_PWM_Type *pwm = (NRF_PWM_Type *)module->instance;
-    for (uint32_t i = 0; i < 4; ++i) {
-        if (pwm->PSEL.OUT[i] != 0xFFFFFFFF) {
-            return true;
-        }
-    }
-    return false;
+    return pwm->PSEL.OUT[channel->instance] != 0xFFFFFFFF;
 }
 
-void fd_pwm_stop(const fd_pwm_channel_t *channel) {
+void fd_pwm_channel_stop(const fd_pwm_channel_t *channel) {
     const fd_pwm_module_t *module = channel->module;
     NRF_PWM_Type *pwm = (NRF_PWM_Type *)module->instance;
     pwm->PSEL.OUT[channel->instance] = 0xFFFFFFFF;

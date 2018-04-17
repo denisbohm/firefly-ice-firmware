@@ -207,6 +207,36 @@ void fd_control_provision(fd_detour_source_collection_t *detour_source_collectio
     }
 }
 
+uint32_t fd_control_provision_get_utf8(const char *key, uint8_t **value) {
+    uint16_t length = 0;
+    uint8_t *map = fd_hal_processor_get_provision_map_address();
+    if (map != 0) {
+        fd_map_get(map, key, FD_MAP_TYPE_UTF8, value, &length);
+    }
+    return length;
+}
+
+void fd_control_provision_put_utf8(const char *key, uint8_t *value, uint16_t value_length) {
+    uint8_t *map = fd_hal_processor_get_provision_map_address();
+    if (map != 0) {
+        uint8_t buffer[128];
+        fd_provision_t provision;
+        provision.version = 1;
+        provision.flags = 0;
+        memset(provision.key, 0, FD_HAL_AES_KEY_SIZE);
+        memcpy(buffer, &provision, sizeof(provision));
+        uint8_t *new_map = &buffer[sizeof(provision)];
+        uint16_t new_map_length = sizeof(buffer) - sizeof(provision);
+        if (fd_map_put(map, new_map, &new_map_length, key, FD_MAP_TYPE_UTF8, value, value_length)) {
+            fd_hal_processor_write_user_data(buffer, sizeof(provision) + new_map_length);
+        }
+    }
+}
+
+uint32_t fd_control_get_name(uint8_t **name) {
+    return fd_control_provision_get_utf8("name", name);
+}
+
 void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -346,48 +376,17 @@ void fd_control_set_property_logging(fd_binary_t *binary) {
     }
 }
 
-uint32_t fd_control_get_name(uint8_t **name) {
-    uint16_t length = 0;
-    uint8_t *address = fd_hal_processor_get_provision_map_address();
-    if (address != 0) {
-        fd_map_get(address, "name", FD_MAP_TYPE_UTF8, name, &length);
-    }
-    return length;
-}
-
 void fd_control_get_property_name(fd_binary_t *binary) {
 //    uint8_t *name;
-//    uint8_t length = fd_control_get_name(&name);
+//    uint8_t length = fd_control_provision_get_utf8("name", name);
     uint8_t name[20];
     uint8_t length = fd_bluetooth_get_name(name);
     fd_binary_put_uint8(binary, length);
     fd_binary_put_bytes(binary, name, length);
 }
 
-typedef struct {
-    fd_provision_t base;
-    uint16_t map_entries;
-    uint8_t key_length;
-    uint8_t value_type;
-    uint16_t value_length;
-    uint16_t key_value_offset;
-    uint8_t key[4];
-    uint8_t value[20];
-} fd_provision_name_t;
-
 static void fd_control_set_name(uint8_t *data, uint32_t length) {
-    fd_provision_name_t provision;
-    provision.base.version = 1;
-    provision.base.flags = 0;
-    memset(provision.base.key, 0, FD_HAL_AES_KEY_SIZE);
-    provision.map_entries = 1;
-    provision.key_length = 4;
-    provision.value_type = FD_MAP_TYPE_UTF8;
-    provision.value_length = length;
-    provision.key_value_offset = 0;
-    memcpy(provision.key, "name", 4);
-    memcpy(provision.value, data, length);
-    fd_hal_processor_write_user_data((uint8_t *)&provision, sizeof(provision));
+    fd_control_provision_put_utf8("name", data, length);
 
     fd_bluetooth_set_name(data, length);
 }

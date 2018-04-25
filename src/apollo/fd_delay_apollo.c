@@ -13,11 +13,12 @@ void fd_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
 #define CYCLES_PER_SECOND 48000000
 
 void fd_delay_ns(uint32_t ns) {
-    fd_delay_3x_cycles((ns * CYCLES_PER_SECOND) / 3000000000);
+//    uint32_t cycles = (uint32_t)((((uint64_t)ns) * CYCLES_PER_SECOND) / 3000000000);
+//    fd_delay_3x_cycles(cycles);
 }
 
 void fd_delay_us(uint32_t us) {
-    fd_delay_3x_cycles((us * CYCLES_PER_SECOND) / 3000000);
+//    fd_delay_3x_cycles((us * CYCLES_PER_SECOND) / 3000000);
 }
 
 void fd_delay_ms(uint32_t ms) {

@@ -35,15 +35,15 @@ enum fd_bq25120_temp_status {
     BQ25120_TEMP_TWARM,
 };
 
-bool fd_bq25120_read(fd_i2cm_device_t *device, uint8_t location, uint8_t *byte) {
+bool fd_bq25120_read(const fd_i2cm_device_t *device, uint8_t location, uint8_t *byte) {
     return fd_i2cm_device_sequence_tx1_rx1(device, location, byte);
 }
 
-bool fd_bq25120_write(fd_i2cm_device_t *device, uint8_t location, uint8_t byte) {
+bool fd_bq25120_write(const fd_i2cm_device_t *device, uint8_t location, uint8_t byte) {
     return fd_i2cm_device_sequence_tx1_tx1(device, location, byte);
 }
 
-bool fd_bq25120_set_system_voltage(fd_i2cm_device_t *device, float voltage) {
+bool fd_bq25120_set_system_voltage(const fd_i2cm_device_t *device, float voltage) {
     // If SYS_SEL = 11, then SYS = 1.80 V + SYS_VOUTCODE x 100 mV. (1.8 to 3.3 V)
     int vout = (int)((voltage * 10.0f) + 0.05f);
     if (vout < 18) {
@@ -62,7 +62,7 @@ bool fd_bq25120_set_system_voltage(fd_i2cm_device_t *device, float voltage) {
     return fd_bq25120_write(device, FD_BQ25120_SYSTEM_VOUT_CTL_REG, sys.byte);
 }
 
-bool fd_bq25120_read_battery_voltage(fd_i2cm_device_t *device, float *battery_voltage) {
+bool fd_bq25120_read_battery_voltage(const fd_i2cm_device_t *device, float *battery_voltage) {
     *battery_voltage = 0.0f;
     fd_bq25120_battery_voltage_control bv;
     if (!fd_bq25120_read(device, FD_BQ25120_BATT_VOLTAGE_CTL_REG, &bv.byte)) {

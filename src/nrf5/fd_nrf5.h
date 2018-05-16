@@ -8,6 +8,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 #include "nrf_sdh.h"
+#include "nrf_sdh_soc.h"
 #include "nrf_sdm.h"
 #include "nrf_soc.h"
 #include "nrf_delay.h"

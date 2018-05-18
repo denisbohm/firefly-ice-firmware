@@ -13,6 +13,7 @@
 #include "nrf_soc.h"
 #include "nrf_delay.h"
 #include "nrf_gpio.h"
+#include "nrf_mbr.h"
 #include "nrf_nvmc.h"
 #include "nrf_temp.h"
 

@@ -96,8 +96,8 @@ uint8_t fd_update_commit(uint8_t area, fd_version_metadata_t *metadata) {
     }
 
 #ifndef __APPLE__
-#ifdef DEBUG
-#warning debug is defined - firmware update commit is not enabled for primary
+#ifdef FD_UPDATE_DEBUG
+#warning FD_UPDATE_DEBUG is defined - firmware update commit is not enabled for primary
     if (area <= FD_HAL_SYSTEM_AREA_OPERATING_SYSTEM) {
         return FD_UPDATE_COMMIT_FAIL_UNSUPPORTED;
     }

@@ -39,11 +39,6 @@ void fd_i2cm_bus_disable(const fd_i2cm_bus_t *bus) {
     }
 
     NRF_TWIM_Type *twim = (NRF_TWIM_Type *)bus->instance;
-    // !!! does this handle all conditions? -denis
-    if (!twim->EVENTS_STOPPED) {
-        twim->TASKS_STOP = 1;
-        while (twim->EVENTS_STOPPED == 0);
-    }
     twim->ENABLE = TWIM_ENABLE_ENABLE_Disabled << TWIM_ENABLE_ENABLE_Pos;
 
     twim->PSEL.SCL = 0xFFFFFFFF;
@@ -84,6 +79,10 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
             while ((twim->EVENTS_SUSPENDED == 0) && (twim->EVENTS_ERROR == 0));
         }
         if (twim->EVENTS_ERROR != 0) {
+            if (!twim->EVENTS_STOPPED) {
+                twim->TASKS_STOP = 1;
+                while (twim->EVENTS_STOPPED == 0);
+            }
             break;
         }
     }

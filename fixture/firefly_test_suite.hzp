@@ -1,6 +1,6 @@
 <!DOCTYPE CrossStudio_Project_File>
 <solution Name="firefly_test_suite" target="8" version="2">
-  <project Name="firefly_test_suite_nrf5">
+  <project Name="fd_test_suite_nrf5">
     <configuration
       Name="Common"
       Placement="RAM"
@@ -110,11 +110,11 @@
     gcc_omit_frame_pointer="Yes"
     gcc_optimization_level="None"
     hidden="Yes" />
-  <project Name="firefly_test_suite_apollo">
+  <project Name="fd_test_suite_apollo">
     <configuration
       CMSIS_CORE="Yes"
       Name="Common"
-      Placement="Flash"
+      Placement="RAM"
       Target="AMAPH1KK-KBR"
       arm_architecture="v7EM"
       arm_core_type="Cortex-M4"
@@ -129,14 +129,14 @@
       arm_simulator_memory_simulation_parameter="Apollo;FLASH,0x00000000,0x00100000,ROM;RAM,0x10000000,0x00040000,RAM"
       arm_target_debug_interface_type="ADIv5"
       arm_target_interface_type="SWD"
-      arm_target_loader_applicable_loaders="Flash"
-      arm_target_loader_default_loader="Flash"
+      arm_target_loader_applicable_loaders=""
+      arm_target_loader_default_loader=""
       c_user_include_directories="$(DeviceIncludePath)"
       debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
       gcc_cplusplus_language_standard="gnu++11"
       gcc_entry_point="Reset_Handler"
       linker_memory_map_file="$(DeviceMemoryMapFile)"
-      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
       macros="DeviceIncludePath=$(TargetsDir)/Apollo/CMSIS/Device/Include;DeviceHeaderFile=$(TargetsDir)/Apollo/CMSIS/Device/Include/apollo2.h;DeviceLoaderFile=$(TargetsDir)/Apollo/Loader/Apollo2_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/Apollo/XML/AMAPH1KK-KBR_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/Apollo/XML/apollo2_Registers.xml;DeviceSystemFile=$(TargetsDir)/Apollo/CMSIS/Device/Source/system_apollo2.c;DeviceVectorsFile=$(TargetsDir)/Apollo/Source/apollo2_Vectors.s;DeviceFamily=Apollo"
       package_dependencies="Apollo"
       project_directory=""
@@ -187,4 +187,167 @@
     gcc_omit_frame_pointer="Yes"
     gcc_optimization_level="Level 1"
     hidden="Yes" />
+  <project Name="fd_quiescent_test_apollo">
+    <configuration
+      CMSIS_CORE="Yes"
+      Name="Common"
+      Placement="Flash"
+      Target="AMAPH1KK-KBR"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_interwork="No"
+      arm_linker_heap_size="4096"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="256"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/Apollo/Simulator/Apollo_SimulatorMemory_$(HostOS)_$(HostArch)$(HostDLLExt)"
+      arm_simulator_memory_simulation_parameter="Apollo;FLASH,0x00000000,0x00100000,ROM;RAM,0x10000000,0x00040000,RAM"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_applicable_loaders="Flash"
+      arm_target_loader_default_loader="Flash"
+      c_user_include_directories="$(DeviceIncludePath)"
+      debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
+      gcc_cplusplus_language_standard="gnu++11"
+      gcc_entry_point="Reset_Handler"
+      linker_memory_map_file="$(DeviceMemoryMapFile)"
+      linker_output_format="hex"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      macros="DeviceIncludePath=$(TargetsDir)/Apollo/CMSIS/Device/Include;DeviceHeaderFile=$(TargetsDir)/Apollo/CMSIS/Device/Include/apollo2.h;DeviceLoaderFile=$(TargetsDir)/Apollo/Loader/Apollo2_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/Apollo/XML/AMAPH1KK-KBR_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/Apollo/XML/apollo2_Registers.xml;DeviceSystemFile=$(TargetsDir)/Apollo/CMSIS/Device/Source/system_apollo2.c;DeviceVectorsFile=$(TargetsDir)/Apollo/Source/apollo2_Vectors.s;DeviceFamily=Apollo"
+      package_dependencies="Apollo"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/Apollo/XML/property_groups.xml"
+      target_get_partname_script="GetPartName()"
+      target_match_partname_script="MatchPartName(&quot;$(Target)&quot;)"
+      target_reset_script="Reset();"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <configuration
+      Name="Flash"
+      arm_target_flash_loader_file_path="$(DeviceLoaderFile)" />
+    <folder Name="CMSIS Files">
+      <file file_name="$(DeviceHeaderFile)" />
+      <file file_name="$(DeviceSystemFile)">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="$(TargetsDir)/Apollo/Scripts/Apollo_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="fd_test_suite_apollo.c" />
+      <file file_name="fd_quiescent_test_apollo.c" />
+      <file file_name="fd_quiescent_test.h" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/Apollo/Source/Apollo_Startup.s" />
+      <file file_name="$(DeviceVectorsFile)">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+  </project>
+  <project Name="fd_quiescent_test_nrf5">
+    <configuration
+      Name="Common"
+      Placement="Flash"
+      Target="nRF52840_xxAA"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_gcc_target="arm-unknown-eabi"
+      arm_linker_heap_size="2048"
+      arm_linker_stack_size="2048"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/nRF51/nRF51SimulatorMemory$(HostDLL)"
+      arm_simulator_memory_simulation_parameter="nRF52840;0x100000;0x40000"
+      arm_target_interface_type="Default"
+      arm_target_loader_applicable_loaders="Flash"
+      arm_target_loader_default_loader="Flash"
+      c_additional_options="-fms-extensions"
+      c_preprocessor_definitions="NRF52840_XXAA;SOFTDEVICE_PRESENT;S140"
+      c_user_include_directories="$(ProjectDir);$(ProjectDir)/../src;$(ProjectDir)/../src/nrf5;$(ProjectDir)/nRF5_SDK/modules/nrfx;$(ProjectDir)/nRF5_SDK/modules/nrfx/hal;$(ProjectDir)/nRF5_SDK/modules/nrfx/mdk;$(ProjectDir)/nRF5_SDK/integration/nrfx;$(ProjectDir)/nRF5_SDK/components/ble/ble_dtm;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_bas;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_dis;$(ProjectDir)/nRF5_SDK/components/ble/common;$(ProjectDir)/nRF5_SDK/components/device;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ble_flash;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/clock;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/common;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/comp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/gpiote;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/hal;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/i2s;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/lpcomp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pdm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/power;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ppi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pwm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qdec;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qspi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/radio_config;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rng;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rtc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/saadc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/sdio;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/swi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/systick;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/timer;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twis_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/uart;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/usbd;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/wdt;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log/src;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_section_vars;$(ProjectDir)/nRF5_SDK/components/libraries/delay;$(ProjectDir)/nRF5_SDK/components/libraries/gpiote;$(ProjectDir)/nRF5_SDK/components/libraries/scheduler;$(ProjectDir)/nRF5_SDK/components/libraries/timer;$(ProjectDir)/nRF5_SDK/components/libraries/util;$(ProjectDir)/nRF5_SDK/components/softdevice/common;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers/nrf52;$(ProjectDir)/nRF5_SDK/config;$(TargetsDir)/nRF51/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include"
+      debug_register_definition_file="$(TargetsDir)/nRF51/nRF52840_Peripherals.xml"
+      linker_memory_map_file="$(TargetsDir)/nRF51/nRF52840_xxAA_MemoryMap.xml"
+      linker_output_format="hex"
+      linker_printf_fmt_level="int"
+      linker_printf_fp_enabled="No"
+      linker_printf_width_precision_supported="No"
+      linker_scanf_character_group_matching_enabled="No"
+      linker_scanf_fmt_level="int"
+      linker_scanf_fp_enabled="No"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      linker_section_placement_macros=""
+      package_dependencies="nRF51"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/nRF51/propertyGroups.xml"
+      target_get_partname_script="GetPartName()"
+      target_reset_script="Reset()"
+      target_script_file="$(TargetsDir)/nRF51/nRF51_Target.js" />
+    <configuration
+      Name="Flash"
+      Placement="RAM"
+      arm_target_flash_loader_file_path="$(TargetsDir)/nRF51/Release/Loader.elf"
+      arm_target_loader_applicable_loaders=""
+      arm_target_loader_can_erase_all="Yes"
+      arm_target_loader_can_lock_all="No"
+      arm_target_loader_can_lock_range="No"
+      arm_target_loader_can_unlock_all="No"
+      arm_target_loader_can_unlock_range="No"
+      arm_target_loader_default_loader=""
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      target_reset_script="FLASHReset()" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="../src/fd_delay.h" />
+      <file file_name="../src/fd_gpio.h" />
+      <file file_name="../src/fd_i2cm.h" />
+      <file file_name="../src/fd_spim.h" />
+      <file file_name="../src/nrf5/fd_delay_nrf5.c" />
+      <file file_name="../src/nrf5/fd_gpio_nrf5.c" />
+      <file file_name="../src/nrf5/fd_i2cm_nrf5.c" />
+      <file file_name="../src/nrf5/fd_nrf5.h" />
+      <file file_name="../src/nrf5/fd_spim_nrf5.c" />
+      <folder Name="nRF5_SDK">
+        <folder Name="modules">
+          <folder Name="nrfx">
+            <folder Name="mdk">
+              <file file_name="nRF5_SDK/modules/nrfx/mdk/system_nrf52840.c" />
+              <file file_name="nRF5_SDK/modules/nrfx/mdk/system_nrf52840.h" />
+            </folder>
+          </folder>
+        </folder>
+      </folder>
+      <file file_name="app_config.h" />
+      <file file_name="../src/nrf5/fd_nrf5.c" />
+      <file file_name="../src/fd_bq25120.c" />
+      <file file_name="../src/fd_bq25120.h" />
+      <file file_name="../src/fd_spi_flash.c" />
+      <file file_name="../src/fd_spi_flash.h" />
+      <file file_name="../src/fd_lsm6dsl.c" />
+      <file file_name="../src/fd_lsm6dsl.h" />
+      <file file_name="nrfx_config.h" />
+      <file file_name="../src/fd_pwm.h" />
+      <file file_name="../src/nrf5/fd_pwm_nrf5.c" />
+      <file file_name="../src/nrf5/sdk_config.h" />
+      <file file_name="../src/fd_i2cm.c" />
+      <file file_name="../src/fd_spim.c" />
+      <file file_name="fd_quiescent_test.h" />
+      <file file_name="fd_quiescent_test_nrf5.c" />
+      <file file_name="fd_test_suite_nrf5.c" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/nRF51/nRF51_Startup.s" />
+    </folder>
+  </project>
 </solution>

@@ -2,6 +2,7 @@
 #include "fd_spi_flash.h"
 #include "fd_i2cm.h"
 #include "fd_lsm6dsl.h"
+#include "fd_quiescent_test.h"
 #include "fd_spim.h"
 
 #include "system_nrf52840.h"
@@ -66,5 +67,9 @@ void main(void) {
         fd_spi_flash_erase_sector,
         fd_spi_flash_write_page,
         fd_spi_flash_read,
+
+        fd_quiescent_test,
     };
+
+    fd_quiescent_test();
 }

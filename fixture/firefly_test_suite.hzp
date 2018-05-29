@@ -1,6 +1,6 @@
 <!DOCTYPE CrossStudio_Project_File>
 <solution Name="firefly_test_suite" target="8" version="2">
-  <project Name="firefly_test_suite">
+  <project Name="firefly_test_suite_nrf5">
     <configuration
       Name="Common"
       Placement="RAM"
@@ -165,7 +165,9 @@
     </folder>
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
-      <file file_name="main.cpp" />
+      <file file_name="fd_test_suite_apollo.c" />
+      <file file_name="fd_quiescent_test_apollo.c" />
+      <file file_name="fd_quiescent_test.h" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />

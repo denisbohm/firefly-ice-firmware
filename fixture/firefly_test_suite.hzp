@@ -53,7 +53,6 @@
       target_reset_script="FLASHReset()" />
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
-      <file file_name="main.c" />
       <file file_name="../src/fd_delay.h" />
       <file file_name="../src/fd_gpio.h" />
       <file file_name="../src/fd_i2cm.h" />
@@ -87,6 +86,9 @@
       <file file_name="../src/nrf5/sdk_config.h" />
       <file file_name="../src/fd_i2cm.c" />
       <file file_name="../src/fd_spim.c" />
+      <file file_name="fd_quiescent_test.h" />
+      <file file_name="fd_quiescent_test_nrf5.c" />
+      <file file_name="fd_test_suite_nrf5.c" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />
@@ -107,5 +109,80 @@
     gcc_debugging_level="Level 3"
     gcc_omit_frame_pointer="Yes"
     gcc_optimization_level="None"
+    hidden="Yes" />
+  <project Name="firefly_test_suite_apollo">
+    <configuration
+      CMSIS_CORE="Yes"
+      Name="Common"
+      Placement="Flash"
+      Target="AMAPH1KK-KBR"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_interwork="No"
+      arm_linker_heap_size="4096"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="256"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/Apollo/Simulator/Apollo_SimulatorMemory_$(HostOS)_$(HostArch)$(HostDLLExt)"
+      arm_simulator_memory_simulation_parameter="Apollo;FLASH,0x00000000,0x00100000,ROM;RAM,0x10000000,0x00040000,RAM"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_applicable_loaders="Flash"
+      arm_target_loader_default_loader="Flash"
+      c_user_include_directories="$(DeviceIncludePath)"
+      debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
+      gcc_cplusplus_language_standard="gnu++11"
+      gcc_entry_point="Reset_Handler"
+      linker_memory_map_file="$(DeviceMemoryMapFile)"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      macros="DeviceIncludePath=$(TargetsDir)/Apollo/CMSIS/Device/Include;DeviceHeaderFile=$(TargetsDir)/Apollo/CMSIS/Device/Include/apollo2.h;DeviceLoaderFile=$(TargetsDir)/Apollo/Loader/Apollo2_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/Apollo/XML/AMAPH1KK-KBR_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/Apollo/XML/apollo2_Registers.xml;DeviceSystemFile=$(TargetsDir)/Apollo/CMSIS/Device/Source/system_apollo2.c;DeviceVectorsFile=$(TargetsDir)/Apollo/Source/apollo2_Vectors.s;DeviceFamily=Apollo"
+      package_dependencies="Apollo"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/Apollo/XML/property_groups.xml"
+      target_get_partname_script="GetPartName()"
+      target_match_partname_script="MatchPartName(&quot;$(Target)&quot;)"
+      target_reset_script="Reset();"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <configuration
+      Name="Flash"
+      arm_target_flash_loader_file_path="$(DeviceLoaderFile)" />
+    <folder Name="CMSIS Files">
+      <file file_name="$(DeviceHeaderFile)" />
+      <file file_name="$(DeviceSystemFile)">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="$(TargetsDir)/Apollo/Scripts/Apollo_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="main.cpp" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/Apollo/Source/Apollo_Startup.s" />
+      <file file_name="$(DeviceVectorsFile)">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+  </project>
+  <configuration
+    Name="THUMB Release"
+    inherited_configurations="THUMB;Release" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG"
+    gcc_debugging_level="None"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="Level 1"
     hidden="Yes" />
 </solution>

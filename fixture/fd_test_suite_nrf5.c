@@ -66,6 +66,5 @@ void main(void) {
         fd_spi_flash_erase_sector,
         fd_spi_flash_write_page,
         fd_spi_flash_read,
-
     };
 }

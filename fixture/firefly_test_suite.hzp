@@ -131,7 +131,7 @@
       arm_target_interface_type="SWD"
       arm_target_loader_applicable_loaders=""
       arm_target_loader_default_loader=""
-      c_user_include_directories="$(DeviceIncludePath)"
+      c_user_include_directories="$(DeviceIncludePath);$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2;$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal;$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs;$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/utils"
       debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
       gcc_cplusplus_language_standard="gnu++11"
       gcc_entry_point="Reset_Handler"
@@ -176,6 +176,117 @@
         <configuration Name="Common" file_type="Assembly" />
       </file>
     </folder>
+    <folder Name="AmbiqSuite">
+      <folder Name="mcu">
+        <folder Name="apollo2">
+          <folder Name="hal">
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_adc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_cachectrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_clkgen.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ctimer.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_debug.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_flash.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_global.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_gpio.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_i2c_bit_bang.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_interrupt.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_iom.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ios.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_itm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_mcuctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_otp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pdm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pin.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pwrctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_queue.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_reset.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_rtc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_stimer.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_sysctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_systick.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_tpiu.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ttp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_uart.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_vcomp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_wdt.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_adc.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_cachectrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_clkgen.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ctimer.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_debug.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_flash.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_global.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_gpio.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_i2c_bit_bang.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_interrupt.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_iom.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ios.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_itm.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_mcuctrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_otp.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pdm.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pwrctrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_queue.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_reset.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_rtc.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_stimer.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_sysctrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_systick.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_tpiu.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ttp.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_uart.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_vcomp.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_wdt.c" />
+          </folder>
+          <folder Name="regs">
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_adc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_base_addresses.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_cachectrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_clkgen.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_ctimer.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_flashctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_gpio.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_iomstr.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_ioslave.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_itm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_jedec.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_macros_asm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_macros.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_mcuctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_nvic.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_pdm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_pwrctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_rstgen.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_rtc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_sysctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_systick.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_tpiu.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_uart.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_vcomp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_wdt.h" />
+          </folder>
+          <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/am_mcu_apollo.h" />
+        </folder>
+      </folder>
+      <folder Name="utils">
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_debug.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_debug.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_delay.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_delay.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_faultisr.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_id.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_id.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_regdump.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_regdump.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_stdio.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_stdio.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_string.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_string.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_time.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_time.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util.h" />
+      </folder>
+    </folder>
   </project>
   <configuration
     Name="THUMB Release"
@@ -183,9 +294,9 @@
   <configuration
     Name="Release"
     c_preprocessor_definitions="NDEBUG"
-    gcc_debugging_level="None"
+    gcc_debugging_level="Level 3"
     gcc_omit_frame_pointer="Yes"
-    gcc_optimization_level="Level 1"
+    gcc_optimization_level="None"
     hidden="Yes" />
   <project Name="fd_quiescent_test_apollo">
     <configuration
@@ -208,7 +319,8 @@
       arm_target_interface_type="SWD"
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
-      c_user_include_directories="$(DeviceIncludePath)"
+      c_preprocessor_definitions="STARTUP_FROM_RESET"
+      c_user_include_directories="$(DeviceIncludePath);$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2;$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal;$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs;$(ProjectDir)/../apollo/AmbiqSuite-Rel1.2.12/utils"
       debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
       gcc_cplusplus_language_standard="gnu++11"
       gcc_entry_point="Reset_Handler"
@@ -254,6 +366,117 @@
         <configuration Name="Common" file_type="Assembly" />
       </file>
     </folder>
+    <folder Name="AmbiqSuite">
+      <folder Name="mcu">
+        <folder Name="apollo2">
+          <folder Name="hal">
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_adc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_cachectrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_clkgen.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ctimer.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_debug.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_flash.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_global.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_gpio.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_i2c_bit_bang.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_interrupt.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_iom.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ios.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_itm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_mcuctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_otp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pdm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pin.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pwrctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_queue.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_reset.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_rtc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_stimer.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_sysctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_systick.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_tpiu.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ttp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_uart.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_vcomp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_wdt.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_adc.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_cachectrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_clkgen.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ctimer.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_debug.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_flash.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_global.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_gpio.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_i2c_bit_bang.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_interrupt.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_iom.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ios.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_itm.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_mcuctrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_otp.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pdm.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pwrctrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_queue.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_reset.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_rtc.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_stimer.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_sysctrl.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_systick.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_tpiu.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ttp.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_uart.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_vcomp.c" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_wdt.c" />
+          </folder>
+          <folder Name="regs">
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_adc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_base_addresses.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_cachectrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_clkgen.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_ctimer.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_flashctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_gpio.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_iomstr.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_ioslave.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_itm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_jedec.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_macros_asm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_macros.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_mcuctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_nvic.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_pdm.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_pwrctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_rstgen.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_rtc.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_sysctrl.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_systick.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_tpiu.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_uart.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_vcomp.h" />
+            <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs/am_reg_wdt.h" />
+          </folder>
+          <file file_name="../apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/am_mcu_apollo.h" />
+        </folder>
+      </folder>
+      <folder Name="utils">
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_debug.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_debug.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_delay.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_delay.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_faultisr.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_id.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_id.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_regdump.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_regdump.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_stdio.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_stdio.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_string.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_string.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_time.c" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util_time.h" />
+        <file file_name="../apollo/AmbiqSuite-Rel1.2.12/utils/am_util.h" />
+      </folder>
+    </folder>
   </project>
   <project Name="fd_quiescent_test_nrf5">
     <configuration
@@ -273,7 +496,7 @@
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
       c_additional_options="-fms-extensions"
-      c_preprocessor_definitions="NRF52840_XXAA;SOFTDEVICE_PRESENT;S140"
+      c_preprocessor_definitions="NRF52840_XXAA;SOFTDEVICE_PRESENT;S140;STARTUP_FROM_RESET"
       c_user_include_directories="$(ProjectDir);$(ProjectDir)/../src;$(ProjectDir)/../src/nrf5;$(ProjectDir)/nRF5_SDK/modules/nrfx;$(ProjectDir)/nRF5_SDK/modules/nrfx/hal;$(ProjectDir)/nRF5_SDK/modules/nrfx/mdk;$(ProjectDir)/nRF5_SDK/integration/nrfx;$(ProjectDir)/nRF5_SDK/components/ble/ble_dtm;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_bas;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_dis;$(ProjectDir)/nRF5_SDK/components/ble/common;$(ProjectDir)/nRF5_SDK/components/device;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ble_flash;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/clock;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/common;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/comp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/gpiote;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/hal;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/i2s;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/lpcomp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pdm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/power;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ppi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pwm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qdec;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qspi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/radio_config;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rng;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rtc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/saadc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/sdio;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/swi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/systick;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/timer;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twis_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/uart;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/usbd;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/wdt;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log/src;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_section_vars;$(ProjectDir)/nRF5_SDK/components/libraries/delay;$(ProjectDir)/nRF5_SDK/components/libraries/gpiote;$(ProjectDir)/nRF5_SDK/components/libraries/scheduler;$(ProjectDir)/nRF5_SDK/components/libraries/timer;$(ProjectDir)/nRF5_SDK/components/libraries/util;$(ProjectDir)/nRF5_SDK/components/softdevice/common;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers/nrf52;$(ProjectDir)/nRF5_SDK/config;$(TargetsDir)/nRF51/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include"
       debug_register_definition_file="$(TargetsDir)/nRF51/nRF52840_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/nRF51/nRF52840_xxAA_MemoryMap.xml"

@@ -81,9 +81,9 @@ void fd_spim_transfer(const fd_spim_bus_t *bus, const uint8_t *tx_bytes, uint32_
     size_t tx_remaining = tx_byte_count;
     size_t rx_remaining = rx_byte_count;
     while ((tx_remaining > 0) || (rx_remaining > 0)) {
-        uint32_t tx_amount = tx_remaining > 0xffff ? 0xffff : tx_remaining;
+        uint32_t tx_amount = tx_remaining > 0xff ? 0xff : tx_remaining;
         spim->TXD.MAXCNT = tx_amount;
-        uint32_t rx_amount = rx_remaining > 0xffff ? 0xffff : rx_remaining;
+        uint32_t rx_amount = rx_remaining > 0xff ? 0xff : rx_remaining;
         spim->RXD.MAXCNT = rx_amount;
         spim->EVENTS_END = 0;
         spim->TASKS_START = 1;

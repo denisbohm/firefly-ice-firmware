@@ -73,6 +73,9 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
             twim->SHORTS = last ? TWIM_SHORTS_LASTRX_STOP_Msk : TWIM_SHORTS_LASTRX_SUSPEND_Msk;
             twim->TASKS_STARTRX = 1;
         }
+        if (i > 0) {
+            twim->TASKS_RESUME = 1;
+        }
         if (last) {
             while ((twim->EVENTS_STOPPED == 0) && (twim->EVENTS_ERROR == 0));
         } else {

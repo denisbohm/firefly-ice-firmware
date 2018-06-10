@@ -2,6 +2,8 @@
 #include "fd_spi_flash.h"
 #include "fd_i2cm.h"
 #include "fd_lsm6dsl.h"
+#include "fd_pwm.h"
+#include "fd_quiescent_test.h"
 #include "fd_spim.h"
 
 #include "system_nrf52840.h"
@@ -67,5 +69,15 @@ void main(void) {
         fd_spi_flash_write_page,
         fd_spi_flash_read,
 
+        fd_pwm_initialize,
+        fd_pwm_module_enable,
+        fd_pwm_module_disable,
+        fd_pwm_channel_start,
+        fd_pwm_channel_is_running,
+        fd_pwm_channel_stop,
+
+        fd_quiescent_test,
     };
+
+    fd_quiescent_test();
 }

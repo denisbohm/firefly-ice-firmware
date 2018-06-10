@@ -17,7 +17,7 @@ void fd_spim_initialize(
         fd_gpio_set(bus->sclk, true);
         fd_gpio_configure_output(bus->mosi);
         fd_gpio_set(bus->mosi, true);
-        fd_gpio_configure_input(bus->miso);
+        fd_gpio_configure_input_pull_up(bus->miso);
 
         fd_spim_bus_disable(bus);
     }
@@ -31,7 +31,7 @@ void fd_spim_bus_enable(const fd_spim_bus_t *bus) {
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
     spim->CONFIG = (SPIM_CONFIG_CPOL_ActiveLow << SPIM_CONFIG_CPOL_Pos) | (SPIM_CONFIG_CPHA_Trailing << SPIM_CONFIG_CPHA_Pos);
-    spim->PSEL.SCK  = NRF_GPIO_PIN_MAP(bus->sclk.port, bus->sclk.pin);
+    spim->PSEL.SCK = NRF_GPIO_PIN_MAP(bus->sclk.port, bus->sclk.pin);
     spim->PSEL.MOSI = NRF_GPIO_PIN_MAP(bus->mosi.port, bus->mosi.pin);
     spim->PSEL.MISO = NRF_GPIO_PIN_MAP(bus->miso.port, bus->miso.pin);
     spim->TXD.LIST = SPIM_RXD_LIST_LIST_ArrayList << SPIM_RXD_LIST_LIST_Pos;
@@ -45,7 +45,6 @@ void fd_spim_bus_disable(const fd_spim_bus_t *bus) {
     }
 
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
-//    NVIC_DisableIRQ(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0_IRQn);
     spim->INTENCLR = SPIM_INTENCLR_END_Msk;
     spim->EVENTS_STARTED = 0;
     spim->EVENTS_STOPPED = 0;
@@ -53,6 +52,10 @@ void fd_spim_bus_disable(const fd_spim_bus_t *bus) {
     spim->EVENTS_ENDTX = 0;
     spim->EVENTS_END = 0;
     spim->ENABLE = SPIM_ENABLE_ENABLE_Disabled << SPIM_ENABLE_ENABLE_Pos;
+
+    spim->PSEL.SCK = 0xFFFFFFFF;
+    spim->PSEL.MOSI = 0xFFFFFFFF;
+    spim->PSEL.MISO = 0xFFFFFFFF;
 }
 
 bool fd_spim_bus_is_enabled(const fd_spim_bus_t *bus) {

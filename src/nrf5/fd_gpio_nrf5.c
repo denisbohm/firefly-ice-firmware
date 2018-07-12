@@ -142,7 +142,7 @@ void fd_gpio_initialize(void) {
     NVIC_EnableIRQ(GPIOTE_IRQn);
 }
 
-bool fd_gpio_callback_add(fd_gpio_t gpio, fd_gpio_function_t function, void *context) {
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_function_t function, void *context) {
     volatile fd_gpio_nrf5_callback_t *callbacks = gpio.port == 0 ? fd_gpio_nrf5_p0_callbacks : fd_gpio_nrf5_p1_callbacks;
     volatile fd_gpio_nrf5_callback_t *callback = &callbacks[gpio.pin];
     callback->function = function;
@@ -157,8 +157,6 @@ bool fd_gpio_callback_add(fd_gpio_t gpio, fd_gpio_function_t function, void *con
 
     NRF_GPIOTE->EVENTS_PORT = 0;
     NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
-
-    return true;
 }
 
 void fd_gpio_nrf5_check(NRF_GPIO_Type *nrf_gpio, volatile fd_gpio_nrf5_callback_t *callbacks) {

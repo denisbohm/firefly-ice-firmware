@@ -13,7 +13,7 @@ typedef void (*fd_gpio_function_t)(void *context, bool pin_state);
 
 void fd_gpio_initialize(void);
 
-bool fd_gpio_callback_add(fd_gpio_t gpio, fd_gpio_function_t function, void *context);
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_function_t function, void *context);
 
 void fd_gpio_configure_default(fd_gpio_t gpio);
 

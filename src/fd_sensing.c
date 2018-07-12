@@ -44,17 +44,6 @@ void fd_sensing_history_initialize(void) {
     fd_sensing_history_count = 0;
 }
 
-static
-void fd_sensing_history_add(uint32_t xyz) {
-    fd_sensing_history[fd_sensing_history_tail] = xyz;
-    if (++fd_sensing_history_tail >= FD_SENSING_HISTORY_LENGTH) {
-        fd_sensing_history_tail = 0;
-    }
-    if (fd_sensing_history_count < FD_SENSING_HISTORY_LENGTH) {
-        ++fd_sensing_history_count;
-    }
-}
-
 void fd_sensing_history_save(void) {
     fd_time_t interval;
     interval.seconds = 0;
@@ -78,6 +67,17 @@ void fd_sensing_history_save(void) {
 }
 
 #ifdef FD_SENSING_STREAM_ENABLE
+static
+void fd_sensing_history_add(uint32_t xyz) {
+    fd_sensing_history[fd_sensing_history_tail] = xyz;
+    if (++fd_sensing_history_tail >= FD_SENSING_HISTORY_LENGTH) {
+        fd_sensing_history_tail = 0;
+    }
+    if (fd_sensing_history_count < FD_SENSING_HISTORY_LENGTH) {
+        ++fd_sensing_history_count;
+    }
+}
+
 static
 void fd_sensing_stream(int16_t x, int16_t y, int16_t z) {
     // 8G range, 10-bit accuracy

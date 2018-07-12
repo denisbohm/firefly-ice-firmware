@@ -20,6 +20,8 @@ static const float fd_lsm6dsl_gyro_scales[] = {
     2000.0f / 0x7fff,
 };
 
+uint8_t fd_lsm6ds3_who_am_i;
+
 float fd_lsm6dsl_gyro_scale(uint32_t fs) {
     return fd_lsm6dsl_gyro_scales[fs & 0x3];
 }
@@ -111,7 +113,7 @@ void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device) {
 }
 
 void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration) {
-    uint8_t who_am_i = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_WHO_AM_I);
+    fd_lsm6ds3_who_am_i = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_WHO_AM_I);
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL4_C, 0b00000100); // disable I2C
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL3_C, 0b01010100); // block data update, int1/2 open drain, address automatically incremented

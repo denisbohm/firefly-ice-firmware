@@ -23,14 +23,19 @@
 
 /* Status and ShipMode Control Register (0x0) */
 #define FD_BQ25120_STAT        (BIT(7) | BIT(6))
-#define FD_BQ25120_STAT_SHIFT    0x06
-#define FD_BQ25120_STAT_MASK    0x03
-#define FD_BQ25120_EN_SHIPMODE    BIT(5)
-#define FD_BQ25120_RESET        BIT(4)
-#define FD_BQ25120_TIMER        BIT(3)
-#define FD_BQ25120_VINDPM_STAT    BIT(2)
-#define FD_BQ25120_NOT_CD_STAT    BIT(1)
-#define FD_BQ25120_SYS_EN_STAT    BIT(0)
+#define FD_BQ25120_STAT_SHIFT  0x06
+#define FD_BQ25120_STAT_MASK   0x03
+#define FD_BQ25120_EN_SHIPMODE BIT(5)
+#define FD_BQ25120_RESET       BIT(4)
+#define FD_BQ25120_TIMER       BIT(3)
+#define FD_BQ25120_VINDPM_STAT BIT(2)
+#define FD_BQ25120_NOT_CD_STAT BIT(1)
+#define FD_BQ25120_SYS_EN_STAT BIT(0)
+
+#define FD_BQ25120_STAT_READY              0b00
+#define FD_BQ25120_STAT_CHARGE_IN_PROGRESS 0b01
+#define FD_BQ25120_STAT_CHARGE_DONE        0b10
+#define FD_BQ25120_STAT_FAULT              0b11
 
 typedef union {
     struct {

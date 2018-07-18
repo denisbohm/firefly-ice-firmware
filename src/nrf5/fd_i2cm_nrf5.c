@@ -17,9 +17,9 @@ void fd_i2cm_bus_enable(const fd_i2cm_bus_t *bus) {
         return;
     }
 
-    fd_gpio_configure_output_open_drain(bus->scl);
+    fd_gpio_configure_output_open_drain_pull_up(bus->scl);
     fd_gpio_set(bus->scl, true);
-    fd_gpio_configure_output_open_drain(bus->sda);
+    fd_gpio_configure_output_open_drain_pull_up(bus->sda);
     fd_gpio_set(bus->sda, true);
 
     NRF_TWIM_Type *twim = (NRF_TWIM_Type *)bus->instance;

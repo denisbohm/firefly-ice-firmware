@@ -58,8 +58,11 @@ void fd_quiescent_test_set_system_voltage(void) {
     fd_gpio_set(cdn, true);
     fd_delay_us(100);
 
+    uint8_t status = 0;
+    bool result = fd_bq25120_read(device, FD_BQ25120_STATUS_SHIPMODE_REG, &status);
+
     float voltage = 3.2f;
-    bool result = fd_bq25120_set_system_voltage(device, voltage);
+    result = fd_bq25120_set_system_voltage(device, voltage);
     fd_delay_us(100);
 
     result = fd_bq25120_read_battery_voltage(device, &battery_voltage);
@@ -77,9 +80,9 @@ void fd_quiescent_test_spi_initialize(void) {
     fd_spim_bus_t buses[] = {
         {
             .instance = (uint32_t)NRF_SPIM1,
-            .sclk = { .port = 0, .pin = 5 },
-            .mosi = { .port = 0, .pin = 4 },
-            .miso = { .port = 0, .pin = 7 },
+            .sclk = { .port = 0, .pin = 15 },
+            .mosi = { .port = 0, .pin = 14 },
+            .miso = { .port = 0, .pin = 13 },
             .frequency = 8000000,
             .mode = 3
         },
@@ -87,7 +90,7 @@ void fd_quiescent_test_spi_initialize(void) {
             .instance = (uint32_t)NRF_SPIM2,
             .sclk = { .port = 1, .pin = 3 },
             .mosi = { .port = 1, .pin = 2 },
-            .miso = { .port = 1, .pin = 1 },
+            .miso = { .port = 1, .pin = 5 },
             .frequency = 8000000,
             .mode = 3
         },
@@ -97,7 +100,7 @@ void fd_quiescent_test_spi_initialize(void) {
     uint32_t bus_count = 2;
     
     fd_spim_device_t devices[] = {
-        { .bus = flash_bus, .csn = { .port = 0, .pin = 6 } },
+        { .bus = flash_bus, .csn = { .port = 0, .pin = 16 } },
         { .bus = lsm6dsl_bus, .csn = { .port = 1, .pin = 4 } },
     };
     fd_spim_device_t *flash_device = &devices[0];
@@ -180,11 +183,11 @@ void fd_quiescent_test(void) {
     fd_gpio_t bq_npg = { .port = 1, .pin = 10 };
     fd_gpio_configure_input_pull_up(bq_npg);
     fd_gpio_t bq_int = { .port = 0, .pin = 3 };
-    fd_gpio_configure_input(bq_int);
+    fd_gpio_configure_input_pull_up(bq_int);
     fd_gpio_t bq_lsctrl = { .port = 1, .pin = 14 };
     fd_gpio_configure_output(bq_lsctrl);
     fd_gpio_set(bq_lsctrl, true);
-    fd_gpio_t v5_en = { .port = 0, .pin = 8 };
+    fd_gpio_t v5_en = { .port = 0, .pin = 2 };
     fd_gpio_configure_output(v5_en);
     fd_gpio_set(v5_en, false);
 
@@ -194,7 +197,7 @@ void fd_quiescent_test(void) {
 
     fd_gpio_t imu_int1 = { .port = 1, .pin = 6 };
     fd_gpio_configure_input_pull_up(imu_int1);
-    fd_gpio_t imu_int2 = { .port = 1, .pin = 5 };
+    fd_gpio_t imu_int2 = { .port = 1, .pin = 1 };
     fd_gpio_configure_input_pull_up(imu_int2);
 
     fd_quiescent_test_button_initialize();

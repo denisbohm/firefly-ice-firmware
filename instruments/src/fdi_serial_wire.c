@@ -3,8 +3,6 @@
 #include "fdi_delay.h"
 #include "fdi_gpio.h"
 
-#include "fd_log.h"
-
 fdi_serial_wire_t fdi_serial_wires[fdi_serial_wire_count];
 
 fdi_serial_wire_t *fdi_serial_wire_get(uint32_t index) {

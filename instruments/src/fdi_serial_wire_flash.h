@@ -1,0 +1,5 @@
+#ifndef FDI_SERIAL_WIRE_FLASH_H
+#define FDI_SERIAL_WIRE_FLASH_H
+
+
+#endif

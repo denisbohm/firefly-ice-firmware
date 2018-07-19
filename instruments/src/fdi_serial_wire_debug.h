@@ -17,6 +17,48 @@ typedef struct {
 
 bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail);
 
+#define SWD_DP_IDCODE 0x00
+#define SWD_DP_ABORT  0x00
+#define SWD_DP_CTRL   0x04
+#define SWD_DP_STAT   0x04
+#define SWD_DP_SELECT 0x08
+#define SWD_DP_RDBUFF 0x0c
+
+#define FDSerialWireDebugBit(n) (1 << (n))
+
+#define SWD_DP_ABORT_ORUNERRCLR FDSerialWireDebugBit(4)
+#define SWD_DP_ABORT_WDERRCLR FDSerialWireDebugBit(3)
+#define SWD_DP_ABORT_STKERRCLR FDSerialWireDebugBit(2)
+#define SWD_DP_ABORT_STKCMPCLR FDSerialWireDebugBit(1)
+#define SWD_DP_ABORT_DAPABORT FDSerialWireDebugBit(0)
+
+#define SWD_DP_CTRL_CSYSPWRUPACK FDSerialWireDebugBit(31)
+#define SWD_DP_CTRL_CSYSPWRUPREQ FDSerialWireDebugBit(30)
+#define SWD_DP_CTRL_CDBGPWRUPACK FDSerialWireDebugBit(29)
+#define SWD_DP_CTRL_CDBGPWRUPREQ FDSerialWireDebugBit(28)
+#define SWD_DP_CTRL_CDBGRSTACK FDSerialWireDebugBit(27)
+#define SWD_DP_CTRL_CDBGRSTREQ FDSerialWireDebugBit(26)
+#define SWD_DP_STAT_WDATAERR FDSerialWireDebugBit(7)
+#define SWD_DP_STAT_READOK FDSerialWireDebugBit(6)
+#define SWD_DP_STAT_STICKYERR FDSerialWireDebugBit(5)
+#define SWD_DP_STAT_STICKYCMP FDSerialWireDebugBit(4)
+#define SWD_DP_STAT_TRNMODE (FDSerialWireDebugBit(3) | FDSerialWireDebugBit(2))
+#define SWD_DP_STAT_STICKYORUN FDSerialWireDebugBit(1)
+#define SWD_DP_STAT_ORUNDETECT FDSerialWireDebugBit(0)
+
+#define SWD_AP_CSW 0x00
+#define SWD_AP_TAR 0x04
+#define SWD_AP_SBZ 0x08
+#define SWD_AP_DRW 0x0c
+#define SWD_AP_BD0 0x10
+#define SWD_AP_BD1 0x14
+#define SWD_AP_BD2 0x18
+#define SWD_AP_BD3 0x1c
+#define SWD_AP_DBGDRAR 0xf8
+#define SWD_AP_IDR 0xfc
+
+#define SWD_DP_SELECT_APSEL_APB_AP 0
+
 #define SWD_MEMORY_CPUID 0xE000ED00
 #define SWD_MEMORY_DFSR  0xE000ED30
 #define SWD_MEMORY_DHCSR 0xE000EDF0
@@ -53,10 +95,17 @@ bool fdi_serial_wire_debug_read_data(
     fdi_serial_wire_debug_error_t *error
 );
 
-bool fdi_serial_wire_debug_read_memory(
+bool fdi_serial_wire_debug_read_memory_uint32(
     fdi_serial_wire_t *serial_wire,
     uint32_t address,
     uint32_t *value,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_write_memory_uint32(
+    fdi_serial_wire_t *serial_wire,
+    uint32_t address,
+    uint32_t value,
     fdi_serial_wire_debug_error_t *error
 );
 
@@ -102,6 +151,27 @@ bool fdi_serial_wire_debug_read_register(
 bool fdi_serial_wire_debug_write_register(
     fdi_serial_wire_t *serial_wire,
     uint16_t register_id,
+    uint32_t value,
+    fdi_serial_wire_debug_error_t *error
+);
+
+void fdi_serial_wire_debug_reset_debug_port(fdi_serial_wire_t *serial_wire);
+
+bool fdi_serial_wire_debug_initialize_debug_port(
+    fdi_serial_wire_t *serial_wire,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_read_debug_port(
+    fdi_serial_wire_t *serial_wire,
+    uint8_t register_offset,
+    uint32_t *value,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_write_debug_port(
+    fdi_serial_wire_t *serial_wire,
+    uint8_t register_offset,
     uint32_t value,
     fdi_serial_wire_debug_error_t *error
 );

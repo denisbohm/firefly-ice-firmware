@@ -87,7 +87,7 @@ bool fdi_serial_wire_is_halted(fdi_serial_wire_t *serial_wire, bool *halted, fdi
     if (!fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dhcsr, error)) {
         return false;
     }
-    *halted = dhcsr & SWD_DHCSR_STAT_HALT != 0;
+    *halted = (dhcsr & SWD_DHCSR_STAT_HALT) != 0;
     return true;
 }
 
@@ -251,4 +251,5 @@ bool fdi_serial_wire_flash_test(void) {
 
     fdi_serial_wire_debug_error_t error;
     bool result = fdi_serial_wire_flash(&flash, &error);
+    return result;
 }

@@ -6,25 +6,6 @@
 #include "fdi_gpio.h"
 #include "fdi_serial_wire_debug.h"
 
-typedef struct {
-    fd_range_t ram;
-    fd_range_t stack;
-    fd_range_t heap;
-    uint32_t halt_address;
-} fdi_serial_wire_flash_rpc_t;
-
-typedef void (*fdi_serial_wire_flash_reader_t)(uint32_t address, uint32_t length, uint8_t *data);
-
-typedef struct {
-    fdi_serial_wire_t *serial_wire;
-    fdi_serial_wire_flash_rpc_t rpc;
-    fdi_firefly_flash_t *firefly_flash;
-    uint32_t address;
-    uint32_t length;
-    fdi_serial_wire_flash_reader_t reader;
-    uint32_t reader_address;
-} fdi_serial_wire_flash_t;
-
 #define CORTEX_M_REGISTER_R0    0
 #define CORTEX_M_REGISTER_R1    1
 #define CORTEX_M_REGISTER_R2    2
@@ -103,6 +84,7 @@ bool fdi_serial_wire_flash_write_pages(
     uint32_t address,
     uint32_t length,
     fdi_serial_wire_flash_reader_t reader,
+    void *reader_context,
     uint32_t reader_address,
     fdi_serial_wire_debug_error_t *error
 ) {
@@ -123,7 +105,7 @@ bool fdi_serial_wire_flash_write_pages(
         if (data_length > sizeof(data)) {
             data_length = sizeof(data);
         }
-        reader(src_address, data_length, data);
+        reader(reader_context, src_address, data_length, data);
         if (!fdi_serial_wire_debug_write_data(flash->serial_wire, dst_address, data, data_length, error)) {
             return false;
         }
@@ -211,7 +193,7 @@ bool fdi_serial_wire_flash(fdi_serial_wire_flash_t *flash, fdi_serial_wire_debug
         if (data_length > firefly_flash->page_length) {
             data_length = firefly_flash->page_length;
         }
-        if (!fdi_serial_wire_flash_write_pages(flash, dst_address, data_length, flash->reader, src_address, error)) {
+        if (!fdi_serial_wire_flash_write_pages(flash, dst_address, data_length, flash->reader, 0, src_address, error)) {
             return false;
         }
         src_address += data_length;
@@ -233,7 +215,6 @@ bool fdi_serial_wire_flash_test(void) {
     free += stack_length;
     uint32_t heap = free;
     uint32_t heap_length = ram_address + ram_length - heap;
-    uint32_t heap_page_count = heap_length / firefly_flash->page_length;
     fdi_serial_wire_flash_t flash = {
         .serial_wire = &fdi_serial_wires[0],
         .firefly_flash = firefly_flash,

@@ -1,7 +1,4 @@
-//#include "fd_spis.h"
-
-//#include "aw_event.h"
-#define AW_EVENT_SPIS 20
+#include "fd_spis.h"
 
 #define fd_assert(e)
 #define fd_assertion_failure()
@@ -12,16 +9,7 @@
 #include "apollo2.h"
 #include <am_mcu_apollo.h>
 
-typedef struct {
-    uint32_t instance;
-    fd_gpio_t sclk;
-    fd_gpio_t mosi;
-    fd_gpio_t miso;
-    fd_gpio_t csn;
-    fd_gpio_t ready;
-    uint32_t frequency;
-    fd_spim_mode_t mode;
-} fd_spis_device_t;
+#include <string.h>
 
 const am_hal_ios_config_t fd_spis_ios_config = {
     // Configure the IOS in SPI mode.
@@ -49,9 +37,13 @@ static uint32_t fd_spis_pin_number(fd_gpio_t gpio) {
     return gpio.port * 32 + gpio.pin;
 }
 
-void fd_spis_initialize(
-    const fd_spis_device_t *devices, uint32_t device_count
-) {
+const fd_spis_device_t *fd_spis_devices;
+uint32_t fd_spis_device_count;
+
+void fd_spis_initialize(const fd_spis_device_t *devices, uint32_t device_count) {
+    fd_spis_devices = devices;
+    fd_spis_device_count = device_count;
+
     fd_assert(device_count <= 1);
     for (uint32_t i = 0; i < device_count; ++i) {
         const fd_spis_device_t *device = &devices[i];
@@ -116,30 +108,57 @@ void am_ioslave_ios_isr(void) {
     uint32_t status = am_hal_ios_int_status_get(false);
     am_hal_ios_int_clear(status);
 
-    // host write to registers complete 
-    if (status & AM_HAL_IOS_INT_XCMPWR) {
-//        fd_event_set(AW_EVENT_SPIS);
-    }
-
-    // host read from FIFO complete
-    if (status & AM_HAL_IOS_INT_XCMPRF) {
-//        fd_event_set(AW_EVENT_SPIS);
+    // host "write to registers" or "read from FIFO" complete 
+    if (status & (AM_HAL_IOS_INT_XCMPWR | AM_HAL_IOS_INT_XCMPRF)) {
+        const fd_spis_device_t *device = &fd_spis_devices[0];
+        if (device->callback) {
+            device->callback();
+        }
     }
 }
 
-void fd_spis_device_master_out(const fd_spis_device_t *device, const uint8_t *data, size_t length) {
-//    AM_BFW(IOSLAVE, FIFOCTR, FIFOCTR, 0x0);
-//    AM_BFW(IOSLAVE, FIFOPTR, FIFOSIZ, 0x0);
-    am_hal_ios_fifo_ptr_set(fd_spis_ios_config.ui32FIFOBase);
+size_t fd_spis_get_slave_in_size(const fd_spis_device_t *device __attribute__((unused))) {
+    return fd_spis_ios_config.ui32ROBase - 1;
+}
+
+size_t fd_spis_get_master_out_size(const fd_spis_device_t *device __attribute__((unused))) {
+    return fd_spis_ios_config.ui32RAMBase - fd_spis_ios_config.ui32FIFOBase;
+}
+
+void fd_spis_device_before(const fd_spis_device_t *device) {
+    fd_gpio_set(device->ready, false);
 }
 
 size_t fd_spis_device_slave_in(const fd_spis_device_t *device, uint8_t *data, size_t size) {
-    fd_gpio_set(device->ready, false);
-    uint32_t length = am_hal_ios_pui8LRAM[0];
-    if (length > 119) {
-        length = 119;
+    size_t length = am_hal_ios_pui8LRAM[0];
+    size_t slave_in_size = fd_spis_get_slave_in_size(device);
+    fd_assert(length <= slave_in_size);
+    if (length > slave_in_size) {
+        length = slave_in_size;
     }
-    memcpy(data, &am_hal_ios_pui8LRAM[1], length);
-    fd_gpio_set(device->ready, true);
+    if (length > size) {
+        length = size;
+    }
+    memcpy(data, (uint8_t *)&am_hal_ios_pui8LRAM[1], length);
+    am_hal_ios_pui8LRAM[0] = 0;
     return length;
+}
+
+void fd_spis_device_master_out(const fd_spis_device_t *device, const uint8_t *data, size_t length) {
+    size_t master_out_size = fd_spis_get_master_out_size(device);
+    fd_assert(length <= master_out_size);
+    if (length > master_out_size) {
+        length = master_out_size;
+    }
+    memcpy((uint8_t *)&am_hal_ios_pui8LRAM[0x80], data, length);
+    volatile uint32_t *IOSLAVE_FIFOPTR = (uint32_t *)(REG_IOSLAVE_BASEADDR + AM_REG_IOSLAVE_FIFOPTR_O);
+    uint32_t FIFOSIZ = length;
+    uint32_t FIFOPTR = 0;
+    *IOSLAVE_FIFOPTR = (FIFOSIZ << 8) | (FIFOPTR << 0);
+    volatile uint32_t *IOSLAVE_FIFOCTR = (uint32_t *)(REG_IOSLAVE_BASEADDR + AM_REG_IOSLAVE_FIFOCTR_O);
+    *IOSLAVE_FIFOCTR = length;
+}
+
+void fd_spis_device_after(const fd_spis_device_t *device) {
+    fd_gpio_set(device->ready, true);
 }

@@ -165,13 +165,16 @@ void fd_gpio_nrf5_check(NRF_GPIO_Type *nrf_gpio, volatile fd_gpio_nrf5_callback_
         uint32_t mask = 1 << pin;
         if (latch & mask) {
             // clear the pin sense latch bit
-            nrf_gpio->LATCH |= mask;
+            nrf_gpio->LATCH = mask;
 
             // toggle high vs low sense mode to get the next edge
             uint32_t cnf = nrf_gpio->PIN_CNF[pin];
             uint32_t sense = (cnf & GPIO_PIN_CNF_SENSE_Msk) >> GPIO_PIN_CNF_SENSE_Pos;
             nrf_gpio->PIN_CNF[pin] = cnf ^ (1 << GPIO_PIN_CNF_SENSE_Pos);
             
+            NRF_GPIOTE->EVENTS_PORT = 0;
+            (void)NRF_GPIOTE->EVENTS_PORT;
+
             volatile fd_gpio_nrf5_callback_t *callback = &callbacks[pin];
             callback->count += 1;
             if (callback) {

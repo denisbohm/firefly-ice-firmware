@@ -104,6 +104,11 @@ void fd_spis_device_disable(const fd_spis_device_t *device) {
     am_hal_ios_disable(device->instance);
 }
 
+void am_ioslave_acc_isr(void) {
+    uint32_t status = am_hal_ios_access_int_status_get(false);
+    am_hal_ios_access_int_clear(status);
+}
+
 void am_ioslave_ios_isr(void) {
     uint32_t status = am_hal_ios_int_status_get(false);
     am_hal_ios_int_clear(status);

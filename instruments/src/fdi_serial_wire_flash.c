@@ -63,15 +63,6 @@
 #define CORTEX_M_REGISTER_S30 0x5e
 #define CORTEX_M_REGISTER_S31 0x5f
 
-bool fdi_serial_wire_is_halted(fdi_serial_wire_t *serial_wire, bool *halted, fdi_serial_wire_debug_error_t *error) {
-    uint32_t dhcsr;
-    if (!fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dhcsr, error)) {
-        return false;
-    }
-    *halted = (dhcsr & SWD_DHCSR_STAT_HALT) != 0;
-    return true;
-}
-
 typedef struct {
     uint32_t register_id;
     uint32_t value;

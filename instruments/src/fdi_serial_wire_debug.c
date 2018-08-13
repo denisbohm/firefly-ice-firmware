@@ -4,7 +4,7 @@
 
 #include <stddef.h>
 
-#define FDI_SERIAL_WIRE_DEBUG_FAST
+//#define FDI_SERIAL_WIRE_DEBUG_FAST
 
 bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail) {
     if (error) {
@@ -88,10 +88,10 @@ bool fdi_serial_wire_debug_read_uint32(fdi_serial_wire_t *serial_wire, uint32_t 
 #if defined(FDI_SERIAL_WIRE_DEBUG_FAST)
     fdi_serial_wire_shift_in_bytes(serial_wire, (uint8_t *)value, sizeof(uint32_t));
 #else
-    uint8_t byte_0 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint8_t byte_1 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint8_t byte_2 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint8_t byte_3 = fdi_serial_wire_shift_in(serial_wire, 8);
+    uint32_t byte_0 = fdi_serial_wire_shift_in(serial_wire, 8);
+    uint32_t byte_1 = fdi_serial_wire_shift_in(serial_wire, 8);
+    uint32_t byte_2 = fdi_serial_wire_shift_in(serial_wire, 8);
+    uint32_t byte_3 = fdi_serial_wire_shift_in(serial_wire, 8);
     *value = (byte_3 << 24) | (byte_2 << 16) | (byte_1 << 8) | byte_0;
 #endif
     uint8_t parity = fdi_serial_wire_shift_in(serial_wire, 1) >> 7;
@@ -670,6 +670,41 @@ bool fdi_serial_wire_debug_write_register(
     return true;
 }
 
+bool fdi_serial_wire_debug_is_halted(fdi_serial_wire_t *serial_wire, bool *halted, fdi_serial_wire_debug_error_t *error) {
+    uint32_t dhcsr;
+    if (!fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dhcsr, error)) {
+        return false;
+    }
+    *halted = (dhcsr & SWD_DHCSR_STAT_HALT) != 0;
+    return true;
+}
+
+bool fdi_serial_wire_debug_write_DHCSR(fdi_serial_wire_t *serial_wire, uint32_t value, fdi_serial_wire_debug_error_t *error) {
+    value |= SWD_DHCSR_DBGKEY | SWD_DHCSR_CTRL_DEBUGEN;
+    return fdi_serial_wire_debug_write_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, value, error);
+}
+
+bool fdi_serial_wire_debug_halt(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
+    return fdi_serial_wire_debug_write_DHCSR(serial_wire, SWD_DHCSR_CTRL_HALT, error);
+}
+
+bool fdi_serial_wire_debug_step(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
+    return fdi_serial_wire_debug_write_DHCSR(serial_wire, SWD_DHCSR_CTRL_STEP, error);
+}
+
+bool fdi_serial_wire_debug_run(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
+    return fdi_serial_wire_debug_write_DHCSR(serial_wire, 0, error);
+}
+
+bool fdi_serial_wire_debug_initialize_access_port(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
+  return fdi_serial_wire_debug_select_and_write_access_port(
+      serial_wire,
+      SWD_DP_SELECT_APSEL_APB_AP,
+      SWD_AP_CSW,
+      SWD_AP_CSW_DBGSWENABLE | SWD_AP_CSW_MASTER_DEBUG | SWD_AP_CSW_HPROT | SWD_AP_CSW_INCREMENT_SINGLE | SWD_AP_CSW_32BIT,
+      error);
+}
+
 bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
     fdi_serial_wire_debug_error_t error;
     bool result;
@@ -681,15 +716,36 @@ bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
 
     result = fdi_serial_wire_debug_initialize_debug_port(serial_wire, &error);
 
-    uint32_t address = 0x20000000;
-    uint32_t value = 0;
+    result = fdi_serial_wire_debug_halt(serial_wire, &error);
+
+    result = fdi_serial_wire_debug_initialize_access_port(serial_wire, &error);
+
+    uint32_t chip_info = 0xffffffff;
+    result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x40020000 /* CHIP_INFO */, &chip_info, &error);
+    uint32_t chip_rev = 0xffffffff;
+    result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x4002000C /* CHIPREV */, &chip_rev, &error);
+    uint32_t vendor_id = 0xffffffff;
+    result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x40020010 /* VENDORID */, &vendor_id, &error);
+    uint32_t debugger = 0xffffffff;
+    result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x40020014 /* DEBUGGER */, &debugger, &error);
+
+    uint32_t address = 0x10000000;
+    uint32_t value = 0xffffffff;
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
     result = fdi_serial_wire_debug_write_memory_uint32(serial_wire, address, 0x12345678, &error);
+    value = 0xffffffff;
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
 
-    uint8_t data[] = {0x12, 0x34, 0x56, 0x78};
+    address = 0x10000004;
+    uint8_t data[] = {0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0};
     result = fdi_serial_wire_debug_write_data(serial_wire, address, data, sizeof(data), &error);
-    uint8_t verify[] = {0, 0, 0, 0};
+    uint8_t verify[sizeof(data)] = {0, };
     result = fdi_serial_wire_debug_read_data(serial_wire, address, verify, sizeof(verify), &error);
+
+    uint16_t register_id = 0; // R0
+    result = fdi_serial_wire_debug_write_register(serial_wire, register_id, 0x12345678, &error);
+    value = 0xffffffff;
+    result = fdi_serial_wire_debug_read_register(serial_wire, register_id, &value, &error);
+
     return result;
 }

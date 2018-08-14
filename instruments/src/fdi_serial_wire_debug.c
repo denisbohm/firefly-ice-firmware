@@ -1,5 +1,7 @@
 #include "fdi_serial_wire_debug.h"
 
+#include "fdi_delay.h"
+
 #include "fd_log.h"
 
 #include <stddef.h>
@@ -709,6 +711,9 @@ bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
     fdi_serial_wire_debug_error_t error;
     bool result;
 
+    fdi_serial_wire_set_reset(serial_wire, true);
+    fdi_delay_ms(100);
+
     fdi_serial_wire_debug_reset_debug_port(serial_wire);
 
     uint32_t dpid;
@@ -716,9 +721,12 @@ bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
 
     result = fdi_serial_wire_debug_initialize_debug_port(serial_wire, &error);
 
-    result = fdi_serial_wire_debug_halt(serial_wire, &error);
-
     result = fdi_serial_wire_debug_initialize_access_port(serial_wire, &error);
+
+    result = fdi_serial_wire_debug_halt(serial_wire, &error);
+    uint32_t dbg_hcsr = 0;
+    result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dbg_hcsr, &error);
+    result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dbg_hcsr, &error);
 
     uint32_t chip_info = 0xffffffff;
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x40020000 /* CHIP_INFO */, &chip_info, &error);
@@ -729,14 +737,14 @@ bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire) {
     uint32_t debugger = 0xffffffff;
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x40020014 /* DEBUGGER */, &debugger, &error);
 
-    uint32_t address = 0x10000000;
+    uint32_t address = 0x10002000;
     uint32_t value = 0xffffffff;
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
     result = fdi_serial_wire_debug_write_memory_uint32(serial_wire, address, 0x12345678, &error);
     value = 0xffffffff;
     result = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
 
-    address = 0x10000004;
+    address = 0x10002004;
     uint8_t data[] = {0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0};
     result = fdi_serial_wire_debug_write_data(serial_wire, address, data, sizeof(data), &error);
     uint8_t verify[sizeof(data)] = {0, };

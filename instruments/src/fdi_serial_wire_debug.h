@@ -90,6 +90,29 @@ bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, ui
 #define SWD_DHCSR_CTRL_HALT      (1 << 1)
 #define SWD_DHCSR_CTRL_DEBUGEN   (1 << 0)
 
+// Debug Exception and Monitor Control Register definitions
+#define SWD_DEMCR_VC_CORERESET   0x00000001  // Reset Vector Catch
+#define SWD_DEMCR_VC_MMERR       0x00000010  // Debug Trap on MMU Fault
+#define SWD_DEMCR_VC_NOCPERR     0x00000020  // Debug Trap on No Coprocessor Fault
+#define SWD_DEMCR_VC_CHKERR      0x00000040  // Debug Trap on Checking Error Fault
+#define SWD_DEMCR_VC_STATERR     0x00000080  // Debug Trap on State Error Fault
+#define SWD_DEMCR_VC_BUSERR      0x00000100  // Debug Trap on Bus Error Fault
+#define SWD_DEMCR_VC_INTERR      0x00000200  // Debug Trap on Interrupt Error Fault
+#define SWD_DEMCR_VC_HARDERR     0x00000400  // Debug Trap on Hard Fault
+#define SWD_DEMCR_MON_EN         0x00010000  // Monitor Enable
+#define SWD_DEMCR_MON_PEND       0x00020000  // Monitor Pend
+#define SWD_DEMCR_MON_STEP       0x00040000  // Monitor Step
+#define SWD_DEMCR_MON_REQ        0x00080000  // Monitor Request
+#define SWD_DEMCR_TRCENA         0x01000000  // Trace Enable (DWT, ITM, ETM, TPIU)
+
+// NVIC: Application Interrupt/Reset Control Register
+#define SWD_MEMORY_NVIC_Addr  0xe000e000
+#define SWD_MEMORY_NVIC_AIRCR (SWD_MEMORY_NVIC_Addr + 0x0D0C)
+#define SWD_MEMORY_NVIC_AIRCR_VECTRESET      0x00000001  // Reset Cortex-M (except Debug)
+#define SWD_MEMORY_NVIC_AIRCR_VECTCLRACTIVE  0x00000002  // Clear Active Vector Bit
+#define SWD_MEMORY_NVIC_AIRCR_SYSRESETREQ    0x00000004  // Reset System (except Debug)
+#define SWD_MEMORY_NVIC_AIRCR_VECTKEY        0x05FA0000  // Write Key
+
 bool fdi_serial_wire_debug_write_data(
     fdi_serial_wire_t *serial_wire,
     uint32_t address,

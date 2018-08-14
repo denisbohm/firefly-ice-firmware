@@ -34,7 +34,7 @@ bool fdi_serial_wire_get_reset(fdi_serial_wire_t *serial_wire) {
 // SWD Master writes and reads data on falling clock edge
 
 #ifdef APOLLO2_HACK
-#define fdi_serial_wire_half_bit_delay() fdi_delay_ns(100)
+#define fdi_serial_wire_half_bit_delay() fdi_delay_ns(200)
 #else
 #define fdi_serial_wire_half_bit_delay() // fdi_delay_ns(50)
 #endif

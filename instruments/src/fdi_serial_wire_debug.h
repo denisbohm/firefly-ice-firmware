@@ -267,11 +267,14 @@ bool fdi_serial_wire_debug_write_debug_port(
     fdi_serial_wire_debug_error_t *error
 );
 
+bool fdi_serial_wire_debug_initialize_access_port(
+    fdi_serial_wire_t *serial_wire,
+    fdi_serial_wire_debug_error_t *error
+);
+
 bool fdi_serial_wire_debug_is_halted(fdi_serial_wire_t *serial_wire, bool *halted, fdi_serial_wire_debug_error_t *error);
 bool fdi_serial_wire_debug_halt(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error);
 bool fdi_serial_wire_debug_step(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error);
 bool fdi_serial_wire_debug_run(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error);
-
-bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire);
 
 #endif

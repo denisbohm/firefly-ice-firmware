@@ -56,6 +56,8 @@ void fd_spis_initialize(const fd_spis_device_t *devices, uint32_t device_count) 
         fd_assert(device->csn == 3);
         am_hal_gpio_pin_config(fd_spis_pin_number(device->csn), AM_HAL_PIN_3_SLnCE);
 
+        am_hal_gpio_pin_config(fd_spis_pin_number(device->ready), AM_HAL_GPIO_OUTPUT);
+
         am_hal_ios_config((am_hal_ios_config_t *)&fd_spis_ios_config);
 
         //

@@ -2,6 +2,8 @@
 
 #include "fd_nrf5.h"
 
+#include <string.h>
+
 static inline
 NRF_GPIO_Type *fd_gpio_get_nrf_gpio(uint32_t port) {
     return (NRF_GPIO_Type *)(NRF_P0_BASE + port * 0x300UL);
@@ -118,6 +120,8 @@ bool fd_gpio_get(fd_gpio_t gpio) {
     return ((nrf_gpio->IN >> gpio.pin) & 1UL) != 0;
 }
 
+#ifdef FD_GPIO_NRF5_PORT_EVENTS
+
 typedef struct {
     fd_gpio_function_t function;
     void *context;
@@ -127,7 +131,7 @@ typedef struct {
 volatile fd_gpio_nrf5_callback_t fd_gpio_nrf5_p0_callbacks[32];
 volatile fd_gpio_nrf5_callback_t fd_gpio_nrf5_p1_callbacks[32];
 
-void fd_gpio_initialize(void) {
+void fd_gpio_initialize_implementation(void) {
     for (int i = 0; i < 32; ++i) {
         fd_gpio_nrf5_p0_callbacks[i].function = 0;
         fd_gpio_nrf5_p0_callbacks[i].context = 0;
@@ -165,13 +169,16 @@ void fd_gpio_nrf5_check(NRF_GPIO_Type *nrf_gpio, volatile fd_gpio_nrf5_callback_
         uint32_t mask = 1 << pin;
         if (latch & mask) {
             // clear the pin sense latch bit
-            nrf_gpio->LATCH |= mask;
+            nrf_gpio->LATCH = mask;
 
             // toggle high vs low sense mode to get the next edge
             uint32_t cnf = nrf_gpio->PIN_CNF[pin];
             uint32_t sense = (cnf & GPIO_PIN_CNF_SENSE_Msk) >> GPIO_PIN_CNF_SENSE_Pos;
             nrf_gpio->PIN_CNF[pin] = cnf ^ (1 << GPIO_PIN_CNF_SENSE_Pos);
             
+            NRF_GPIOTE->EVENTS_PORT = 0;
+            (void)NRF_GPIOTE->EVENTS_PORT;
+
             volatile fd_gpio_nrf5_callback_t *callback = &callbacks[pin];
             callback->count += 1;
             if (callback) {
@@ -185,4 +192,65 @@ void fd_gpio_nrf5_check(NRF_GPIO_Type *nrf_gpio, volatile fd_gpio_nrf5_callback_
 void GPIOTE_IRQHandler(void) {
     fd_gpio_nrf5_check(NRF_P0, fd_gpio_nrf5_p0_callbacks);
     fd_gpio_nrf5_check(NRF_P1, fd_gpio_nrf5_p1_callbacks);
+}
+
+#else
+
+typedef struct {
+    fd_gpio_t gpio;
+    fd_gpio_function_t function;
+    void *context;
+    uint32_t count;
+} fd_gpio_nrf5_callback_t;
+
+#define fd_gpio_nrf5_callback_limit 8
+volatile fd_gpio_nrf5_callback_t fd_gpio_nrf5_callbacks[fd_gpio_nrf5_callback_limit];
+volatile uint32_t fd_gpio_nrf5_callback_count;
+
+void fd_gpio_initialize_implementation(void) {
+    fd_gpio_nrf5_callback_count = 0;
+    memset((void *)fd_gpio_nrf5_callbacks, 0, sizeof(fd_gpio_nrf5_callbacks));
+    
+    NVIC_EnableIRQ(GPIOTE_IRQn);
+}
+
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_function_t function, void *context) {
+    if (fd_gpio_nrf5_callback_count >= fd_gpio_nrf5_callback_limit) {
+        return;
+    }
+    volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_callbacks[fd_gpio_nrf5_callback_count];
+    callback->gpio = gpio;
+    callback->function = function;
+    callback->context = context;
+    callback->count = 0;
+
+    NRF_GPIOTE->CONFIG[fd_gpio_nrf5_callback_count] =
+        (GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos) |
+        (gpio.pin << GPIOTE_CONFIG_PSEL_Pos) |
+        (gpio.port << GPIOTE_CONFIG_PORT_Pos) |
+        (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos);
+
+    NRF_GPIOTE->INTENSET |= 1 << fd_gpio_nrf5_callback_count;
+
+    fd_gpio_nrf5_callback_count += 1;
+}
+
+void GPIOTE_IRQHandler(void) {
+    for (uint32_t i = 0; i < fd_gpio_nrf5_callback_limit; ++i) {
+        if (NRF_GPIOTE->EVENTS_IN[i]) {
+            NRF_GPIOTE->EVENTS_IN[i] = 0;
+            if (i < fd_gpio_nrf5_callback_count) {
+                volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_callbacks[i];
+                callback->count += 1;
+                bool pin_state = fd_gpio_get(callback->gpio);
+                callback->function(callback->context, pin_state);
+            }
+        }
+    }
+}
+
+#endif
+
+void fd_gpio_initialize(void) {
+    fd_gpio_initialize_implementation();
 }

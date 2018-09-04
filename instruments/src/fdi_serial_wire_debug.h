@@ -57,6 +57,17 @@ bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, ui
 #define SWD_AP_DBGDRAR 0xf8
 #define SWD_AP_IDR 0xfc
 
+#define SWD_AP_CSW_DBGSWENABLE FDSerialWireDebugBit(31)
+#define SWD_AP_CSW_MASTER_DEBUG FDSerialWireDebugBit(29)
+#define SWD_AP_CSW_HPROT FDSerialWireDebugBit(25)
+#define SWD_AP_CSW_SPIDEN FDSerialWireDebugBit(23)
+#define SWD_AP_CSW_TRIN_PROG FDSerialWireDebugBit(7)
+#define SWD_AP_CSW_DEVICE_EN FDSerialWireDebugBit(6)
+#define SWD_AP_CSW_INCREMENT_PACKED FDSerialWireDebugBit(5)
+#define SWD_AP_CSW_INCREMENT_SINGLE FDSerialWireDebugBit(4)
+#define SWD_AP_CSW_32BIT FDSerialWireDebugBit(1)
+#define SWD_AP_CSW_16BIT FDSerialWireDebugBit(0)
+
 #define SWD_DP_SELECT_APSEL_APB_AP 0
 
 #define SWD_MEMORY_CPUID 0xE000ED00
@@ -78,6 +89,86 @@ bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, ui
 #define SWD_DHCSR_CTRL_STEP      (1 << 2)
 #define SWD_DHCSR_CTRL_HALT      (1 << 1)
 #define SWD_DHCSR_CTRL_DEBUGEN   (1 << 0)
+
+// Debug Exception and Monitor Control Register definitions
+#define SWD_DEMCR_VC_CORERESET   0x00000001  // Reset Vector Catch
+#define SWD_DEMCR_VC_MMERR       0x00000010  // Debug Trap on MMU Fault
+#define SWD_DEMCR_VC_NOCPERR     0x00000020  // Debug Trap on No Coprocessor Fault
+#define SWD_DEMCR_VC_CHKERR      0x00000040  // Debug Trap on Checking Error Fault
+#define SWD_DEMCR_VC_STATERR     0x00000080  // Debug Trap on State Error Fault
+#define SWD_DEMCR_VC_BUSERR      0x00000100  // Debug Trap on Bus Error Fault
+#define SWD_DEMCR_VC_INTERR      0x00000200  // Debug Trap on Interrupt Error Fault
+#define SWD_DEMCR_VC_HARDERR     0x00000400  // Debug Trap on Hard Fault
+#define SWD_DEMCR_MON_EN         0x00010000  // Monitor Enable
+#define SWD_DEMCR_MON_PEND       0x00020000  // Monitor Pend
+#define SWD_DEMCR_MON_STEP       0x00040000  // Monitor Step
+#define SWD_DEMCR_MON_REQ        0x00080000  // Monitor Request
+#define SWD_DEMCR_TRCENA         0x01000000  // Trace Enable (DWT, ITM, ETM, TPIU)
+
+// NVIC: Application Interrupt/Reset Control Register
+#define SWD_MEMORY_NVIC_Addr  0xe000e000
+#define SWD_MEMORY_NVIC_AIRCR (SWD_MEMORY_NVIC_Addr + 0x0D0C)
+#define SWD_MEMORY_NVIC_AIRCR_VECTRESET      0x00000001  // Reset Cortex-M (except Debug)
+#define SWD_MEMORY_NVIC_AIRCR_VECTCLRACTIVE  0x00000002  // Clear Active Vector Bit
+#define SWD_MEMORY_NVIC_AIRCR_SYSRESETREQ    0x00000004  // Reset System (except Debug)
+#define SWD_MEMORY_NVIC_AIRCR_VECTKEY        0x05FA0000  // Write Key
+
+#define CORTEX_M_REGISTER_R0    0
+#define CORTEX_M_REGISTER_R1    1
+#define CORTEX_M_REGISTER_R2    2
+#define CORTEX_M_REGISTER_R3    3
+#define CORTEX_M_REGISTER_R4    4
+#define CORTEX_M_REGISTER_R5    5
+#define CORTEX_M_REGISTER_R6    6
+#define CORTEX_M_REGISTER_R7    7
+#define CORTEX_M_REGISTER_R8    8
+#define CORTEX_M_REGISTER_R9    9
+#define CORTEX_M_REGISTER_R10  10
+#define CORTEX_M_REGISTER_R11  11
+#define CORTEX_M_REGISTER_R12  12
+#define CORTEX_M_REGISTER_IP   12
+#define CORTEX_M_REGISTER_R13  13
+#define CORTEX_M_REGISTER_SP   13
+#define CORTEX_M_REGISTER_R14  14
+#define CORTEX_M_REGISTER_LR   14
+#define CORTEX_M_REGISTER_R15  15
+#define CORTEX_M_REGISTER_PC   15
+#define CORTEX_M_REGISTER_XPSR 16
+#define CORTEX_M_REGISTER_MSP  17
+#define CORTEX_M_REGISTER_PSP  18
+
+#define CORTEX_M_REGISTER_S0  0x40
+#define CORTEX_M_REGISTER_S1  0x41
+#define CORTEX_M_REGISTER_S2  0x42
+#define CORTEX_M_REGISTER_S3  0x43
+#define CORTEX_M_REGISTER_S4  0x44
+#define CORTEX_M_REGISTER_S5  0x45
+#define CORTEX_M_REGISTER_S6  0x46
+#define CORTEX_M_REGISTER_S7  0x47
+#define CORTEX_M_REGISTER_S8  0x48
+#define CORTEX_M_REGISTER_S9  0x49
+#define CORTEX_M_REGISTER_S10 0x4a
+#define CORTEX_M_REGISTER_S11 0x4b
+#define CORTEX_M_REGISTER_S12 0x4c
+#define CORTEX_M_REGISTER_S13 0x4d
+#define CORTEX_M_REGISTER_S14 0x4e
+#define CORTEX_M_REGISTER_S15 0x4f
+#define CORTEX_M_REGISTER_S16 0x50
+#define CORTEX_M_REGISTER_S17 0x51
+#define CORTEX_M_REGISTER_S18 0x52
+#define CORTEX_M_REGISTER_S19 0x53
+#define CORTEX_M_REGISTER_S20 0x54
+#define CORTEX_M_REGISTER_S21 0x55
+#define CORTEX_M_REGISTER_S22 0x56
+#define CORTEX_M_REGISTER_S23 0x57
+#define CORTEX_M_REGISTER_S24 0x58
+#define CORTEX_M_REGISTER_S25 0x59
+#define CORTEX_M_REGISTER_S26 0x5a
+#define CORTEX_M_REGISTER_S27 0x5b
+#define CORTEX_M_REGISTER_S28 0x5c
+#define CORTEX_M_REGISTER_S29 0x5d
+#define CORTEX_M_REGISTER_S30 0x5e
+#define CORTEX_M_REGISTER_S31 0x5f
 
 bool fdi_serial_wire_debug_write_data(
     fdi_serial_wire_t *serial_wire,
@@ -176,6 +267,14 @@ bool fdi_serial_wire_debug_write_debug_port(
     fdi_serial_wire_debug_error_t *error
 );
 
-bool fdi_serial_wire_debug_test(fdi_serial_wire_t *serial_wire);
+bool fdi_serial_wire_debug_initialize_access_port(
+    fdi_serial_wire_t *serial_wire,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_is_halted(fdi_serial_wire_t *serial_wire, bool *halted, fdi_serial_wire_debug_error_t *error);
+bool fdi_serial_wire_debug_halt(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error);
+bool fdi_serial_wire_debug_step(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error);
+bool fdi_serial_wire_debug_run(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error);
 
 #endif

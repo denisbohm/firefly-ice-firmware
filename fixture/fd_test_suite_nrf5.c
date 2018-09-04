@@ -7,10 +7,34 @@
 #include "fd_spim.h"
 
 #include "system_nrf52840.h"
+#include "fd_nrf5.h"
 
 static
 void halt(void) {
     __asm("BKPT   #0");
+}
+
+bool fd_test_suite_crystal_test(uint32_t source, uint32_t timeout) {
+    if (source == 0) {
+        NRF_CLOCK->LFCLKSRC = 1; // 1 == external crystal
+        NRF_CLOCK->TASKS_LFCLKSTART = 1;
+        for (uint32_t i = 0; i < timeout; ++i) {
+            if (NRF_CLOCK->EVENTS_LFCLKSTARTED != 0) {
+                return true;
+            }
+        }
+    }
+
+    if (source == 1) {
+        NRF_CLOCK->TASKS_HFCLKSTART = 1;
+        for (uint32_t i = 0; i < timeout; ++i) {
+            if (NRF_CLOCK->EVENTS_HFCLKSTARTED != 0) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void main(void) {
@@ -77,6 +101,8 @@ void main(void) {
         fd_pwm_channel_stop,
 
         fd_quiescent_test,
+
+        fd_test_suite_crystal_test,
     };
 
     fd_quiescent_test();

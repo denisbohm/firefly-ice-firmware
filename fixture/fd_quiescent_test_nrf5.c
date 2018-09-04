@@ -150,6 +150,7 @@ void fd_quiescent_test_spi_initialize(void) {
     fd_spim_bus_disable(lsm6dsl_bus);
 }
 
+#if 0
 void fd_quiescent_vibrate(void) {
     const fd_pwm_module_t aw_pwm_modules[] = {
         {
@@ -171,6 +172,7 @@ void fd_quiescent_vibrate(void) {
     fd_pwm_module_enable(&aw_pwm_modules[0]);
     fd_pwm_channel_start(&aw_pwm_channels[0], 0.5f);
 }
+#endif
 
 uint32_t loop_count = 0;
 
@@ -204,7 +206,9 @@ void fd_quiescent_test(void) {
     fd_quiescent_test_set_system_voltage();
     fd_quiescent_test_spi_initialize();
 
+#if 0
     fd_quiescent_vibrate();
+#endif
 
     while (true) {
         ++loop_count;

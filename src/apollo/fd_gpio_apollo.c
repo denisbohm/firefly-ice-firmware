@@ -56,5 +56,5 @@ void fd_gpio_set(fd_gpio_t gpio, bool value) {
 
 bool fd_gpio_get(fd_gpio_t gpio) {
     uint32_t pin_number = gpio.port * 32 + gpio.pin;
-    return am_hal_gpio_out_bit_read(pin_number);
+    return (am_hal_gpio_input_read() & (1ULL << pin_number)) != 0;
 }

@@ -1,5 +1,7 @@
 #include "fd_bq25120.h"
 
+#include "fd_delay.h"
+
 struct fd_bq25120_reg_default {
     unsigned int reg;
     unsigned int def;
@@ -69,7 +71,13 @@ bool fd_bq25120_read_battery_voltage(const fd_i2cm_device_t *device, float *batt
         return false;
     }
     float battery_regulation_voltage = 3.6f + bv.field.vbreg / 100.0f;
-    fd_bq25120_vbmon_t vbmon;
+    fd_bq25120_vbmon_t vbmon = { .byte = 0 };
+    vbmon.field.vbmon_read = 1;
+    if (!fd_bq25120_write(device, FD_BQ25120_BATT_VOLT_MONITOR_REG, vbmon.byte)) {
+        return false;
+    }
+    fd_delay_ms(2);
+    vbmon.byte = 0;
     if (!fd_bq25120_read(device, FD_BQ25120_BATT_VOLT_MONITOR_REG, &vbmon.byte)) {
         return false;
     }
@@ -91,6 +99,7 @@ bool fd_bq25120_read_battery_voltage(const fd_i2cm_device_t *device, float *batt
             amount += 0.10f;
             break;
         default:
+            amount = 0.00f;
             break;
     }
     *battery_voltage = battery_regulation_voltage * amount;

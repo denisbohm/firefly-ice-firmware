@@ -47,6 +47,7 @@ static fd_timer_t fd_power_update_timer;
 static uint32_t fd_power_high_start;
 static uint32_t fd_power_low_start;
 static bool fd_power_low_battery;
+static fd_power_callback_t fd_power_callback;
 static fd_power_callback_t fd_power_low_battery_level_callback;
 static fd_power_callback_t fd_power_high_battery_level_callback;
 
@@ -264,9 +265,21 @@ void fd_power_update_callback(void) {
 #endif
     
     fd_power_sanity_check();
+    
+    if (fd_power_callback) {
+        fd_power_callback();
+    }
 
     fd_hal_system_start_conversions();
     fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
+}
+
+void fd_power_set_callback(fd_power_callback_t callback) {
+    fd_power_callback = callback;
+}
+
+fd_power_callback_t fd_power_get_callback(void) {
+    return fd_power_callback;
 }
 
 void fd_power_set_low_battery_level_callback(fd_power_callback_t callback) {
@@ -301,6 +314,7 @@ void fd_power_initialize(void) {
     fd_power_high_start = 0;
     fd_power_low_start = 0;
     fd_power_low_battery = false;
+    fd_power_callback = 0;
     fd_power_low_battery_level_callback = 0;
     fd_power_high_battery_level_callback = 0;
 
@@ -308,6 +322,7 @@ void fd_power_initialize(void) {
 
     fd_timer_add(&fd_power_update_timer, fd_power_update_callback);
     fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
+    fd_hal_system_start_conversions();
 }
 
 void fd_power_get(fd_power_t *power) {

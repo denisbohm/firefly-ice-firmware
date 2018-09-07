@@ -21,6 +21,10 @@ void fd_activity_prime(int16_t x __attribute__((unused)), int16_t y __attribute_
     activity_acc_dc = 1.0f;
 }
 
+uint32_t fd_activity_get_sample_count(void) {
+    return activity_sample_count;
+}
+
 void fd_activity_start(void) {
     activity_sample_count = 0;
     activity_vm = 0.0f;

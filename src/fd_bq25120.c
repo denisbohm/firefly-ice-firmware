@@ -64,6 +64,33 @@ bool fd_bq25120_set_system_voltage(const fd_i2cm_device_t *device, float voltage
     return fd_bq25120_write(device, FD_BQ25120_SYSTEM_VOUT_CTL_REG, sys.byte);
 }
 
+bool fd_bq25120_ramp_up_system_voltage(const fd_i2cm_device_t *device, float voltage) {
+    fd_bq25120_sys_t sys;
+    if (!fd_bq25120_read(device, FD_BQ25120_SYSTEM_VOUT_CTL_REG, &sys.byte)) {
+        return false;
+    }
+    int vout = (int)((voltage * 10.0f) + 0.05f);
+    if (vout < 18) {
+        vout = 18;
+    }
+    if (vout > 33) {
+        vout = 33;
+    }
+    vout -= 18;
+    if (sys.field.sys_sel != 0b11) {
+        // assume 1.8 V default from reset -denis
+        sys.field.sys_sel = 0b11;
+        sys.field.sys_vout = 0;
+    }
+    while (sys.field.sys_vout < vout) {
+        sys.field.sys_vout += 1;
+        if (!fd_bq25120_write(device, FD_BQ25120_SYSTEM_VOUT_CTL_REG, sys.byte)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool fd_bq25120_read_battery_voltage(const fd_i2cm_device_t *device, float *battery_voltage) {
     *battery_voltage = 0.0f;
     fd_bq25120_battery_voltage_control bv;

@@ -1,5 +1,7 @@
 #include "fd_timeout.h"
 
+#ifdef FD_TIMEOUT_RTC
+
 #include "fd_hal_rtc.h"
 
 void fd_timeout_initialize(fd_timeout_t *timeout, float duration) {
@@ -20,3 +22,20 @@ bool fd_timeout_is_over(fd_timeout_t *timeout) {
     }
     return false;
 }
+
+#else
+
+void fd_timeout_initialize(fd_timeout_t *timeout, float duration) {
+    timeout->deadline.microseconds = (uint32_t)(duration * 1000000.0f);
+    timeout->change_count = 0;
+}
+
+bool fd_timeout_is_over(fd_timeout_t *timeout) {
+    ++timeout->change_count;
+    if ((timeout->change_count / 1000) > timeout->deadline.microseconds) {
+        return true;
+    }
+    return false;
+}
+
+#endif

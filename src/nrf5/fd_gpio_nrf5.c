@@ -200,6 +200,7 @@ typedef struct {
     fd_gpio_t gpio;
     fd_gpio_function_t function;
     void *context;
+    bool state;
     uint32_t count;
 } fd_gpio_nrf5_callback_t;
 
@@ -222,6 +223,7 @@ void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_function_t function, void *con
     callback->gpio = gpio;
     callback->function = function;
     callback->context = context;
+    callback->state = fd_gpio_get(gpio);
     callback->count = 0;
 
     NRF_GPIOTE->CONFIG[fd_gpio_nrf5_callback_count] =
@@ -242,8 +244,14 @@ void GPIOTE_IRQHandler(void) {
             if (i < fd_gpio_nrf5_callback_count) {
                 volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_callbacks[i];
                 callback->count += 1;
-                bool pin_state = fd_gpio_get(callback->gpio);
-                callback->function(callback->context, pin_state);
+                bool previous_state = callback->state;
+                bool state = fd_gpio_get(callback->gpio);
+                callback->state = state;
+                // may have missed some transitions, make sure we at least get the same number of high & low callbacks -denis
+                if (state == previous_state) {
+                    callback->function(callback->context, !state);
+                }
+                callback->function(callback->context, state);
             }
         }
     }

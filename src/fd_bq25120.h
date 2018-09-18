@@ -296,6 +296,7 @@ bool fd_bq25120_read(const fd_i2cm_device_t *device, uint8_t location, uint8_t *
 bool fd_bq25120_write(const fd_i2cm_device_t *device, uint8_t location, uint8_t byte);
 
 bool fd_bq25120_set_system_voltage(const fd_i2cm_device_t *device, float voltage);
+bool fd_bq25120_ramp_up_system_voltage(const fd_i2cm_device_t *device, float voltage);
 bool fd_bq25120_read_battery_voltage(const fd_i2cm_device_t *device, float *battery_voltage);
 
 #endif

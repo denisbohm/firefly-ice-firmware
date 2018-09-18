@@ -322,7 +322,6 @@ void fd_power_initialize(void) {
 
     fd_timer_add(&fd_power_update_timer, fd_power_update_callback);
     fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
-    fd_hal_system_start_conversions();
 }
 
 void fd_power_get(fd_power_t *power) {

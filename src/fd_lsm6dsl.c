@@ -2,7 +2,8 @@
 
 #include "fd_delay.h"
 
-#include "string.h"
+#include <stdlib.h>
+#include <string.h>
 
 static const float fd_lsm6dsl_accelerometer_scales[] = {
     2.0f / 0x7fff,
@@ -59,7 +60,7 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
         uint16_t pattern = fd_lsm6dsl_to_uint16(buffer, 2) & 0x3ff;
 
         // pattern will be 0 at the start of a sample set, otherwise try to align pattern by discarding a fifo word
-        if (pattern != 0) {
+        if ((unread_words > 0) && (pattern != 0)) {
             uint8_t word[2];
             fd_spim_bus_rxn(device->bus, word, sizeof(word));
             fd_spim_bus_wait(device->bus);
@@ -177,4 +178,125 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
         (lsm6ds3_axis_count != 0) ? ((configuration->fifo_output_data_rate << 3) | 0b110 /* continuous  */ ) : 0
     );
     fd_lsm6dsl_fifo_flush(device);
+}
+
+typedef struct {
+    uint8_t location;
+    uint8_t value;
+} fd_lsm6dsl_access_t;
+
+void fd_lsm6dsl_get_stats(
+    const fd_spim_device_t *device,
+    fd_lsm6dsl_accelerometer_sample_t *avg,
+    fd_lsm6dsl_accelerometer_sample_t *min,
+    fd_lsm6dsl_accelerometer_sample_t *max
+) {
+    fd_delay_ms(100);
+    fd_lsm6dsl_accelerometer_sample_t samples[6];
+    for (int i = 0; i < 6; ++i) {
+        uint8_t status_reg;
+        do {
+            status_reg = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_STATUS_REG);
+        } while ((status_reg & FD_LSM6DSLSTATUS_XLDA) == 0);
+        uint8_t tx_bytes[] = { FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_OUTX_L_XL };
+        uint8_t rx_bytes[6];
+        fd_spim_device_sequence_txn_rxn(device, tx_bytes, sizeof(tx_bytes), rx_bytes, sizeof(rx_bytes));
+        samples[i] = (fd_lsm6dsl_accelerometer_sample_t){
+            .x = (rx_bytes[1] << 8) | rx_bytes[0],
+            .y = (rx_bytes[3] << 8) | rx_bytes[2],
+            .z = (rx_bytes[5] << 8) | rx_bytes[4],
+        };
+    }
+    int32_t x = samples[1].x;
+    int32_t y = samples[1].y;
+    int32_t z = samples[1].z;
+    int16_t x_min = x;
+    int16_t y_min = y;
+    int16_t z_min = z;
+    int16_t x_max = x;
+    int16_t y_max = y;
+    int16_t z_max = z;
+    for (int i = 2; i < 6; ++i) {
+        fd_lsm6dsl_accelerometer_sample_t s = samples[i];
+        x += s.x;
+        y += s.y;
+        z += s.z;
+        if (s.x < x_min) {
+            x_min = s.x;
+        }
+        if (s.y < y_min) {
+            y_min = s.y;
+        }
+        if (s.z < z_min) {
+            z_min = s.z;
+        }
+        if (s.x > x_max) {
+            x_max = s.x;
+        }
+        if (s.y > y_max) {
+            y_max = s.y;
+        }
+        if (s.z > z_max) {
+            z_max = s.z;
+        }
+    }
+    if (avg) {
+        *avg = (fd_lsm6dsl_accelerometer_sample_t){
+            .x = x / 5,
+            .y = y / 5,
+            .z = z / 5,
+        };
+    }
+    if (min) {
+        *min = (fd_lsm6dsl_accelerometer_sample_t){
+            .x = x_min,
+            .y = y_min,
+            .z = z_min,
+        };
+    }
+    if (max) {
+        *max = (fd_lsm6dsl_accelerometer_sample_t){
+            .x = x_max,
+            .y = y_max,
+            .z = z_max,
+        };
+    }
+}
+
+bool fd_lsm6dsl_self_test(const fd_spim_device_t *device) {
+    fd_lsm6dsl_access_t setup_accesses[] = {
+        { .location = FD_LSM6DSL_REGISTER_CTRL1_XL, .value = 0x38 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL2_G,  .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL3_C,  .value = 0x44 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL4_C,  .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL5_C,  .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL6_C,  .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL7_G,  .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL8_XL, .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL9_XL, .value = 0x00 },
+        { .location = FD_LSM6DSL_REGISTER_CTRL10_C, .value = 0x00 },
+    };
+    uint32_t setup_count = sizeof(setup_accesses) / sizeof(setup_accesses[0]);
+    for (int i = 0; i < setup_count; ++i) {
+        fd_lsm6dsl_access_t *access = &setup_accesses[i];
+        fd_lsm6dsl_write(device, access->location, access->value);
+    }
+
+    fd_lsm6dsl_accelerometer_sample_t nost;
+    fd_lsm6dsl_accelerometer_sample_t nost_min;
+    fd_lsm6dsl_accelerometer_sample_t nost_max;
+    fd_lsm6dsl_get_stats(device, &nost, &nost_min, &nost_max);
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL5_C, 0x01);
+    fd_lsm6dsl_accelerometer_sample_t st;
+    fd_lsm6dsl_accelerometer_sample_t st_min;
+    fd_lsm6dsl_accelerometer_sample_t st_max;
+    fd_lsm6dsl_get_stats(device, &st, &st_min, &st_max);
+
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL1_XL, 0x00);
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL5_C, 0x00);
+
+    bool tx = (abs(st_min.x) <= abs(st.x - nost.x)) && (abs(st.x - nost.x) <= abs(st_max.x));
+    bool ty = (abs(st_min.y) <= abs(st.y - nost.y)) && (abs(st.y - nost.y) <= abs(st_max.y));
+    bool tz = (abs(st_min.z) <= abs(st.z - nost.z)) && (abs(st.z - nost.z) <= abs(st_max.z));
+    return tx && ty && tz;
 }

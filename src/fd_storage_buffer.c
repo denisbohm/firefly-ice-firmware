@@ -147,6 +147,48 @@ void fd_storage_buffer_add_time_series_s(
     storage_buffer->index += length;
 }
 
+void fd_storage_buffer_add_time_series_us(
+    fd_storage_buffer_t *storage_buffer, fd_time_t time, uint32_t interval_us, uint8_t *data, uint32_t length
+) {
+    if ((storage_buffer->index + length) > FD_STORAGE_MAX_DATA_LENGTH) {
+        fd_storage_buffer_flush(storage_buffer);
+    }
+    if (storage_buffer->index > 0) {
+        fd_time_t next_time = {
+            .seconds = fd_binary_unpack_uint32(&storage_buffer->data[0]),
+            .microseconds = fd_binary_unpack_uint32(&storage_buffer->data[4])
+        };
+        fd_time_t increment = {
+            .seconds = 0,
+            .microseconds = interval_us
+        };
+        uint32_t count = (storage_buffer->index - 3 * SIZEOF_UINT32) / length;
+        for (int i = 0; i < count; ++i) {
+            next_time = fd_time_add(next_time, increment);
+        }
+        if (!fd_time_eq(time, next_time)) {
+            fd_storage_buffer_flush(storage_buffer);
+        }
+    }
+    if (storage_buffer->index == 0) {
+        fd_binary_pack_uint32(&storage_buffer->data[storage_buffer->index], time.seconds);
+        storage_buffer->index += SIZEOF_UINT32;
+        fd_binary_pack_uint32(&storage_buffer->data[storage_buffer->index], time.microseconds);
+        storage_buffer->index += SIZEOF_UINT32;
+        fd_binary_pack_uint32(&storage_buffer->data[storage_buffer->index], interval_us);
+        storage_buffer->index += SIZEOF_UINT32;
+    }
+    memcpy(&storage_buffer->data[storage_buffer->index], data, length);
+    storage_buffer->index += length;
+    if ((storage_buffer->index + length) > FD_STORAGE_MAX_DATA_LENGTH) {
+        fd_storage_buffer_flush(storage_buffer);
+    }
+}
+
+bool fd_storage_buffer_is_empty(fd_storage_buffer_t *storage_buffer) {
+    return storage_buffer->index == 0;
+}
+
 void fd_storage_buffer_add_time_series_s_float16(
     fd_storage_buffer_t *storage_buffer, uint32_t time_s, uint16_t interval_s, float value
 ) {

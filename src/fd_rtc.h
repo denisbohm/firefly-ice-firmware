@@ -20,4 +20,6 @@ void fd_rtc_enable(const fd_rtc_t *rtc);
 void fd_rtc_disable(const fd_rtc_t *rtc);
 bool fd_rtc_is_enabled(const fd_rtc_t *rtc);
 
+uint32_t fd_rtc_get_subticks(const fd_rtc_t *fd_rtc);
+
 #endif

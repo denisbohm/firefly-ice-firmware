@@ -1,6 +1,11 @@
 #include "fd_rtc.h"
 
+#include "fd_hal_processor.h"
+
 #include "fd_nrf5.h"
+
+// Use compare 1 to trigger rtc ticks, so that we can use a counter prescaler of 1.
+// This lets us read the counter register to get an "accurate" time (~30.5 us resolution).
 
 #define FD_RTC_CLOCK_FREQUENCY 32768UL
 
@@ -10,6 +15,7 @@ typedef struct {
     const fd_rtc_t *rtc;
     IRQn_Type irqn;
     uint32_t counter;
+    uint32_t last_counter;
 } fd_rtc_info_t;
 
 #define fd_rtc_size 3
@@ -39,6 +45,7 @@ void fd_rtc_initialize(
         info->rtc = rtc;
         info->irqn = fd_rtc_get_irqn(rtc);
         info->counter = FD_RTC_CLOCK_FREQUENCY / rtc->ticks_per_second;
+        info->last_counter = 0;
         fd_rtc_disable(rtc);
     }
 }
@@ -85,11 +92,10 @@ void fd_rtc_enable(const fd_rtc_t *fd_rtc) {
     NVIC_ClearPendingIRQ(irqn);
     NVIC_EnableIRQ(irqn);
 
+    info->last_counter = 0;
     rtc->TASKS_CLEAR = 1;
     nrf_delay_us(FD_RTC_MAX_TASK_DELAY);
 
-    // use compare 1 to trigger rtc ticks
-    uint32_t cc = FD_RTC_CLOCK_FREQUENCY / fd_rtc->ticks_per_second;
     rtc->CC[1] = info->counter;
 
     rtc->TASKS_START = 1;
@@ -102,11 +108,22 @@ bool fd_rtc_is_enabled(const fd_rtc_t *fd_rtc) {
     return rtc->CC[1] != 0;
 }
 
+uint32_t fd_rtc_get_subticks(const fd_rtc_t *fd_rtc) {
+    NRF_RTC_Type *rtc = (NRF_RTC_Type *)fd_rtc->instance;
+    fd_rtc_info_t *info = fd_rtc_get_info(fd_rtc->instance);
+    fd_hal_processor_interrupts_disable();
+    uint32_t subticks = rtc->COUNTER - info->last_counter;
+    fd_hal_processor_interrupts_enable();
+    return subticks;
+}
+
 void fd_rtc_handler(NRF_RTC_Type *rtc) {
     if (rtc->EVENTS_COMPARE[1]) {
         fd_rtc_info_t *info = fd_rtc_get_info((uint32_t)rtc);
         if (info != 0) {
-            rtc->CC[1] = (rtc->COUNTER & ~(info->counter - 1)) + info->counter;
+            uint32_t counter = rtc->COUNTER;
+            rtc->CC[1] = (counter & ~(info->counter - 1)) + info->counter;
+            info->last_counter = counter;
 
             if (info->rtc->handler != 0) {
                 info->rtc->handler();

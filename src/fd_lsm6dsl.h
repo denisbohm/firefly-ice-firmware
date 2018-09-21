@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     fd_lsm6dsl_accelerometer_sample_t accelerometer;
     fd_lsm6dsl_gyro_sample_t gyro;
+    uint32_t timestamp;
 } fd_lsm6dsl_sample_t;
 
 #define FD_LSM6DSL_REGISTER_FUNC_CFG_ACCESS 0x01
@@ -153,6 +154,15 @@ typedef struct {
 #define FD_LSM6DSL_GHPF_P0324_HZ    0b101
 #define FD_LSM6DSL_GHPF_2P07_HZ     0b110
 #define FD_LSM6DSL_GHPF_16P32_HZ    0b111
+
+#define FD_LSM6DSL_INT1_STEP_DETECTOR 0b10000000
+#define FD_LSM6DSL_INT1_SIGN_MOT      0b01000000
+#define FD_LSM6DSL_INT1_FULL_FLAG     0b00100000
+#define FD_LSM6DSL_INT1_FIFO_OVR      0b00010000
+#define FD_LSM6DSL_INT1_FTH           0b00001000
+#define FD_LSM6DSL_INT1_BOOT          0b00000100
+#define FD_LSM6DSL_INT1_DRDY_G        0b00000010
+#define FD_LSM6DSL_INT1_DRDY_XL       0b00000001
 
 #define FD_LSM6DSL_READ 0x80
 

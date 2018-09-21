@@ -14,6 +14,20 @@ float fd_time_to_float(fd_time_t time) {
     return time.seconds + time.microseconds / 1000000.0f;
 }
 
+fd_time_t fd_time_from_us(uint64_t us) {
+    uint32_t seconds = (uint32_t)(us / 1000000);
+    uint32_t microseconds = (uint32_t)(us - (seconds * 1000000ULL));
+    fd_time_t time = {
+        .seconds = seconds,
+        .microseconds = microseconds
+    };
+    return time;
+}
+
+uint64_t fd_time_to_us(fd_time_t time) {
+    return time.seconds * 1000000ULL + time.microseconds;
+}
+
 bool fd_time_eq(fd_time_t a, fd_time_t b) {
     return (a.seconds == b.seconds) && (a.microseconds == b.microseconds);
 }

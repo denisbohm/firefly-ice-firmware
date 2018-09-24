@@ -14,7 +14,8 @@
 typedef struct {
     const fd_rtc_t *rtc;
     IRQn_Type irqn;
-    uint32_t counter;
+    uint32_t count_per_tick;
+    uint32_t correction_ticks;
     uint32_t last_counter;
 } fd_rtc_info_t;
 
@@ -44,7 +45,8 @@ void fd_rtc_initialize(
         fd_rtc_info_t *info = &fd_rtc_infos[i];
         info->rtc = rtc;
         info->irqn = fd_rtc_get_irqn(rtc);
-        info->counter = FD_RTC_CLOCK_FREQUENCY / rtc->ticks_per_second;
+        info->count_per_tick = FD_RTC_CLOCK_FREQUENCY / rtc->ticks_per_second;
+        info->correction_ticks = 0;
         info->last_counter = 0;
         fd_rtc_disable(rtc);
     }
@@ -96,7 +98,7 @@ void fd_rtc_enable(const fd_rtc_t *fd_rtc) {
     rtc->TASKS_CLEAR = 1;
     nrf_delay_us(FD_RTC_MAX_TASK_DELAY);
 
-    rtc->CC[1] = info->counter;
+    rtc->CC[1] = info->count_per_tick;
 
     rtc->TASKS_START = 1;
     nrf_delay_us(FD_RTC_MAX_TASK_DELAY);
@@ -121,8 +123,16 @@ void fd_rtc_handler(NRF_RTC_Type *rtc) {
     if (rtc->EVENTS_COMPARE[1]) {
         fd_rtc_info_t *info = fd_rtc_get_info((uint32_t)rtc);
         if (info != 0) {
+            uint32_t count_per_tick = info->count_per_tick;
+            uint32_t ticks_per_correction = info->rtc->ticks_per_correction;
+            if (ticks_per_correction) {
+                if (++info->correction_ticks >= ticks_per_correction) {
+                    info->correction_ticks = 0;
+                    count_per_tick += info->rtc->correction_count;
+                }
+            }
             uint32_t counter = rtc->COUNTER;
-            rtc->CC[1] = (counter & ~(info->counter - 1)) + info->counter;
+            rtc->CC[1] = (counter & ~(count_per_tick - 1)) + count_per_tick;
             info->last_counter = counter;
 
             if (info->rtc->handler != 0) {

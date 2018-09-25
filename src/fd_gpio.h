@@ -9,11 +9,17 @@ typedef struct {
     uint32_t pin;
 } fd_gpio_t;
 
+typedef enum {
+    fd_gpio_edge_rising,
+    fd_gpio_edge_falling,
+    fd_gpio_edge_toggle,
+} fd_gpio_edge_t;
+
 typedef void (*fd_gpio_function_t)(void *context, bool pin_state);
 
 void fd_gpio_initialize(void);
 
-void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_function_t function, void *context);
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_edge_t edge, fd_gpio_function_t function, void *context);
 
 void fd_gpio_configure_default(fd_gpio_t gpio);
 

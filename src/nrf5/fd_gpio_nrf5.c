@@ -198,6 +198,7 @@ void GPIOTE_IRQHandler(void) {
 
 typedef struct {
     fd_gpio_t gpio;
+    fd_gpio_edge_t edge;
     fd_gpio_function_t function;
     void *context;
     bool state;
@@ -208,19 +209,50 @@ typedef struct {
 volatile fd_gpio_nrf5_callback_t fd_gpio_nrf5_callbacks[fd_gpio_nrf5_callback_limit];
 volatile uint32_t fd_gpio_nrf5_callback_count;
 
+volatile bool fd_gpio_nrf5_port_used;
+volatile fd_gpio_nrf5_callback_t fd_gpio_nrf5_port_callback;
+
 void fd_gpio_initialize_implementation(void) {
     fd_gpio_nrf5_callback_count = 0;
     memset((void *)fd_gpio_nrf5_callbacks, 0, sizeof(fd_gpio_nrf5_callbacks));
-    
+
+    fd_gpio_nrf5_port_used = false;
+    memset((void *)&fd_gpio_nrf5_port_callback, 0, sizeof(fd_gpio_nrf5_port_callback));
+
     NVIC_EnableIRQ(GPIOTE_IRQn);
 }
 
-void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_function_t function, void *context) {
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_edge_t edge, fd_gpio_function_t function, void *context) {
+    if ((edge == fd_gpio_edge_rising) || (edge == fd_gpio_edge_falling)) {
+        if (!fd_gpio_nrf5_port_used) {
+            // use port change callback
+            fd_gpio_nrf5_port_callback = (fd_gpio_nrf5_callback_t){
+                .gpio = gpio,
+                .edge = edge,
+                .function = function,
+                .context = context,
+                .state = edge == fd_gpio_edge_rising,
+                .count = 0
+            };
+            fd_gpio_nrf5_port_used = true;
+
+            NRF_GPIOTE->INTENCLR = GPIOTE_INTENCLR_PORT_Msk;
+            NRF_GPIO_Type *nrf_gpio = fd_gpio_get_nrf_gpio(gpio.port);
+            uint32_t sense = edge == fd_gpio_edge_falling ? GPIO_PIN_CNF_SENSE_Low : GPIO_PIN_CNF_SENSE_High;
+            volatile uint32_t *cnf = &nrf_gpio->PIN_CNF[gpio.pin];
+            *cnf = (*cnf & ~GPIO_PIN_CNF_SENSE_Msk) | (sense << GPIO_PIN_CNF_SENSE_Pos);
+            NRF_GPIOTE->EVENTS_PORT = 0;
+            NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
+            return;
+        }
+    }
+
     if (fd_gpio_nrf5_callback_count >= fd_gpio_nrf5_callback_limit) {
         return;
     }
     volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_callbacks[fd_gpio_nrf5_callback_count];
     callback->gpio = gpio;
+    callback->edge = edge;
     callback->function = function;
     callback->context = context;
     callback->state = fd_gpio_get(gpio);
@@ -253,6 +285,15 @@ void GPIOTE_IRQHandler(void) {
                 }
                 callback->function(callback->context, state);
             }
+        }
+    }
+
+    if (NRF_GPIOTE->EVENTS_PORT) {
+        NRF_GPIOTE->EVENTS_PORT = 0;
+        if (fd_gpio_nrf5_port_used) {
+            volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_port_callback;
+            callback->count += 1;
+            callback->function(callback->context, callback->state);
         }
     }
 }

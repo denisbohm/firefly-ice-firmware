@@ -2,6 +2,8 @@
 
 #include "fd_nrf5.h"
 
+#include <string.h>
+
 typedef struct {
     uint16_t sequence[4];
 } fd_pwm_module_state_t;
@@ -9,6 +11,7 @@ typedef struct {
 fd_pwm_module_state_t fd_pwm_module_states[4];
 
 void fd_pwm_initialize(const fd_pwm_module_t *modules, uint32_t module_count) {
+    memset(fd_pwm_module_states, 0, sizeof(fd_pwm_module_states));
 }
 
 static
@@ -56,6 +59,18 @@ void fd_pwm_module_disable(const fd_pwm_module_t *module) {
     pwm->TASKS_STOP = 1;
     while (pwm->EVENTS_STOPPED == 0);
     pwm->ENABLE = PWM_ENABLE_ENABLE_Disabled << PWM_ENABLE_ENABLE_Pos;
+
+    pwm->EVENTS_STOPPED = 0;
+    pwm->EVENTS_SEQSTARTED[0] = 0;
+    pwm->EVENTS_SEQEND[0] = 0;
+    pwm->EVENTS_PWMPERIODEND = 0;
+    pwm->COUNTERTOP = 0;
+    pwm->LOOP = 0;
+    pwm->DECODER = 0;
+    pwm->SEQ[0].PTR = 0;
+    pwm->SEQ[0].CNT = 0;
+    pwm->SEQ[0].REFRESH = 0;
+    pwm->SEQ[0].ENDDELAY = 0;
 }
 
 void fd_pwm_channel_start(const fd_pwm_channel_t *channel, float duty_cycle) {
@@ -74,11 +89,15 @@ void fd_pwm_channel_start(const fd_pwm_channel_t *channel, float duty_cycle) {
 bool fd_pwm_channel_is_running(const fd_pwm_channel_t *channel) {
     const fd_pwm_module_t *module = channel->module;
     NRF_PWM_Type *pwm = (NRF_PWM_Type *)module->instance;
+
     return pwm->PSEL.OUT[channel->instance] != 0xFFFFFFFF;
 }
 
 void fd_pwm_channel_stop(const fd_pwm_channel_t *channel) {
     const fd_pwm_module_t *module = channel->module;
     NRF_PWM_Type *pwm = (NRF_PWM_Type *)module->instance;
+    fd_pwm_module_state_t *state = fd_pwm_get_state(module->instance);
+
+    state->sequence[channel->instance] = 0;
     pwm->PSEL.OUT[channel->instance] = 0xFFFFFFFF;
 }

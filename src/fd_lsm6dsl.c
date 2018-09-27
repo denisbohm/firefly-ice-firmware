@@ -1,6 +1,7 @@
 #include "fd_lsm6dsl.h"
 
 #include "fd_delay.h"
+#include "fd_log.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -51,13 +52,21 @@ uint16_t fd_lsm6dsl_to_uint16(uint8_t *bytes, uint32_t offset) {
 
 uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
     for (int retry = 0; retry < 10; ++retry) {
+        bool int1 = fd_gpio_get((fd_gpio_t){ .port = 1, .pin = 6 });
         fd_spim_device_select(device);
         uint8_t location = FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_STATUS1;
         uint8_t buffer[4];
         fd_spim_bus_sequence_txn_rxn(device->bus, &location, 1, buffer, sizeof(buffer));
         fd_spim_bus_wait(device->bus);
-        uint16_t unread_words = fd_lsm6dsl_to_uint16(buffer, 0) & 0x7ff;
-        uint16_t pattern = fd_lsm6dsl_to_uint16(buffer, 2) & 0x3ff;
+        uint16_t fifo_status_12 = fd_lsm6dsl_to_uint16(buffer, 0);
+        uint16_t unread_words = fifo_status_12 & 0x0fff;
+        uint16_t pattern = fd_lsm6dsl_to_uint16(buffer, 2) & 0x03ff;
+
+        // Check full and overrun.  In these cases, unread_words is 0.  Not sure why... -denis
+        if (fifo_status_12 & 0x6000) {
+            // in this case let's just say there are 1024 words in the buffer (there should be many more) -denis
+            unread_words = 1024;
+        }
 
         // pattern will be 0 at the start of a sample set, otherwise try to align pattern by discarding a fifo word
         if ((unread_words > 0) && (pattern != 0)) {
@@ -69,6 +78,9 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
         }
 
         fd_spim_device_deselect(device);
+        if (unread_words == 0) {
+            fd_log_assert(int1);
+        }
         return unread_words; // normal return
     }
     return 0; // failed to align pattern
@@ -111,17 +123,20 @@ uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl
 }
 
 void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device) {
-    uint32_t word_count = fd_lsm6dsl_read_fifo_word_count(device);
+    uint32_t word_count = 0;
+    do {
+        word_count = fd_lsm6dsl_read_fifo_word_count(device);
 
-    fd_spim_device_select(device);
-    fd_spim_bus_tx1(device->bus, FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_DATA_OUT_L);
-    fd_spim_bus_wait(device->bus);
-    for (uint32_t i = 0; i < word_count; ++i) {
-        uint8_t bytes[2];
-        fd_spim_bus_rxn(device->bus, bytes, sizeof(bytes));
+        fd_spim_device_select(device);
+        fd_spim_bus_tx1(device->bus, FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_DATA_OUT_L);
         fd_spim_bus_wait(device->bus);
-    }
-    fd_spim_device_deselect(device);
+        for (uint32_t i = 0; i < word_count; ++i) {
+            uint8_t bytes[2];
+            fd_spim_bus_rxn(device->bus, bytes, sizeof(bytes));
+            fd_spim_bus_wait(device->bus);
+        }
+        fd_spim_device_deselect(device);
+    } while (word_count > 0);
 }
 
 void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration) {

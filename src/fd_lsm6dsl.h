@@ -168,6 +168,11 @@ typedef struct {
 #define FD_LSM6DSL_INT1_DRDY_G        0b00000010
 #define FD_LSM6DSL_INT1_DRDY_XL       0b00000001
 
+#define FD_LSM6DSL_FIFO_STATUS2_WATERM          0b10000000
+#define FD_LSM6DSL_FIFO_STATUS2_OVER_RUN        0b01000000
+#define FD_LSM6DSL_FIFO_STATUS2_FIFO_FULL_SMART 0b00100000
+#define FD_LSM6DSL_FIFO_STATUS2_EMPTY           0b00010000
+
 #define FD_LSM6DSL_READ 0x80
 
 float fd_lsm6dsl_accelerometer_scale(uint32_t fs);

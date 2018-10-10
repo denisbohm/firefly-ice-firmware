@@ -15,6 +15,7 @@ typedef struct {
     bool overrun_detection_enabled;
     uint32_t ack_wait_retry_count;
     uint32_t register_retry_count;
+    uint32_t half_bit_delay_ns;
 } fdi_serial_wire_t;
 
 #define fdi_serial_wire_count 2

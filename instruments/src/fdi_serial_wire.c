@@ -33,11 +33,7 @@ bool fdi_serial_wire_get_reset(fdi_serial_wire_t *serial_wire) {
 // SWDIO has a pull up resistor
 // SWD Master writes and reads data on falling clock edge
 
-#ifdef APOLLO2_HACK
-#define fdi_serial_wire_half_bit_delay() fdi_delay_ns(200)
-#else
-#define fdi_serial_wire_half_bit_delay() // fdi_delay_ns(50)
-#endif
+#define fdi_serial_wire_half_bit_delay() fdi_delay_ns(serial_wire->half_bit_delay_ns)
 
 void fdi_serial_wire_shift_out(fdi_serial_wire_t *serial_wire, uint8_t byte, int bit_count) {
     while (bit_count-- > 0) {
@@ -57,13 +53,13 @@ void fdi_serial_wire_shift_out(fdi_serial_wire_t *serial_wire, uint8_t byte, int
 }
 
 void fdi_serial_wire_shift_out_bytes(fdi_serial_wire_t *serial_wire, uint8_t *data, uint32_t length) {
-#ifdef APOLLO2_HACK
-    for (uint32_t i = 0; i < length; ++i) {
-        fdi_serial_wire_shift_out(serial_wire, data[i], 8);
+    if (serial_wire->half_bit_delay_ns > 0) {
+        for (uint32_t i = 0; i < length; ++i) {
+            fdi_serial_wire_shift_out(serial_wire, data[i], 8);
+        }
+    } else {
+        fdi_gpio_serial_wire_debug_out(serial_wire->gpio_clock, serial_wire->gpio_data, data, length);
     }
-#else
-    fdi_gpio_serial_wire_debug_out(serial_wire->gpio_clock, serial_wire->gpio_data, data, length);
-#endif
 }
 
 uint8_t fdi_serial_wire_shift_in(fdi_serial_wire_t *serial_wire, int bit_count) {
@@ -84,13 +80,13 @@ uint8_t fdi_serial_wire_shift_in(fdi_serial_wire_t *serial_wire, int bit_count) 
 }
 
 void fdi_serial_wire_shift_in_bytes(fdi_serial_wire_t *serial_wire, uint8_t *data, uint32_t length) {
-#ifdef APOLLO2_HACK
-    for (uint32_t i = 0; i < length; ++i) {
-        data[i] = fdi_serial_wire_shift_in(serial_wire, 8);
+    if (serial_wire->half_bit_delay_ns > 0) {
+        for (uint32_t i = 0; i < length; ++i) {
+            data[i] = fdi_serial_wire_shift_in(serial_wire, 8);
+        }
+    } else {
+        fdi_gpio_serial_wire_debug_in(serial_wire->gpio_clock, serial_wire->gpio_data, data, length);
     }
-#else
-    fdi_gpio_serial_wire_debug_in(serial_wire->gpio_clock, serial_wire->gpio_data, data, length);
-#endif
 }
 
 void fdi_serial_wire_set_direction_to_read(fdi_serial_wire_t *serial_wire) {
@@ -110,6 +106,11 @@ void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire) {
     fdi_gpio_off(serial_wire->gpio_direction);
     fdi_gpio_on(serial_wire->gpio_clock);
     fdi_gpio_off(serial_wire->gpio_reset);
+
+    serial_wire->overrun_detection_enabled = false;
+    serial_wire->ack_wait_retry_count = 3;
+    serial_wire->register_retry_count = 3;
+    serial_wire->half_bit_delay_ns = 0;
 }
 
 void fdi_serial_wire_initialize(void) {
@@ -124,6 +125,7 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->overrun_detection_enabled = false;
         serial_wire->ack_wait_retry_count = 3;
         serial_wire->register_retry_count = 3;
+        serial_wire->half_bit_delay_ns = 0;
     }
     {
         fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
@@ -136,5 +138,6 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->overrun_detection_enabled = false;
         serial_wire->ack_wait_retry_count = 3;
         serial_wire->register_retry_count = 3;
+        serial_wire->half_bit_delay_ns = 0;
     }
 }

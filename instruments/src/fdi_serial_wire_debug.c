@@ -4,8 +4,6 @@
 
 #include <stddef.h>
 
-//#define FDI_SERIAL_WIRE_DEBUG_FAST
-
 bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail) {
     if (error) {
         error->code = code;
@@ -85,15 +83,15 @@ fdi_serial_wire_debug_ack_t fdi_serial_wire_debug_request(fdi_serial_wire_t *ser
 }
 
 bool fdi_serial_wire_debug_read_uint32(fdi_serial_wire_t *serial_wire, uint32_t *value) {
-#if defined(FDI_SERIAL_WIRE_DEBUG_FAST)
-    fdi_serial_wire_shift_in_bytes(serial_wire, (uint8_t *)value, sizeof(uint32_t));
-#else
-    uint32_t byte_0 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint32_t byte_1 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint32_t byte_2 = fdi_serial_wire_shift_in(serial_wire, 8);
-    uint32_t byte_3 = fdi_serial_wire_shift_in(serial_wire, 8);
-    *value = (byte_3 << 24) | (byte_2 << 16) | (byte_1 << 8) | byte_0;
-#endif
+    if (serial_wire->half_bit_delay_ns == 0) {
+        fdi_serial_wire_shift_in_bytes(serial_wire, (uint8_t *)value, sizeof(uint32_t));
+    } else {
+        uint32_t byte_0 = fdi_serial_wire_shift_in(serial_wire, 8);
+        uint32_t byte_1 = fdi_serial_wire_shift_in(serial_wire, 8);
+        uint32_t byte_2 = fdi_serial_wire_shift_in(serial_wire, 8);
+        uint32_t byte_3 = fdi_serial_wire_shift_in(serial_wire, 8);
+        *value = (byte_3 << 24) | (byte_2 << 16) | (byte_1 << 8) | byte_0;
+    }
     uint8_t parity = fdi_serial_wire_shift_in(serial_wire, 1) >> 7;
     if (parity != fdi_serial_wire_debug_get_parity_uint32(*value)) {
         return false;
@@ -102,14 +100,14 @@ bool fdi_serial_wire_debug_read_uint32(fdi_serial_wire_t *serial_wire, uint32_t 
 }
 
 void fdi_serial_wire_debug_write_uint32(fdi_serial_wire_t *serial_wire, uint32_t value) {
-#if defined(FDI_SERIAL_WIRE_DEBUG_FAST)
-    fdi_serial_wire_shift_out_bytes(serial_wire, (uint8_t *)&value, sizeof(uint32_t));
-#else
-    fdi_serial_wire_shift_out(serial_wire, value, 8);
-    fdi_serial_wire_shift_out(serial_wire, value >> 8, 8);
-    fdi_serial_wire_shift_out(serial_wire, value >> 16, 8);
-    fdi_serial_wire_shift_out(serial_wire, value >> 24, 8);
-#endif
+    if (serial_wire->half_bit_delay_ns == 0) {
+        fdi_serial_wire_shift_out_bytes(serial_wire, (uint8_t *)&value, sizeof(uint32_t));
+    } else {
+        fdi_serial_wire_shift_out(serial_wire, value, 8);
+        fdi_serial_wire_shift_out(serial_wire, value >> 8, 8);
+        fdi_serial_wire_shift_out(serial_wire, value >> 16, 8);
+        fdi_serial_wire_shift_out(serial_wire, value >> 24, 8);
+    }
     uint8_t parity = fdi_serial_wire_debug_get_parity_uint32(value);
     fdi_serial_wire_shift_out(serial_wire, parity, 1);
 }

@@ -26,6 +26,7 @@ static const uint64_t apiTypeReadMemory = 11;
 static const uint64_t apiTypeWriteFromStorage = 12;
 static const uint64_t apiTypeCompareToStorage = 13;
 static const uint64_t apiTypeTransfer = 14;
+static const uint64_t apiTypeSetHalfBitDelay = 15;
 
 static const uint8_t outputIndicator = 0;
 static const uint8_t outputReset = 1;
@@ -389,6 +390,15 @@ void fdi_serial_wire_instrument_api_transfer(uint64_t identifier, uint64_t type 
     }
 }
 
+void fdi_serial_wire_instrument_api_set_half_bit_delay(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    instrument->serial_wire->half_bit_delay_ns = fd_binary_get_uint32(binary);
+}
+
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
@@ -412,5 +422,6 @@ void fdi_serial_wire_instrument_initialize(void) {
         fdi_api_register(identifier, apiTypeWriteFromStorage, fdi_serial_wire_instrument_api_write_from_storage);
         fdi_api_register(identifier, apiTypeCompareToStorage, fdi_serial_wire_instrument_api_compare_memory_to_storage);
         fdi_api_register(identifier, apiTypeTransfer, fdi_serial_wire_instrument_api_transfer);
+        fdi_api_register(identifier, apiTypeSetHalfBitDelay, fdi_serial_wire_instrument_api_set_half_bit_delay);
     }
 }

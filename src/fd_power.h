@@ -15,6 +15,7 @@ typedef struct {
 typedef void (*fd_power_callback_t)(void);
 
 void fd_power_initialize(void);
+void fd_power_initialize_with_update_interval(uint32_t update_interval);
 
 void fd_power_set_callback(fd_power_callback_t callback);
 fd_power_callback_t fd_power_get_callback(void);

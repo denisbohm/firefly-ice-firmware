@@ -43,6 +43,7 @@
 #include "fd_power.h"
 #include "fd_timer.h"
 
+static uint32_t fd_power_update_interval;
 static fd_timer_t fd_power_update_timer;
 static uint32_t fd_power_high_start;
 static uint32_t fd_power_low_start;
@@ -55,8 +56,6 @@ static fd_power_callback_t fd_power_high_battery_level_callback;
 
 static uint32_t fd_power_state;
 static uint32_t fd_power_state_start;
-
-#define UPDATE_INTERVAL 60
 
 #define FD_POWER_HIGH_DURATION (2 * 60)
 #define FD_POWER_LOW_DURATION (5 * 60)
@@ -238,13 +237,13 @@ void fd_power_update_callback(void) {
     bool is_charging = fd_hal_system_is_charging();
     if (is_usb_powered) {
         if (is_charging) {
-            retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute();
+            retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute() / fd_power_update_interval;
             if (retained->power_battery_level > 1.0) {
                 retained->power_battery_level = 1.0;
             }
         }
     } else {
-        retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute();
+        retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute() / fd_power_update_interval;
         if (retained->power_battery_level < 0.0) {
             retained->power_battery_level = 0.0;
         }
@@ -271,7 +270,7 @@ void fd_power_update_callback(void) {
     }
 
     fd_hal_system_start_conversions();
-    fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
+    fd_timer_start_next(&fd_power_update_timer, fd_power_update_interval);
 }
 
 void fd_power_set_callback(fd_power_callback_t callback) {
@@ -298,7 +297,9 @@ fd_power_callback_t fd_power_get_high_battery_level_callback(void) {
     return fd_power_high_battery_level_callback;
 }
 
-void fd_power_initialize(void) {
+void fd_power_initialize_with_update_interval(uint32_t update_interval) {
+    fd_power_update_interval = update_interval;
+    
     fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
     if ((retained->power_battery_level < 0.01) || (retained->power_battery_level > 1.0)) {
         // battery level is uninitialized/unknown/bogus, so make a guess... -denis
@@ -321,7 +322,11 @@ void fd_power_initialize(void) {
     fd_event_add_callback(FD_EVENT_USB_POWER, fd_power_usb_power_callback);
 
     fd_timer_add(&fd_power_update_timer, fd_power_update_callback);
-    fd_timer_start_next(&fd_power_update_timer, UPDATE_INTERVAL);
+    fd_timer_start_next(&fd_power_update_timer, fd_power_update_interval);
+}
+
+void fd_power_initialize(void) {
+    fd_power_initialize_with_update_interval(60);
 }
 
 void fd_power_get(fd_power_t *power) {

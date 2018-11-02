@@ -1,7 +1,7 @@
 #ifndef FD_SENSING_H
 #define FD_SENSING_H
 
-#include "fd_detour.h"
+#include "fd_packet.h"
 
 void fd_sensing_initialize(void);
 
@@ -15,6 +15,6 @@ uint32_t fd_sensing_get_stream_sample_count(void);
 
 void fd_sensing_erase(void);
 
-void fd_sensing_synthesize(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length);
+void fd_sensing_synthesize(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length);
 
 #endif

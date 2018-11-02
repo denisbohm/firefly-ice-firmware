@@ -13,20 +13,12 @@
 #define METADATA_SIZE 12
 #define SYNC_SIZE (COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE + FD_STORAGE_MAX_DATA_LENGTH)
 
-fd_detour_source_t fd_sync_detour_source;
-uint8_t fd_sync_detour_buffer[SYNC_SIZE];
+uint8_t fd_sync_output_buffer[SYNC_SIZE];
 
 void fd_sync_initialize(void) {
-    fd_detour_source_initialize(&fd_sync_detour_source);
 }
 
-static
-void fd_sync_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
-    fd_log_assert((offset + length) <= SYNC_SIZE);
-    memcpy(data, &fd_sync_detour_buffer[offset], length);
-}
-
-void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_sync_start(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     uint32_t flags = 0;
     uint32_t offset = 0;
     if (length >= 4) {
@@ -39,11 +31,11 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     }
 
     fd_storage_metadata_t metadata;
-    uint32_t shortage = fd_storage_read_nth_page(offset, &metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
+    uint32_t shortage = fd_storage_read_nth_page(offset, &metadata, &fd_sync_output_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
     if (shortage > 0) {
         bool has_page = false;
         if (shortage == 1) {
-            has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_detour_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
+            has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_output_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
         }
         if (has_page) {
             --shortage;
@@ -62,7 +54,7 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     }
 
     fd_binary_t binary;
-    fd_binary_initialize(&binary, fd_sync_detour_buffer, COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE);
+    fd_binary_initialize(&binary, fd_sync_output_buffer, COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE);
     fd_binary_put_uint8(&binary, FD_CONTROL_SYNC_DATA);
     fd_hal_processor_get_hardware_id(&binary);
     fd_binary_put_uint32(&binary, metadata.page);
@@ -73,14 +65,13 @@ void fd_sync_start(fd_detour_source_collection_t *detour_source_collection, uint
     uint32_t sync_length = COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE + metadata.length;
     // encrypt
 
-    fd_detour_source_set(&fd_sync_detour_source, fd_sync_detour_supplier, sync_length);
-    bool result = fd_detour_source_collection_push(detour_source_collection, &fd_sync_detour_source);
+    bool result = packet_output->write(fd_sync_output_buffer, sync_length);
     if (!result) {
         fd_log_assert_fail("");
     }
 }
 
-void fd_sync_ack(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_sync_ack(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     // decrypt
 
     fd_storage_metadata_t metadata;

@@ -4,8 +4,6 @@
 
 #include <string.h>
 
-fd_detour_source_collection_t *fd_detour_source_collection_head;
-
 void fd_detour_initialize(fd_detour_t *detour, uint8_t *data, uint32_t size) {
     detour->data = data;
     detour->size = size;
@@ -84,8 +82,8 @@ void fd_detour_event(fd_detour_t *detour, uint8_t *data, uint32_t length) {
 }
 
 void fd_detour_source_initialize(fd_detour_source_t *source) {
-    source->supplier = 0;
     source->state = fd_detour_state_clear;
+    source->data = 0;
     source->length = 0;
     source->sequence_number = 0;
     source->offset = 0;
@@ -95,9 +93,9 @@ bool fd_detour_source_is_transferring(fd_detour_source_t *source) {
     return (source->state == fd_detour_state_intermediate) && (source->sequence_number != 0);
 }
 
-void fd_detour_source_set(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length) {
-    source->supplier = supplier;
+void fd_detour_source_set(fd_detour_source_t *source, uint8_t *data, uint32_t length) {
     source->state = fd_detour_state_intermediate;
+    source->data = data;
     source->length = length;
     source->sequence_number = 0;
     source->offset = 0;
@@ -118,65 +116,11 @@ bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t le
     if (n > (length - index)) {
         n = length - index;
     }
-    (*source->supplier)(source->offset, &data[index], n);
+    memcpy(&data[index], &source->data[source->offset], n);
     source->offset += n;
     ++source->sequence_number;
     if (source->length == source->offset) {
         source->state = fd_detour_state_success;
     }
-    return true;
-}
-
-void fd_detour_startup_initialize(void) {
-    fd_detour_source_collection_head = 0;
-}
-
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, fd_lock_owner_t owner, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize, fd_detour_source_is_available_t is_available) {
-    collection->owner = owner;
-    collection->packetSize = packetSize;
-    collection->buffer = buffer;
-    collection->bufferSize = bufferSize;
-    collection->bufferCount = 0;
-    collection->callback = 0;
-    collection->is_available = is_available;
-    collection->subscribed_properties = 0;
-    collection->notify_properties = 0;
-    collection->next = fd_detour_source_collection_head;
-    fd_detour_source_collection_head = collection;
-}
-
-void fd_detour_source_collection_unavailable(fd_detour_source_collection_t *collection) {
-    collection->bufferCount = 0;
-    collection->subscribed_properties = 0;
-    collection->notify_properties = 0;
-}
-
-bool fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source) {
-    bool result = false;
-    uint32_t bufferCount = collection->bufferCount;
-    while (true) {
-        if ((collection->bufferCount + collection->packetSize) > collection->bufferSize) {
-            collection->bufferCount = bufferCount;
-            break;
-        }
-        if (!fd_detour_source_get(source, &collection->buffer[collection->bufferCount], collection->packetSize)) {
-            result = true;
-            break;
-        }
-        collection->bufferCount += collection->packetSize;
-    }
-    if (collection->callback) {
-        collection->callback();
-    }
-    return result;
-}
-
-bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, uint8_t *buffer) {
-    if (collection->bufferCount == 0) {
-        return false;
-    }
-    memcpy(buffer, collection->buffer, collection->packetSize);
-    collection->bufferCount -= collection->packetSize;
-    memmove(collection->buffer, &collection->buffer[collection->packetSize], collection->bufferCount);
     return true;
 }

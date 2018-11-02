@@ -122,7 +122,7 @@ void fd_sensing_timer_callback(void) {
     fd_sensing_wake();
 }
 
-void fd_sensing_synthesize(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_sensing_synthesize(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t samples = fd_binary_get_uint32(&binary);

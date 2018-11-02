@@ -11,8 +11,6 @@ In the first chunk the sequence number is followed by a uint16 length.  All subs
 the content data.  The last chunk can have extra data (which will be ignored).
 */
 
-#include "fd_lock.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -36,34 +34,12 @@ typedef struct {
 typedef void (*fd_detour_supplier_t)(uint32_t offset, uint8_t *data, uint32_t length);
 
 typedef struct fd_detour_source {
-    fd_detour_supplier_t supplier;
-
     fd_detour_state_t state;
+    uint8_t *data;
     uint32_t length;
     uint32_t sequence_number;
     uint32_t offset;
 } fd_detour_source_t;
-
-typedef void (*fd_detour_source_callback_t)(void);
-
-typedef bool (*fd_detour_source_is_available_t)(void);
-
-typedef struct fd_detour_source_collection_s {
-    fd_lock_owner_t owner;
-    uint32_t packetSize;
-    uint8_t *buffer;
-    uint32_t bufferSize;
-    uint32_t bufferCount;
-    fd_detour_source_callback_t callback;
-    fd_detour_source_is_available_t is_available;
-    uint32_t subscribed_properties;
-    uint32_t notify_properties;
-    struct fd_detour_source_collection_s *next;
-} fd_detour_source_collection_t;
-
-extern fd_detour_source_collection_t *fd_detour_source_collection_head;
-
-void fd_detour_startup_initialize(void);
 
 void fd_detour_initialize(fd_detour_t *detour, uint8_t *data, uint32_t size);
 
@@ -75,16 +51,8 @@ void fd_detour_event(fd_detour_t *detour, uint8_t *data, uint32_t length);
 
 void fd_detour_source_initialize(fd_detour_source_t *source);
 
-void fd_detour_source_set(fd_detour_source_t *source, fd_detour_supplier_t supplier, uint32_t length);
+void fd_detour_source_set(fd_detour_source_t *source, uint8_t *data, uint32_t length);
 
 bool fd_detour_source_get(fd_detour_source_t *source, uint8_t *data, uint32_t length);
-
-void fd_detour_source_collection_initialize(fd_detour_source_collection_t *collection, fd_lock_owner_t owner, uint32_t packetSize, uint8_t *buffer, uint32_t bufferSize, fd_detour_source_is_available_t is_available);
-
-void fd_detour_source_collection_unavailable(fd_detour_source_collection_t *collection);
-
-bool fd_detour_source_collection_push(fd_detour_source_collection_t *collection, fd_detour_source_t *source);
-
-bool fd_detour_source_collection_get(fd_detour_source_collection_t *collection, uint8_t *buffer);
 
 #endif

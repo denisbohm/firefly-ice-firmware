@@ -117,6 +117,25 @@ void fd_binary_initialize(fd_binary_t *binary, uint8_t *buffer, uint32_t size) {
     binary->flags = 0;
 }
 
+void fd_binary_reset(fd_binary_t *binary) {
+    binary->put_index = 0;
+    binary->get_index = 0;
+    binary->flags = 0;
+}
+
+void fd_binary_remove(fd_binary_t *binary, uint32_t index, uint32_t length) {
+    uint8_t *buffer = binary->buffer;
+    uint32_t amount = binary->put_index - length;
+    memmove(&buffer[index], &buffer[index + length], amount);
+    if (binary->get_index > (index + length)) {
+        binary->get_index -= length;
+    } else
+    if (binary->get_index > index) {
+        binary->get_index = index;
+    }
+    binary->put_index -= length;
+}
+
 uint32_t fd_binary_remaining_length(fd_binary_t *binary) {
     return binary->size - binary->put_index;
 }

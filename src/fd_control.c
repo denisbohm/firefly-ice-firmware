@@ -2,7 +2,6 @@
 #include "fd_bluetooth.h"
 #include "fd_control.h"
 #include "fd_control_codes.h"
-#include "fd_detour.h"
 #include "fd_event.h"
 #include "fd_hal_aes.h"
 #include "fd_hal_ble.h"
@@ -16,6 +15,7 @@
 #include "fd_log.h"
 #include "fd_main.h"
 #include "fd_map.h"
+#include "fd_packet.h"
 #include "fd_power.h"
 #include "fd_provision.h"
 #include "fd_recognition.h"
@@ -37,7 +37,7 @@ uint8_t fd_control_input_buffer[INPUT_BUFFER_SIZE];
 uint32_t fd_control_input_buffer_count;
 
 typedef struct {
-    fd_detour_source_collection_t *detour_source_collection;
+    fd_packet_output_t *packet_output;
     uint32_t length;
 } fd_control_input_t;
 
@@ -46,11 +46,10 @@ typedef struct {
 fd_control_input_t fd_control_inputs[INPUTS_SIZE];
 uint32_t fd_control_inputs_count;
 
-#define DETOUR_BUFFER_SIZE 300
+#define FD_CONTROL_OUTPUT_BUFFER_SIZE 300
 
-fd_detour_source_t fd_control_detour_source;
-uint8_t fd_control_detour_buffer[DETOUR_BUFFER_SIZE];
-fd_binary_t fd_control_detour_binary;
+uint8_t fd_control_output_buffer[FD_CONTROL_OUTPUT_BUFFER_SIZE];
+fd_binary_t fd_control_output_binary;
 
 void fd_control_initialize_commands(void);
 void fd_control_command(void);
@@ -62,8 +61,6 @@ fd_control_callback_t fd_control_before_callback;
 fd_control_callback_t fd_control_after_callback;
 
 void fd_control_initialize(void) {
-    fd_detour_source_initialize(&fd_control_detour_source);
-
     fd_control_input_buffer_count = 0;
     fd_control_inputs_count = 0;
 
@@ -81,7 +78,7 @@ void fd_control_set_command(uint8_t code, fd_control_command_t command) {
     fd_control_commands[code] = command;
 }
 
-void fd_control_process(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_process(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     if (fd_control_inputs_count >= INPUTS_SIZE) {
         return;
     }
@@ -90,7 +87,7 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
     }
 
     fd_control_input_t *input = &fd_control_inputs[fd_control_inputs_count];
-    input->detour_source_collection = detour_source_collection;
+    input->packet_output = packet_output;
     input->length = length;
 
     memcpy(&fd_control_input_buffer[fd_control_input_buffer_count], data, length);
@@ -101,34 +98,29 @@ void fd_control_process(fd_detour_source_collection_t *detour_source_collection,
     fd_event_set(FD_EVENT_COMMAND);
 }
 
-void fd_control_detour_supplier(uint32_t offset, uint8_t *data, uint32_t length) {
-    memcpy(data, &fd_control_detour_buffer[offset], length);
+fd_binary_t *fd_control_send_start(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t type) {
+    fd_binary_initialize(&fd_control_output_binary, fd_control_output_buffer, sizeof(fd_control_output_buffer));
+    fd_binary_put_uint8(&fd_control_output_binary, type);
+    return &fd_control_output_binary;
 }
 
-fd_binary_t *fd_control_send_start(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t type) {
-    fd_binary_initialize(&fd_control_detour_binary, fd_control_detour_buffer, DETOUR_BUFFER_SIZE);
-    fd_binary_put_uint8(&fd_control_detour_binary, type);
-    return &fd_control_detour_binary;
+bool fd_control_send_complete(fd_packet_output_t *packet_output) {
+    return packet_output->write(fd_control_output_binary.buffer, fd_control_output_binary.put_index);
 }
 
-bool fd_control_send_complete(fd_detour_source_collection_t *detour_source_collection) {
-    fd_detour_source_set(&fd_control_detour_source, fd_control_detour_supplier, fd_control_detour_binary.put_index);
-    return fd_detour_source_collection_push(detour_source_collection, &fd_control_detour_source);
-}
-
-void fd_control_ping(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_ping(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint16_t ping_length = fd_binary_get_uint16(&binary);
     uint8_t *ping_data = &binary.buffer[binary.get_index];
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_PING);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_PING);
     fd_binary_put_uint16(binary_out, ping_length);
     fd_binary_put_bytes(binary_out, ping_data, ping_length);
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
-void fd_control_rtc(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_rtc(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t flags = fd_binary_get_uint32(&binary);
@@ -144,7 +136,7 @@ void fd_control_rtc(fd_detour_source_collection_t *detour_source_collection, uin
     }
 
     if (flags & (FD_CONTROL_RTC_FLAG_GET_TIME | FD_CONTROL_RTC_FLAG_GET_UTC_OFFSET)) {
-        fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_RTC);
+        fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_RTC);
         fd_binary_put_uint32(binary_out, flags);
         if (flags & FD_CONTROL_RTC_FLAG_GET_TIME) {
             fd_time_t time = fd_hal_rtc_get_time();
@@ -155,16 +147,16 @@ void fd_control_rtc(fd_detour_source_collection_t *detour_source_collection, uin
             int32_t utc_offset = fd_hal_rtc_get_utc_offset();
             fd_binary_put_uint32(binary_out, utc_offset);
         }
-        fd_control_send_complete(detour_source_collection);
+        fd_control_send_complete(packet_output);
     }
 }
 
-void fd_control_hardware(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_hardware(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t flags = fd_binary_get_uint32(&binary);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_HARDWARE);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_HARDWARE);
     fd_binary_put_uint32(binary_out, flags);
     if (flags & FD_CONTROL_HARDWARE_FLAG_GET_UNIQUE) {
         fd_hal_processor_get_hardware_unique(binary_out);
@@ -179,10 +171,10 @@ void fd_control_hardware(fd_detour_source_collection_t *detour_source_collection
     if (flags & FD_CONTROL_HARDWARE_FLAG_GET_MODEL) {
         fd_binary_put_uint32(binary_out, fd_hal_processor_get_model_number());
     }
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
-void fd_control_provision(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_provision(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
 
@@ -238,7 +230,7 @@ uint32_t fd_control_get_name(uint8_t **name) {
     return fd_control_provision_get_utf8("name", name);
 }
 
-void fd_control_reset(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_reset(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
 
@@ -451,13 +443,13 @@ void fd_control_set_property_recognition(fd_binary_t *binary) {
 
 #endif
 
-void fd_control_get_property_subscribe(fd_binary_t *binary, fd_detour_source_collection_t *collection) {
-    fd_binary_put_uint32(binary, collection->subscribed_properties);
+void fd_control_get_property_subscribe(fd_binary_t *binary, fd_packet_output_t *packet_output) {
+    fd_binary_put_uint32(binary, packet_output->subscribed_properties);
 }
 
-void fd_control_set_property_subscribe(fd_binary_t *binary, fd_detour_source_collection_t *collection) {
+void fd_control_set_property_subscribe(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint32_t properties = fd_binary_get_uint32(binary);
-    collection->subscribed_properties = properties;
+    packet_output->subscribed_properties = properties;
 }
 
 #define GET_PROPERTY_MASK \
@@ -481,8 +473,8 @@ void fd_control_set_property_subscribe(fd_binary_t *binary, fd_detour_source_col
  FD_CONTROL_PROPERTY_RECOGNITION |\
  FD_CONTROL_PROPERTY_HARDWARE_VERSION)
 
-bool fd_control_send_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t type, uint32_t properties) {
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, type);
+bool fd_control_send_properties(fd_packet_output_t *packet_output, uint8_t type, uint32_t properties) {
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, type);
     fd_binary_put_uint32(binary_out, properties & GET_PROPERTY_MASK);
     for (uint32_t property = 1; property != 0; property <<= 1) {
         if (property & properties) {
@@ -544,28 +536,28 @@ bool fd_control_send_properties(fd_detour_source_collection_t *detour_source_col
                 } break;
 #endif
                 case FD_CONTROL_PROPERTY_INDICATE: {
-                    fd_control_get_property_indicate(binary_out, detour_source_collection->owner);
+                    fd_control_get_property_indicate(binary_out, packet_output->owner);
                 } break;
                 case FD_CONTROL_PROPERTY_HARDWARE_VERSION: {
                     fd_control_get_property_hardware_version(binary_out);
                 } break;
                 case FD_CONTROL_PROPERTY_SUBSCRIBE: {
-                    fd_control_get_property_subscribe(binary_out, detour_source_collection);
+                    fd_control_get_property_subscribe(binary_out, packet_output);
                 }
             }
         }
     }
-    return fd_control_send_complete(detour_source_collection);
+    return fd_control_send_complete(packet_output);
 }
 
-void fd_control_get_properties(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_get_properties(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t properties = fd_binary_get_uint32(&binary);
-    fd_control_send_properties(detour_source_collection, FD_CONTROL_GET_PROPERTIES, properties);
+    fd_control_send_properties(packet_output, FD_CONTROL_GET_PROPERTIES, properties);
 }
 
-void fd_control_set_properties(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_set_properties(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t properties = fd_binary_get_uint32(&binary);
@@ -608,10 +600,10 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
                 } break;
 #endif
                 case FD_CONTROL_PROPERTY_INDICATE: {
-                    fd_control_set_property_indicate(&binary, detour_source_collection->owner);
+                    fd_control_set_property_indicate(&binary, packet_output->owner);
                 } break;
                 case FD_CONTROL_PROPERTY_SUBSCRIBE: {
-                    fd_control_set_property_subscribe(&binary, detour_source_collection);
+                    fd_control_set_property_subscribe(&binary, packet_output);
                 }
             }
         }
@@ -619,7 +611,7 @@ void fd_control_set_properties(fd_detour_source_collection_t *detour_source_coll
 }
 
 void fd_control_update_get_external_hash_impl(
-    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+    fd_packet_output_t *packet_output, uint8_t *data, uint32_t length, bool withArea
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -631,13 +623,13 @@ void fd_control_update_get_external_hash_impl(
     uint32_t external_length = fd_binary_get_uint32(&binary);
     uint8_t hash[FD_SHA_HASH_SIZE];
     fd_update_get_external_hash(area, external_address, external_length, hash);
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_GET_EXTERNAL_HASH);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_UPDATE_GET_EXTERNAL_HASH);
     fd_binary_put_bytes(binary_out, hash, FD_SHA_HASH_SIZE);
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
 void fd_control_update_get_sector_hashes_impl(
-    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+    fd_packet_output_t *packet_output, uint8_t *data, uint32_t length, bool withArea
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -647,7 +639,7 @@ void fd_control_update_get_sector_hashes_impl(
     }
     uint32_t sector_count = fd_binary_get_uint8(&binary);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_GET_SECTOR_HASHES);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_UPDATE_GET_SECTOR_HASHES);
     fd_binary_put_uint8(binary_out, sector_count);
     for (uint32_t i = 0; i < sector_count; ++i) {
         uint8_t hash[FD_SHA_HASH_SIZE];
@@ -656,11 +648,11 @@ void fd_control_update_get_sector_hashes_impl(
         fd_binary_put_uint16(binary_out, sector);
         fd_binary_put_bytes(binary_out, hash, FD_SHA_HASH_SIZE);
     }
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
 void fd_control_update_erase_sectors_impl(
-    fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length, bool withArea
+    fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length, bool withArea
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -676,7 +668,7 @@ void fd_control_update_erase_sectors_impl(
 }
 
 void fd_control_update_write_page_impl(
-    fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length, bool withArea
+    fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length, bool withArea
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -690,7 +682,7 @@ void fd_control_update_write_page_impl(
 }
 
 void fd_control_update_read_page_impl(
-    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+    fd_packet_output_t *packet_output, uint8_t *data, uint32_t length, bool withArea
 ) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
@@ -701,13 +693,13 @@ void fd_control_update_read_page_impl(
     uint32_t page = fd_binary_get_uint32(&binary);
     uint8_t page_data[256];
     fd_update_read_page(area, page, page_data);
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_READ_PAGE);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_UPDATE_READ_PAGE);
     fd_binary_put_bytes(binary_out, page_data, 256);
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
 void fd_control_update_commit_impl(
-    fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length, bool withArea
+    fd_packet_output_t *packet_output, uint8_t *data, uint32_t length, bool withArea
 ) {
     fd_version_metadata_t metadata;
     memset(&metadata, 0, sizeof(metadata));
@@ -733,45 +725,45 @@ void fd_control_update_commit_impl(
 
     uint8_t result = fd_update_commit(area, &metadata);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_COMMIT);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_UPDATE_COMMIT);
     fd_binary_put_uint8(binary_out, result);
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
 ///////
 
-void fd_control_update_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_get_external_hash_impl(detour_source_collection, data, length, false);
+void fd_control_update_get_external_hash(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_get_external_hash_impl(packet_output, data, length, false);
 }
 
-void fd_control_update_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_get_sector_hashes_impl(detour_source_collection, data, length, false);
+void fd_control_update_get_sector_hashes(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_get_sector_hashes_impl(packet_output, data, length, false);
 }
 
-void fd_control_update_erase_sectors(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_erase_sectors_impl(detour_source_collection, data, length, false);
+void fd_control_update_erase_sectors(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_erase_sectors_impl(packet_output, data, length, false);
 }
 
-void fd_control_update_write_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_write_page_impl(detour_source_collection, data, length, false);
+void fd_control_update_write_page(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_write_page_impl(packet_output, data, length, false);
 }
 
-void fd_control_update_read_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_read_page_impl(detour_source_collection, data, length, false);
+void fd_control_update_read_page(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_read_page_impl(packet_output, data, length, false);
 }
 
-void fd_control_update_commit(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_commit_impl(detour_source_collection, data, length, false);
+void fd_control_update_commit(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_commit_impl(packet_output, data, length, false);
 }
 
 ///////
 
-void fd_control_update_area_get_version(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_update_area_get_version(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint8_t area = fd_binary_get_uint8(&binary);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_UPDATE_AREA_GET_VERSION);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_UPDATE_AREA_GET_VERSION);
     uint32_t flags = 0;
     fd_version_revision_t revision;
     if (fd_hal_system_get_firmware_version(area, &revision)) {
@@ -804,36 +796,36 @@ void fd_control_update_area_get_version(fd_detour_source_collection_t *detour_so
         fd_binary_put_bytes(binary_out, metadata.revision.commit, sizeof(metadata.revision.commit));
     }
 
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
-void fd_control_update_area_get_external_hash(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_get_external_hash_impl(detour_source_collection, data, length, true);
+void fd_control_update_area_get_external_hash(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_get_external_hash_impl(packet_output, data, length, true);
 }
 
-void fd_control_update_area_get_sector_hashes(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_get_sector_hashes_impl(detour_source_collection, data, length, true);
+void fd_control_update_area_get_sector_hashes(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_get_sector_hashes_impl(packet_output, data, length, true);
 }
 
-void fd_control_update_area_erase_sectors(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_erase_sectors_impl(detour_source_collection, data, length, true);
+void fd_control_update_area_erase_sectors(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_erase_sectors_impl(packet_output, data, length, true);
 }
 
-void fd_control_update_area_write_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_write_page_impl(detour_source_collection, data, length, true);
+void fd_control_update_area_write_page(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_write_page_impl(packet_output, data, length, true);
 }
 
-void fd_control_update_area_read_page(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_read_page_impl(detour_source_collection, data, length, true);
+void fd_control_update_area_read_page(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_read_page_impl(packet_output, data, length, true);
 }
 
-void fd_control_update_area_commit(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
-    fd_control_update_commit_impl(detour_source_collection, data, length, true);
+void fd_control_update_area_commit(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
+    fd_control_update_commit_impl(packet_output, data, length, true);
 }
 
 /////
 
-void fd_control_radio_direct_test_mode_enter(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_radio_direct_test_mode_enter(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint16_t request = fd_binary_get_uint16(&binary);
@@ -841,17 +833,17 @@ void fd_control_radio_direct_test_mode_enter(fd_detour_source_collection_t *deto
     fd_bluetooth_direct_test_mode_enter(request, duration);
 }
 
-void fd_control_radio_direct_test_mode_exit(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
+void fd_control_radio_direct_test_mode_exit(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
     fd_bluetooth_direct_test_mode_exit();
 }
 
-void fd_control_radio_direct_test_mode_report(fd_detour_source_collection_t *detour_source_collection, uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT);
+void fd_control_radio_direct_test_mode_report(fd_packet_output_t *packet_output, uint8_t *data __attribute__((unused)), uint32_t length __attribute__((unused))) {
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_RADIO_DIRECT_TEST_MODE_REPORT);
     fd_binary_put_uint16(binary_out, fd_bluetooth_direct_test_mode_report());
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
-void fd_control_disconnect(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_disconnect(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint8_t flags __attribute__((unused)) = fd_binary_get_uint8(&binary);
@@ -866,7 +858,7 @@ void get_rgb(fd_binary_t *binary, fd_hal_ui_led_rgb_t *rgb) {
     rgb->b = fd_binary_get_uint8(binary);
 }
 
-void fd_control_led_override(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_led_override(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     fd_hal_ui_led_state_t state;
@@ -882,7 +874,7 @@ void fd_control_led_override(fd_detour_source_collection_t *detour_source_collec
     fd_hal_ui_set_led(&state, duration);
 }
 
-void fd_control_identify(fd_detour_source_collection_t *detour_source_collection __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_identify(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     bool active = fd_binary_get_uint8(&binary) != 0;
@@ -894,29 +886,29 @@ void fd_control_identify(fd_detour_source_collection_t *detour_source_collection
     }
 }
 
-void fd_control_lock(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_lock(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     fd_lock_identifier_t identifier = fd_binary_get_uint8(&binary);
     fd_lock_operation_t operation = fd_binary_get_uint8(&binary);
-    fd_lock_owner_t owner = detour_source_collection->owner;
+    fd_lock_owner_t owner = packet_output->owner;
     fd_lock_owner_t lock_owner = fd_lock(identifier, operation, owner);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_LOCK);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_LOCK);
     fd_binary_put_uint8(binary_out, identifier);
     fd_binary_put_uint8(binary_out, operation);
     fd_binary_put_uint32(binary_out, lock_owner);
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
 #define FD_CONTROL_DIAGNOSTICS_FLAGS (FD_CONTROL_DIAGNOSTICS_BLE | FD_CONTROL_DIAGNOSTICS_BLE_TIMING)
 
-void fd_control_diagnostics(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_diagnostics(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t flags = fd_binary_get_uint32(&binary);
 
-    fd_binary_t *binary_out = fd_control_send_start(detour_source_collection, FD_CONTROL_DIAGNOSTICS);
+    fd_binary_t *binary_out = fd_control_send_start(packet_output, FD_CONTROL_DIAGNOSTICS);
     fd_binary_put_uint32(binary_out, flags & FD_CONTROL_DIAGNOSTICS_FLAGS);
     if (flags & FD_CONTROL_DIAGNOSTICS_BLE) {
         fd_bluetooth_diagnostics(binary_out);
@@ -924,7 +916,7 @@ void fd_control_diagnostics(fd_detour_source_collection_t *detour_source_collect
     if (flags & FD_CONTROL_DIAGNOSTICS_BLE_TIMING) {
         fd_bluetooth_diagnostics_timing(binary_out);
     }
-    fd_control_send_complete(detour_source_collection);
+    fd_control_send_complete(packet_output);
 }
 
 void fd_control_initialize_commands(void) {
@@ -967,37 +959,37 @@ void fd_control_initialize_commands(void) {
 }
 
 void fd_control_check_notify_properties(void) {
-    fd_detour_source_collection_t *collection = fd_detour_source_collection_head;
-    while (collection != 0) {
-        uint32_t properties = collection->subscribed_properties & collection->notify_properties;
-        if ((properties != 0) && collection->is_available()) {
-            if (fd_control_send_properties(collection, FD_CONTROL_NOTIFY_PROPERTIES, properties)) {
-                collection->notify_properties = 0;
+    fd_packet_output_t *packet_output = fd_packet_output_head;
+    while (packet_output != 0) {
+        uint32_t properties = packet_output->subscribed_properties & packet_output->notify_properties;
+        if ((properties != 0) && packet_output->is_available()) {
+            if (fd_control_send_properties(packet_output, FD_CONTROL_NOTIFY_PROPERTIES, properties)) {
+                packet_output->notify_properties = 0;
             } else {
                 fd_event_set_exclusive(FD_EVENT_NOTIFY);
             }
         }
         
-        collection = collection->next;
+        packet_output = packet_output->next;
     }
 }
 
 void fd_control_notify(uint32_t properties) {
-    fd_detour_source_collection_t *collection = fd_detour_source_collection_head;
-    while (collection != 0) {
-        uint32_t notify_properties = collection->subscribed_properties & properties;
+    fd_packet_output_t *packet_output = fd_packet_output_head;
+    while (packet_output != 0) {
+        uint32_t notify_properties = packet_output->subscribed_properties & properties;
         if (notify_properties != 0) {
-            collection->notify_properties |= notify_properties;
+            packet_output->notify_properties |= notify_properties;
             fd_event_set_exclusive(FD_EVENT_NOTIFY);
         }
         
-        collection = collection->next;
+        packet_output = packet_output->next;
     }
 }
 
 // !!! should we encrypt/decrypt everything? or just syncs? or just things that modify? -denis
 
-void fd_control_process_command(fd_detour_source_collection_t *detour_source_collection, uint8_t *data, uint32_t length) {
+void fd_control_process_command(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     if (length < 1) {
         return;
     }
@@ -1007,7 +999,7 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
         if (fd_control_before_callback) {
             fd_control_before_callback(code);
         }
-        (*command)(detour_source_collection, &data[1], length - 1);
+        (*command)(packet_output, &data[1], length - 1);
         if (fd_control_after_callback) {
             fd_control_after_callback(code);
         }
@@ -1016,7 +1008,7 @@ void fd_control_process_command(fd_detour_source_collection_t *detour_source_col
 
 void fd_control_command(void) {
     int count;
-    fd_detour_source_collection_t *detour_source_collection = 0;
+    fd_packet_output_t *packet_output = 0;
     uint32_t length = 0;
 
     fd_hal_processor_interrupts_disable();
@@ -1024,13 +1016,13 @@ void fd_control_command(void) {
     if (count > 0) {
         // get the command info
         fd_control_input_t *input = &fd_control_inputs[0];
-        detour_source_collection = input->detour_source_collection;
+        packet_output = input->packet_output;
         uint32_t input_length = input->length;
         if (input_length <= sizeof(fd_control_command_buffer)) {
             length = input_length;
             memcpy(fd_control_command_buffer, fd_control_input_buffer, input_length);
         } else {
-            // to much data from the detour source to fit in the command buffer, so just ignore it -denis
+            // to much data from the source to fit in the command buffer, so just ignore it -denis
             fd_log_assert_fail("command buffer size exceeded");
             length = 0;
         }
@@ -1045,7 +1037,7 @@ void fd_control_command(void) {
 
     if (count > 0) {
         // process it
-        fd_control_process_command(detour_source_collection, fd_control_command_buffer, length);
+        fd_control_process_command(packet_output, fd_control_command_buffer, length);
     }
 
     if (count > 1) {

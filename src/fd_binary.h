@@ -46,6 +46,9 @@ typedef struct {
 
 void fd_binary_initialize(fd_binary_t *binary, uint8_t *buffer, uint32_t size);
 
+void fd_binary_reset(fd_binary_t *binary);
+void fd_binary_remove(fd_binary_t *binary, uint32_t index, uint32_t length);
+
 uint32_t fd_binary_remaining_length(fd_binary_t *binary);
 
 bool fd_binary_get_check(fd_binary_t *binary, uint32_t length);

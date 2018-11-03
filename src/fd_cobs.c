@@ -1,5 +1,25 @@
 #include "fd_cobs.h"
 
+size_t fd_cobs_encode_size(const uint8_t *src_data, size_t src_length) {
+    uint32_t dst = 0;
+    uint8_t code = 1;
+    const uint8_t *src = src_data;
+    const uint8_t *src_end = src_data + src_length;
+    while (src < src_end) {
+        if (code != 255) {
+            uint8_t byte = *src++;
+            if (byte != 0) {
+                dst++;
+                code++;
+                continue;
+            }
+        }
+        dst++;
+        code = 1;
+    }
+    return dst;
+}
+
 size_t fd_cobs_encode(const uint8_t *src_data, size_t src_length, uint8_t *dst_data, size_t dst_length) {
     uint8_t *dst = dst_data;
     uint8_t *dst_end = dst_data + dst_length;
@@ -31,6 +51,30 @@ size_t fd_cobs_encode(const uint8_t *src_data, size_t src_length, uint8_t *dst_d
     }
     *code_ptr = code;
     return dst - dst_data;
+}
+
+size_t fd_cobs_decode_size(const uint8_t *src_data, size_t src_length) {
+    uint32_t dst = 0;
+    uint8_t code = 255;
+    uint8_t copy = 0;
+    const uint8_t *src = src_data;
+    const uint8_t *src_end = src_data + src_length;
+    for (; src < src_end; copy--) {
+        if (copy != 0) {
+            src++;
+            dst++;
+        } else {
+            if (code != 255) {
+                dst++;
+            }
+            if (src >= src_end) {
+                return 0;
+            }
+            code = *src++;
+            copy = code;
+        }
+    }
+    return dst;
 }
 
 size_t fd_cobs_decode(const uint8_t *src_data, size_t src_length, uint8_t *dst_data, size_t dst_length) {

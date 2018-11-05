@@ -1,7 +1,7 @@
 #include "fd_cobs.h"
 
 size_t fd_cobs_encode_size(const uint8_t *src_data, size_t src_length) {
-    uint32_t dst = 0;
+    uint32_t dst = 1;
     uint8_t code = 1;
     const uint8_t *src = src_data;
     const uint8_t *src_end = src_data + src_length;

@@ -108,18 +108,20 @@ bool fd_event_process_pending(void) {
             }
         }
     }
+    if (pending == 0) {
+        for (uint32_t i = 0; i < fd_event_em2_check_count; ++i) {
+            fd_event_em2_check_t em2_check = fd_event_em2_checks[i];
+            if (!em2_check()) {
+                return true;
+            }
+        }
+    }
     return pending != 0;
 }
 
 void fd_event_process(void) {
     bool pending = fd_event_process_pending();
     if (!pending) {
-        for (uint32_t i = 0; i < fd_event_em2_check_count; ++i) {
-            fd_event_em2_check_t em2_check = fd_event_em2_checks[i];
-            if (!em2_check()) {
-                return;
-            }
-        }
         fd_hal_processor_wait();
     }
 }

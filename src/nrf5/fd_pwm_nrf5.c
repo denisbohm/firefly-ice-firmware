@@ -82,7 +82,7 @@ void fd_pwm_module_enable(const fd_pwm_module_t *module) {
     fd_pwm_module_state_t *state = fd_pwm_get_state(module->instance);
     pwm->ENABLE = PWM_ENABLE_ENABLE_Enabled << PWM_ENABLE_ENABLE_Pos;
     pwm->MODE = PWM_MODE_UPDOWN_Up << PWM_MODE_UPDOWN_Pos;
-    pwm->PRESCALER = PWM_PRESCALER_PRESCALER_DIV_1 << PWM_PRESCALER_PRESCALER_Pos;
+    pwm->PRESCALER = state->prescaler << PWM_PRESCALER_PRESCALER_Pos;
     pwm->COUNTERTOP = state->countertop << PWM_COUNTERTOP_COUNTERTOP_Pos;
     pwm->LOOP = PWM_LOOP_CNT_Disabled << PWM_LOOP_CNT_Pos;
     pwm->DECODER = (PWM_DECODER_LOAD_Individual << PWM_DECODER_LOAD_Pos) | (PWM_DECODER_MODE_RefreshCount << PWM_DECODER_MODE_Pos);

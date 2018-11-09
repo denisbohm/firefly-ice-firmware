@@ -11,10 +11,16 @@ typedef struct {
     float frequency;
 } fd_pwm_module_t;
 
+typedef enum {
+    fd_pwm_polarity_rising,
+    fd_pwm_polarity_falling,
+} fd_pwm_polarity_t;
+
 typedef struct {
     const fd_pwm_module_t *module;
     uint32_t instance;
     fd_gpio_t gpio;
+    fd_pwm_polarity_t polarity;
 } fd_pwm_channel_t;
 
 void fd_pwm_initialize(const fd_pwm_module_t *modules, uint32_t module_count);

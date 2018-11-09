@@ -106,9 +106,11 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
         }
 
         fd_spim_device_deselect(device);
+#if 0
         if (unread_words == 0) {
             fd_log_assert(int1);
         }
+#endif
         return unread_words; // normal return
     }
     return 0; // failed to align pattern

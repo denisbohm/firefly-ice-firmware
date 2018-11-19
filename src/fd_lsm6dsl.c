@@ -25,6 +25,9 @@ static const float fd_lsm6dsl_gyro_scales[] = {
 };
 
 uint8_t fd_lsm6ds3_who_am_i;
+bool fd_lsm6dsl_gyro_enabled;
+bool fd_lsm6dsl_accelerometer_enabled;
+bool fd_lsm6dsl_timestamp_and_steps_enabled;
 
 float fd_lsm6dsl_gyro_scale(uint32_t fs) {
     return fd_lsm6dsl_gyro_scales[fs & 0x3];
@@ -48,6 +51,20 @@ uint16_t fd_lsm6dsl_to_uint16(uint8_t *bytes, uint32_t offset) {
     uint8_t b0 = bytes[offset];
     uint8_t b1 = bytes[offset + 1];
     return (uint16_t)((b1 << 8) | b0);
+}
+
+uint32_t fd_lsm6dsl_get_axis_count(void) {
+    uint32_t count = 0;
+    if (fd_lsm6dsl_gyro_enabled) {
+        count += 3;
+    }
+    if (fd_lsm6dsl_accelerometer_enabled) {
+        count += 3;
+    }
+    if (fd_lsm6dsl_timestamp_and_steps_enabled) {
+        count += 3;
+    }
+    return count;
 }
 
 uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
@@ -92,7 +109,7 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
 
         // pattern will be 0 at the start of a sample set, otherwise try to align pattern by discarding a fifo word
         if (pattern != 0) {
-            const uint32_t axis_count = 9; // 3 accelerometer + 3 gyro + 3 (6 bytes) timestamp (and steps)
+            uint32_t axis_count = fd_lsm6dsl_get_axis_count();
             uint8_t bytes[18 * 2];
             uint32_t skip = (axis_count - pattern) + axis_count;
             if (skip > unread_words) {
@@ -118,7 +135,7 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
 
 uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count) {
     uint32_t word_count = fd_lsm6dsl_read_fifo_word_count(device);
-    const uint32_t axis_count = 9; // 3 accelerometer + 3 gyro + 3 (6 bytes) timestamp (and steps)
+    uint32_t axis_count = fd_lsm6dsl_get_axis_count();
     uint32_t count = word_count / axis_count;
     if (count > sample_count) {
         count = sample_count;
@@ -129,24 +146,44 @@ uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl
     fd_spim_bus_wait(device->bus);
     for (int i = 0; i < count; ++i) {
         uint8_t bytes[18];
-        fd_spim_bus_rxn(device->bus, bytes, sizeof(bytes));
+        uint32_t byte_index = 0;
+        fd_spim_bus_rxn(device->bus, bytes, axis_count * 2);
         fd_spim_bus_wait(device->bus);
         fd_lsm6dsl_sample_t *sample = &samples[i];
-        sample->gyro.x = fd_lsm6dsl_to_uint16(bytes, 0);
-        sample->gyro.y = fd_lsm6dsl_to_uint16(bytes, 2);
-        sample->gyro.z = fd_lsm6dsl_to_uint16(bytes, 4);
-        sample->accelerometer.x = fd_lsm6dsl_to_uint16(bytes, 6);
-        sample->accelerometer.y = fd_lsm6dsl_to_uint16(bytes, 8);
-        sample->accelerometer.z = fd_lsm6dsl_to_uint16(bytes, 10);
-        uint32_t timestamp1 = bytes[12];
-        uint32_t timestamp2 = bytes[13];
-        uint32_t unused __attribute__((unused)) = bytes[14];
-        uint32_t timestamp0 = bytes[15];
-        uint32_t timestamp = (timestamp2 << 16) | (timestamp1 << 8) | timestamp0;
-        sample->timestamp = timestamp;
-        uint32_t steps0 = bytes[16];
-        uint32_t steps1 = bytes[17];
-        uint32_t steps = (steps1 << 8) | steps0;
+        memset(sample, 0, sizeof(fd_lsm6dsl_sample_t));
+        if (fd_lsm6dsl_gyro_enabled) {
+            sample->gyro.x = fd_lsm6dsl_to_uint16(bytes, byte_index);
+            byte_index += 2;
+            sample->gyro.y = fd_lsm6dsl_to_uint16(bytes, byte_index);
+            byte_index += 2;
+            sample->gyro.z = fd_lsm6dsl_to_uint16(bytes, byte_index);
+            byte_index += 2;
+        }
+        if (fd_lsm6dsl_accelerometer_enabled) {
+            sample->accelerometer.x = fd_lsm6dsl_to_uint16(bytes, byte_index);
+            byte_index += 2;
+            sample->accelerometer.y = fd_lsm6dsl_to_uint16(bytes, byte_index);
+            byte_index += 2;
+            sample->accelerometer.z = fd_lsm6dsl_to_uint16(bytes, byte_index);
+            byte_index += 2;
+        }
+        if (fd_lsm6dsl_timestamp_and_steps_enabled) {
+            uint32_t timestamp1 = bytes[byte_index];
+            byte_index += 1;
+            uint32_t timestamp2 = bytes[byte_index];
+            byte_index += 1;
+            uint32_t unused __attribute__((unused)) = bytes[byte_index];
+            byte_index += 1;
+            uint32_t timestamp0 = bytes[byte_index];
+            byte_index += 1;
+            uint32_t timestamp = (timestamp2 << 16) | (timestamp1 << 8) | timestamp0;
+            sample->timestamp = timestamp;
+            uint32_t steps0 = bytes[byte_index];
+            byte_index += 1;
+            uint32_t steps1 = bytes[byte_index];
+            byte_index += 1;
+            uint32_t steps = (steps1 << 8) | steps0;
+        }
     }
     fd_spim_device_deselect(device);
     return count;
@@ -191,16 +228,16 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL4_C, 0b00000100); // disable I2C
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL3_C, 0b01110100); // block data update, int1/2 open drain active low, address automatically incremented
 
-    uint32_t lsm6ds3_axis_count = 6;
+    fd_lsm6dsl_accelerometer_enabled = configuration->accelerometer_enable;
     uint32_t accelerometer_output_data_rate = configuration->accelerometer_output_data_rate;
     if (!configuration->accelerometer_enable) {
         accelerometer_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
-        lsm6ds3_axis_count -= 3;
     }
+    
+    fd_lsm6dsl_gyro_enabled = configuration->gyro_enable;
     uint32_t gyro_output_data_rate = configuration->gyro_output_data_rate;
     if (!configuration->gyro_enable) {
         gyro_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
-        lsm6ds3_axis_count -= 3;
     }
     
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL1_XL,
@@ -223,7 +260,8 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
         ((configuration->gyro_low_power ? 1 : 0) << 7) |
         (configuration->gyro_high_pass_filter << 4)
     );
-    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00100000); // enable timestamp
+    fd_lsm6dsl_timestamp_and_steps_enabled = configuration->timestamp_and_steps_enable;
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00100000 : 0b00000000); // enable timestamp
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL4, 0b00001000); // no timestamp decimation
     fd_lsm6dsl_write16(device, FD_LSM6DSL_REGISTER_FIFO_CTRL1,
@@ -235,8 +273,9 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
     );
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL5, 0x00);
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_TIMESTAMP2_REG, 0xaa); // reset timestamp
+    uint32_t axis_count = fd_lsm6dsl_get_axis_count();
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL5,
-        (lsm6ds3_axis_count != 0) ? ((configuration->fifo_output_data_rate << 3) | 0b110 /* continuous  */ ) : 0
+        (axis_count != 0) ? ((configuration->fifo_output_data_rate << 3) | 0b110 /* continuous  */ ) : 0
     );
     fd_lsm6dsl_fifo_flush(device);
 }

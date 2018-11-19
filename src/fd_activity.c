@@ -30,12 +30,16 @@ void fd_activity_start(void) {
     activity_vm = 0.0f;
 }
 
+#ifndef FD_ACTIVITY_MAGNITUDE_SCALE
+#define FD_ACTIVITY_MAGNITUDE_SCALE (1.0 / 8192.0)
+#endif
+
 void fd_activity_accumulate(int16_t xg, int16_t yg, int16_t zg) {
-    uint32_t x = xg;
-    uint32_t y = yg;
-    uint32_t z = zg;
-    uint32_t t = fd_math_isqrt(x * x + y * y + z * z);
-    float v = t * (FD_HAL_ACCELEROMETER_SCALE / 65536.0f);
+    int32_t x = xg;
+    int32_t y = yg;
+    int32_t z = zg;
+    uint32_t t = sqrt(x * x + y * y + z * z);
+    float v = t * FD_ACTIVITY_MAGNITUDE_SCALE;
 
     float value = v - activity_acc_dc;
     activity_acc_dc += value * ACTIVITY_K;
@@ -46,10 +50,6 @@ void fd_activity_accumulate(int16_t xg, int16_t yg, int16_t zg) {
     ++activity_sample_count;
 }
 
-// Scale activity value by a constant for compatibility with other meters.
-// If compatibility isn't needed the scale can be removed (set to 1.0f).
-#define SCALE (10.0f * 1.25f)
-
 float fd_activity_value(float time_interval __attribute__((unused))) {
-    return SCALE * activity_vm / activity_sample_count;
+    return activity_vm / activity_sample_count;
 }

@@ -30,7 +30,7 @@
 
 #define FD_BLE_SERVICE_LIMIT 4
 #define FD_BLE_CHARACTERISTICS_LIMIT 16
-#define FD_BLE_CHANNEL_LIMIT 1
+#define FD_BLE_CHANNEL_LIMIT 4
 
 typedef struct {
     ble_gatts_char_handles_t handles;
@@ -47,6 +47,10 @@ typedef struct {
 typedef struct {
     fd_ble_l2cap_channel_t *channel;
     uint16_t local_cid;
+    uint8_t stream_read_data[300];
+    uint32_t stream_read_offset;
+    uint32_t stream_read_length;
+    uint8_t stream_write_data[300];
 } fd_ble_l2cap_channel_nrf5_t;
 
 #define APP_BLE_CONN_CFG_TAG 1
@@ -55,7 +59,7 @@ fd_ble_configuration_t *fd_ble_configuration;
 fd_ble_service_nrf5_t fd_ble_services[FD_BLE_SERVICE_LIMIT];
 uint32_t fd_ble_services_count;
 fd_ble_l2cap_channel_nrf5_t fd_ble_channels[FD_BLE_CHANNEL_LIMIT];
-uint32_t fd_ble_channels_count;
+uint32_t fd_ble_channel_count;
 uint8_t fd_ble_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 uint8_t fd_ble_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];
 uint8_t fd_ble_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX];
@@ -81,14 +85,12 @@ uint32_t fd_ble_data_credits;
 
 const uint8_t rx_queue_size = 1;
 
-fd_ble_l2cap_channel_t *fd_ble_l2cap_channel;
-uint16_t fd_ble_l2cap_local_cid;
-
 ble_gap_sec_keyset_t ble_gap_sec_keyset;
 ble_gap_conn_params_t ble_gap_conn_params;
 ble_gap_evt_auth_status_t ble_gap_evt_auth_status;
 ble_gap_evt_phy_update_t ble_gap_evt_phy_update;
 ble_gap_data_length_params_t ble_gap_data_length_params;
+ble_l2cap_evt_ch_setup_request_t ble_l2cap_evt_ch_setup_request;
 ble_l2cap_evt_ch_setup_refused_t ble_l2cap_evt_ch_setup_refused;
 ble_l2cap_evt_ch_setup_t ble_l2cap_evt_ch_setup;
 ble_l2cap_evt_ch_rx_t ble_l2cap_evt_ch_rx;
@@ -433,31 +435,58 @@ bool fd_ble_l2cap_channel_stream_is_read_available(fd_ble_l2cap_channel_t *chann
     return channel->read_available;
 }
 
-uint8_t fd_ble_l2cap_channel_stream_read_data[300];
-uint32_t fd_ble_l2cap_channel_stream_read_offset;
-uint32_t fd_ble_l2cap_channel_stream_read_length;
+fd_ble_l2cap_channel_nrf5_t *fd_ble_l2cap_channel_nrf5_for_psm(uint16_t psm) {
+    for (uint32_t i = 0; i < fd_ble_channel_count; ++i) {
+        fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = &fd_ble_channels[i];
+        if (channel_nrf5->channel->protocol_service_multiplexer == psm) {
+            return channel_nrf5;
+        }
+    }
+    return 0;
+}
 
-void fd_ble_setup_l2cap_rx(void) {
-    fd_ble_l2cap_channel_stream_read_offset = 0;
-    fd_ble_l2cap_channel_stream_read_length = 0;
+fd_ble_l2cap_channel_nrf5_t *fd_ble_l2cap_channel_nrf5_for_local_cid(uint16_t local_cid) {
+    for (uint32_t i = 0; i < fd_ble_channel_count; ++i) {
+        fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = &fd_ble_channels[i];
+        if (channel_nrf5->local_cid == local_cid) {
+            return channel_nrf5;
+        }
+    }
+    return 0;
+}
+
+fd_ble_l2cap_channel_nrf5_t *fd_ble_l2cap_channel_nrf5_for_l2cap_channel(fd_ble_l2cap_channel_t *l2cap_channel) {
+    for (uint32_t i = 0; i < fd_ble_channel_count; ++i) {
+        fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = &fd_ble_channels[i];
+        if (channel_nrf5->channel == l2cap_channel) {
+            return channel_nrf5;
+        }
+    }
+    return 0;
+}
+
+void fd_ble_setup_l2cap_rx(fd_ble_l2cap_channel_nrf5_t *channel_nrf5) {
+    channel_nrf5->stream_read_offset = 0;
+    channel_nrf5->stream_read_length = 0;
     ble_data_t sdu = {
-        .p_data = fd_ble_l2cap_channel_stream_read_data,
-        .len = sizeof(fd_ble_l2cap_channel_stream_read_data)
+        .p_data = channel_nrf5->stream_read_data,
+        .len = sizeof(channel_nrf5->stream_read_data)
     };
-    uint32_t err_code = sd_ble_l2cap_ch_rx(fd_ble_conn_handle, fd_ble_l2cap_local_cid, &sdu);
+    uint32_t err_code = sd_ble_l2cap_ch_rx(fd_ble_conn_handle, channel_nrf5->local_cid, &sdu);
     APP_ERROR_CHECK(err_code);
 }
 
 uint32_t fd_ble_l2cap_channel_stream_read(fd_ble_l2cap_channel_t *channel, uint8_t *data, uint32_t length) {
-    uint32_t n = fd_ble_l2cap_channel_stream_read_length;
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_l2cap_channel(channel);
+    uint32_t n = channel_nrf5->stream_read_length;
     if (n > length) {
         n = length;
     }
-    memcpy(data, &fd_ble_l2cap_channel_stream_read_data[fd_ble_l2cap_channel_stream_read_offset], n);
-    fd_ble_l2cap_channel_stream_read_length -= n;
-    if (fd_ble_l2cap_channel_stream_read_length == 0) {
+    memcpy(data, &channel_nrf5->stream_read_data[channel_nrf5->stream_read_offset], n);
+    channel_nrf5->stream_read_length -= n;
+    if (channel_nrf5->stream_read_length == 0) {
         channel->read_available = false;
-        fd_ble_setup_l2cap_rx();
+        fd_ble_setup_l2cap_rx(channel_nrf5);
     }
     return n;
 }
@@ -467,17 +496,17 @@ bool fd_ble_l2cap_channel_stream_is_write_available(fd_ble_l2cap_channel_t *chan
 }
 
 uint32_t fd_ble_l2cap_channel_stream_write(fd_ble_l2cap_channel_t *channel, uint8_t *data, uint32_t length) {
-    static uint8_t buffer[300];
-    uint32_t len = sizeof(buffer);
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_l2cap_channel(channel);
+    uint32_t len = sizeof(channel_nrf5->stream_write_data);
     if (len > length) {
         len = length;
     }
     ble_data_t sdu = {
-        .p_data = buffer,
+        .p_data = channel_nrf5->stream_write_data,
         .len = (uint16_t)len
     };
-    memcpy(buffer, data, len);
-    uint32_t err_code = sd_ble_l2cap_ch_tx(fd_ble_conn_handle, fd_ble_l2cap_local_cid, &sdu);
+    memcpy(channel_nrf5->stream_write_data, data, len);
+    uint32_t err_code = sd_ble_l2cap_ch_tx(fd_ble_conn_handle, channel_nrf5->local_cid, &sdu);
     APP_ERROR_CHECK(err_code);
     channel->write_available = false;
     return len;
@@ -488,15 +517,18 @@ void fd_ble_l2cap_initialize(void) {
 }
 
 void fd_ble_l2cap_evt_ch_setup_request(ble_evt_t const *p_ble_evt) {
-    fd_ble_l2cap_local_cid = p_ble_evt->evt.l2cap_evt.local_cid;
+    ble_l2cap_evt_ch_setup_request = p_ble_evt->evt.l2cap_evt.params.ch_setup_request;
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_psm(ble_l2cap_evt_ch_setup_request.le_psm);
+    // !!! reject if channel not found for that psm -denis
+    channel_nrf5->local_cid = p_ble_evt->evt.l2cap_evt.local_cid;
     ble_l2cap_ch_setup_params_t ch_setup_params;
     memset(&ch_setup_params, 0, sizeof(ch_setup_params));
-    ch_setup_params.le_psm = 0x25; // 0x1001;
+    ch_setup_params.le_psm = ble_l2cap_evt_ch_setup_request.le_psm;
     ch_setup_params.status = BLE_L2CAP_CH_STATUS_CODE_SUCCESS;
     ch_setup_params.rx_params.rx_mtu = BLE_L2CAP_MTU_MIN;
     ch_setup_params.rx_params.rx_mps = BLE_L2CAP_MPS_MIN;
     ch_setup_params.rx_params.sdu_buf = (ble_data_t){ .p_data = 0, .len = 0 };
-    uint32_t err_code = sd_ble_l2cap_ch_setup(p_ble_evt->evt.l2cap_evt.conn_handle, &fd_ble_l2cap_local_cid, &ch_setup_params);
+    uint32_t err_code = sd_ble_l2cap_ch_setup(p_ble_evt->evt.l2cap_evt.conn_handle, &channel_nrf5->local_cid, &ch_setup_params);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -505,24 +537,27 @@ void fd_ble_l2cap_evt_ch_setup_refused(ble_evt_t const *p_ble_evt) {
 }
 
 void fd_ble_l2cap_evt_ch_setup(ble_evt_t const *p_ble_evt) {
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_local_cid(p_ble_evt->evt.l2cap_evt.local_cid);
     ble_l2cap_evt_ch_setup = p_ble_evt->evt.l2cap_evt.params.ch_setup;
 
     fd_ble_l2cap_initialize();
 
-    fd_ble_setup_l2cap_rx();
+    fd_ble_setup_l2cap_rx(channel_nrf5);
 
     fd_ble_l2cap_channel_t *channel = &fd_ble_configuration->channels[0];
     channel->on_open(channel);
 }
 
-void fd_ble_l2cap_evt_ch_released(ble_evt_t const FD_UNUSED *p_ble_evt) {
-    fd_ble_l2cap_local_cid = 0;
+void fd_ble_l2cap_evt_ch_released(ble_evt_t const *p_ble_evt) {
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_local_cid(p_ble_evt->evt.l2cap_evt.local_cid);
+    channel_nrf5->local_cid = 0;
 
     fd_ble_l2cap_channel_t *channel = &fd_ble_configuration->channels[0];
     channel->on_close(channel);
 }
 
 void fd_ble_l2cap_evt_ch_rx(ble_evt_t const *p_ble_evt) {
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_local_cid(p_ble_evt->evt.l2cap_evt.local_cid);
     ble_l2cap_evt_ch_rx = p_ble_evt->evt.l2cap_evt.params.rx;
     ble_data_t FD_UNUSED sdu_buf = p_ble_evt->evt.l2cap_evt.params.rx.sdu_buf;
     uint16_t len = p_ble_evt->evt.l2cap_evt.params.rx.sdu_len;
@@ -530,19 +565,22 @@ void fd_ble_l2cap_evt_ch_rx(ble_evt_t const *p_ble_evt) {
         ble_l2cap_evt_ch_rx_sdu_len_max = len;
     }
 
-    fd_ble_l2cap_channel_stream_read_offset = 0;
-    fd_ble_l2cap_channel_stream_read_length = len;
+    channel_nrf5->stream_read_offset = 0;
+    channel_nrf5->stream_read_length = len;
 
-    fd_ble_l2cap_channel_t *channel = &fd_ble_configuration->channels[0];
+    fd_ble_l2cap_channel_t *channel = channel_nrf5->channel;
     channel->read_available = true;
     channel->on_read_available(channel);
 }
 
 void fd_ble_l2cap_evt_ch_tx(ble_evt_t const *p_ble_evt) {
+    uint16_t local_cid = p_ble_evt->evt.l2cap_evt.local_cid;
+    fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = fd_ble_l2cap_channel_nrf5_for_local_cid(local_cid);
+
     ble_l2cap_evt_ch_tx = p_ble_evt->evt.l2cap_evt.params.tx;
     ble_data_t FD_UNUSED sdu_buf = p_ble_evt->evt.l2cap_evt.params.tx.sdu_buf;
 
-    fd_ble_l2cap_channel_t *channel = &fd_ble_configuration->channels[0];
+    fd_ble_l2cap_channel_t *channel = channel_nrf5->channel;
     channel->write_available = true;
     channel->on_write_available(channel);
 }
@@ -815,8 +853,12 @@ void fd_ble_initialize(fd_ble_configuration_t *configuration) {
         channel->write_available = false;
         channel->is_write_available = fd_ble_l2cap_channel_stream_is_write_available;
         channel->write = fd_ble_l2cap_channel_stream_write;
+
+        fd_ble_l2cap_channel_nrf5_t *channel_nrf5 = &fd_ble_channels[i];
+        channel_nrf5->channel = channel;
+        channel_nrf5->local_cid = 0;
     }
-    fd_ble_l2cap_local_cid = 0;
+    fd_ble_channel_count = configuration->channel_count;
 
     fd_ble_flash_operation_result = flash_operation_result_none;
 

@@ -63,15 +63,14 @@ fd_rtc_info_t *fd_rtc_get_info(uint32_t instance) {
     return 0;
 }
 
-
 void fd_rtc_disable(const fd_rtc_t *fd_rtc) {
     NRF_RTC_Type *rtc = (NRF_RTC_Type *)fd_rtc->instance;
     fd_rtc_info_t *info = fd_rtc_get_info(fd_rtc->instance);
 
     NVIC_DisableIRQ(info->irqn);
 
-    rtc->EVTENCLR = RTC_EVTEN_COMPARE0_Msk | RTC_EVTEN_COMPARE1_Msk;
-    rtc->INTENCLR = RTC_INTENSET_COMPARE0_Msk | RTC_INTENSET_COMPARE1_Msk;
+    rtc->EVTENCLR = RTC_EVTEN_COMPARE1_Msk;
+    rtc->INTENCLR = RTC_INTENSET_COMPARE1_Msk;
 
     rtc->TASKS_STOP = 1;
     nrf_delay_us(FD_RTC_MAX_TASK_DELAY);
@@ -86,8 +85,8 @@ void fd_rtc_enable(const fd_rtc_t *fd_rtc) {
     NRF_RTC_Type *rtc = (NRF_RTC_Type *)fd_rtc->instance;
     fd_rtc_info_t *info = fd_rtc_get_info(fd_rtc->instance);
 
-    rtc->EVTENSET = RTC_EVTEN_COMPARE0_Msk | RTC_EVTEN_COMPARE1_Msk;
-    rtc->INTENSET = RTC_INTENSET_COMPARE0_Msk | RTC_INTENSET_COMPARE1_Msk;
+    rtc->EVTENSET = RTC_EVTEN_COMPARE1_Msk;
+    rtc->INTENSET = RTC_INTENSET_COMPARE1_Msk;
 
     IRQn_Type irqn = info->irqn;
     NVIC_SetPriority(irqn, APP_IRQ_PRIORITY_HIGH);

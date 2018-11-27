@@ -33,10 +33,7 @@ void fd_sync_start(fd_packet_output_t *packet_output, uint8_t *data, uint32_t le
     fd_storage_metadata_t metadata;
     uint32_t shortage = fd_storage_read_nth_page(offset, &metadata, &fd_sync_output_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
     if (shortage > 0) {
-        bool has_page = false;
-        if (shortage == 1) {
-            has_page = fd_storage_buffer_get_first_page(&metadata, &fd_sync_output_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
-        }
+        bool has_page = fd_storage_buffer_get_first_page(shortage - 1, &metadata, &fd_sync_output_buffer[COMMAND_SIZE + HARDWARE_ID_SIZE + METADATA_SIZE], FD_STORAGE_MAX_DATA_LENGTH);
         if (has_page) {
             --shortage;
         } else {

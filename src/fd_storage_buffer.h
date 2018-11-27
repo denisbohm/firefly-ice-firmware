@@ -48,7 +48,7 @@ void fd_storage_buffer_collection_flush(void);
 
 void fd_storage_buffer_collection_push(fd_storage_buffer_t *storage_buffer);
 
-bool fd_storage_buffer_get_first_page(fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length);
+bool fd_storage_buffer_get_first_page(uint32_t offset, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length);
 
 void fd_storage_buffer_clear_page(fd_storage_metadata_t *metadata);
 

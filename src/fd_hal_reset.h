@@ -39,6 +39,7 @@ typedef struct {
 #define FD_HAL_RESET_WATCHDOG 2
 #define FD_HAL_RESET_HARD_FAULT 3
 #define FD_HAL_RESET_RETAIN 4
+#define FD_HAL_RESET_ASSERTION 5
 
 extern fd_hal_reset_state_t fd_hal_reset_last;
 

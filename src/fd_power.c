@@ -151,7 +151,8 @@ double fd_power_estimate_battery_level(void) {
             double charge_current = fd_hal_system_get_charge_current();
             // Assume +/- 10% tolerance on charge current limit
             double constant_current_threshold = fd_hal_system_get_charge_current_limit_threshold();
-            if (charge_current < constant_current_threshold) {
+            bool charge_current_is_valid = fd_hal_system_is_charge_current_available();
+            if (charge_current_is_valid && (charge_current < constant_current_threshold)) {
                 // The battery is charging and near or in the constant voltage phase.
                 // 85% to 100%
                 // *** simple linear approximation ***
@@ -233,35 +234,36 @@ static
 void fd_power_update_callback(void) {
     fd_hal_reset_retained_t *retained = fd_hal_reset_retained();
     bool is_usb_powered = fd_hal_usb_is_powered();
-#ifdef FD_POWER_USE_RATE
-    bool is_charging = fd_hal_system_is_charging();
-    if (is_usb_powered) {
-        if (is_charging) {
-            retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute() / fd_power_update_interval;
-            if (retained->power_battery_level > 1.0) {
-                retained->power_battery_level = 1.0;
+    bool charge_current_is_valid = fd_hal_system_is_charge_current_available();
+    if (!charge_current_is_valid) {
+        bool is_charging = fd_hal_system_is_charging();
+        if (is_usb_powered) {
+            if (is_charging) {
+                retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute() / fd_power_update_interval;
+                if (retained->power_battery_level > 1.0) {
+                    retained->power_battery_level = 1.0;
+                }
+            }
+        } else {
+            retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute() / fd_power_update_interval;
+            if (retained->power_battery_level < 0.0) {
+                retained->power_battery_level = 0.0;
             }
         }
     } else {
-        retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute() / fd_power_update_interval;
-        if (retained->power_battery_level < 0.0) {
-            retained->power_battery_level = 0.0;
-        }
-    }
-#else
-    if (fd_power_is_stable()) {
-        double level = fd_power_estimate_battery_level();
-        if (is_usb_powered) {
-            if (level > retained->power_battery_level) {
-                retained->power_battery_level = level;
-            }
-        } else {
-            if (level < retained->power_battery_level) {
-                retained->power_battery_level = level;
+        if (fd_power_is_stable()) {
+            double level = fd_power_estimate_battery_level();
+            if (is_usb_powered) {
+                if (level > retained->power_battery_level) {
+                    retained->power_battery_level = level;
+                }
+            } else {
+                if (level < retained->power_battery_level) {
+                    retained->power_battery_level = level;
+                }
             }
         }
     }
-#endif
     
     fd_power_sanity_check();
     

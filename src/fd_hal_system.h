@@ -32,6 +32,7 @@ float fd_hal_system_get_charging_low_battery_voltage(void);
 float fd_hal_system_get_almost_low_battery_voltage(void);
 float fd_hal_system_get_low_battery_voltage(void);
 
+bool fd_hal_system_is_charge_current_available(void);
 double fd_hal_system_get_charge_current_limit(void);
 double fd_hal_system_get_charge_current_limit_threshold(void);
 double fd_hal_system_get_battery_level_at_cccv_threshold(void);

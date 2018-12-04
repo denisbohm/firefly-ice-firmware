@@ -201,9 +201,8 @@ void fd_control_provision(fd_packet_output_t *packet_output __attribute__((unuse
 
 uint32_t fd_control_provision_get_utf8(const char *key, uint8_t **value) {
     uint16_t length = 0;
-    uint8_t *provision = fd_hal_processor_get_provision_map_address();
-    if (provision != 0) {
-        uint8_t *map = provision + sizeof(fd_provision_t);
+    uint8_t *map = fd_hal_processor_get_provision_map_address();
+    if (map != 0) {
         fd_map_get(map, key, FD_MAP_TYPE_UTF8, value, &length);
     }
     return length;

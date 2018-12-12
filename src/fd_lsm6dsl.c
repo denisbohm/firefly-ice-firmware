@@ -263,9 +263,9 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
     fd_lsm6dsl_timestamp_and_steps_enabled = configuration->timestamp_and_steps_enable;
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00100000 : 0b00000000); // enable timestamp
 
-    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL4, 0b00001000); // no timestamp decimation
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL4, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00001000 : 0b00000000); // no timestamp decimation
     fd_lsm6dsl_write16(device, FD_LSM6DSL_REGISTER_FIFO_CTRL1,
-        0x8000 /* enable timestamp in fifo */ | (configuration->fifo_threshold & 0x07ff)
+        (fd_lsm6dsl_timestamp_and_steps_enabled ? 0x8000 /* enable timestamp in fifo */ : 0x0000) | (configuration->fifo_threshold & 0x07ff)
     );
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL3,
         (configuration->gyro_enable ? 0b00001000 /* no decimation */ : 0b00000000) |

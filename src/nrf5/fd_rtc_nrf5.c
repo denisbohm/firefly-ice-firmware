@@ -119,7 +119,17 @@ uint32_t fd_rtc_get_subticks(const fd_rtc_t *fd_rtc) {
 }
 
 void fd_rtc_handler(NRF_RTC_Type *rtc) {
-    if (rtc->EVENTS_COMPARE[1]) {
+    bool events_compare_1 = rtc->EVENTS_COMPARE[1] != 0;
+
+    // Clear all events (also unexpected ones)
+    rtc->EVENTS_COMPARE[0] = 0;
+    rtc->EVENTS_COMPARE[1] = 0;
+    rtc->EVENTS_COMPARE[2] = 0;
+    rtc->EVENTS_COMPARE[3] = 0;
+    rtc->EVENTS_TICK       = 0;
+    rtc->EVENTS_OVRFLW     = 0;
+
+    if (events_compare_1) {
         fd_rtc_info_t *info = fd_rtc_get_info((uint32_t)rtc);
         if (info != 0) {
             uint32_t count_per_tick = info->count_per_tick;
@@ -139,14 +149,6 @@ void fd_rtc_handler(NRF_RTC_Type *rtc) {
             }
         }
     }
-
-    // Clear all events (also unexpected ones)
-    rtc->EVENTS_COMPARE[0] = 0;
-    rtc->EVENTS_COMPARE[1] = 0;
-    rtc->EVENTS_COMPARE[2] = 0;
-    rtc->EVENTS_COMPARE[3] = 0;
-    rtc->EVENTS_TICK       = 0;
-    rtc->EVENTS_OVRFLW     = 0;
 }
 
 void RTC2_IRQHandler(void) {

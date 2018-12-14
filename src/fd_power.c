@@ -239,13 +239,13 @@ void fd_power_update_callback(void) {
         bool is_charging = fd_hal_system_is_charging();
         if (is_usb_powered) {
             if (is_charging) {
-                retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute() / fd_power_update_interval;
+                retained->power_battery_level += fd_hal_system_get_charge_level_change_per_minute() * 60.0 / fd_power_update_interval;
                 if (retained->power_battery_level > 1.0) {
                     retained->power_battery_level = 1.0;
                 }
             }
         } else {
-            retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute() / fd_power_update_interval;
+            retained->power_battery_level -= fd_hal_system_get_discharge_level_change_per_minute() * 60.0 / fd_power_update_interval;
             if (retained->power_battery_level < 0.0) {
                 retained->power_battery_level = 0.0;
             }

@@ -72,7 +72,7 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
     uint16_t last_unread_words = 0;
     uint16_t last_pattern = 0;
     for (int retry = 0; retry < 10; ++retry) {
-        bool int1 = fd_gpio_get((fd_gpio_t){ .port = 1, .pin = 6 });
+        bool int1 __attribute__((unused)) = fd_gpio_get((fd_gpio_t){ .port = 1, .pin = 6 });
         fd_spim_device_select(device);
         uint8_t location = FD_LSM6DSL_READ | FD_LSM6DSL_REGISTER_FIFO_STATUS1;
         uint8_t buffer[4];
@@ -197,7 +197,7 @@ void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device) {
     fd_spim_bus_wait(device->bus);
     uint16_t fifo_status_12 = fd_lsm6dsl_to_uint16(buffer, 0);
     uint16_t unread_words = fifo_status_12 & 0x0fff;
-    uint16_t pattern = fd_lsm6dsl_to_uint16(buffer, 2) & 0x03ff;
+    uint16_t pattern __attribute__((unused)) = fd_lsm6dsl_to_uint16(buffer, 2) & 0x03ff;
 
     uint8_t fifo_status2 = buffer[1];
     if (fifo_status2 & FD_LSM6DSL_FIFO_STATUS2_EMPTY) {

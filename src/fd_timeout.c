@@ -23,6 +23,13 @@ bool fd_timeout_is_over(fd_timeout_t *timeout) {
     return false;
 }
 
+float fd_timeout_elapsed(fd_timeout_t *timeout) {
+    return timeout->change_count / 1000000.0;
+}
+
+void fd_timeout_stop(fd_timeout_t *timeout) {
+}
+
 #else
 
 void fd_timeout_initialize(fd_timeout_t *timeout, float duration) {
@@ -36,6 +43,13 @@ bool fd_timeout_is_over(fd_timeout_t *timeout) {
         return true;
     }
     return false;
+}
+
+float fd_timeout_elapsed(fd_timeout_t *timeout) {
+    return timeout->change_count / 1000000.0;
+}
+
+void fd_timeout_stop(fd_timeout_t *timeout) {
 }
 
 #endif

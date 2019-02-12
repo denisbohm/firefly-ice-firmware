@@ -1,5 +1,7 @@
 #include "fd_packet.h"
 
+#include "fd_log.h"
+
 fd_packet_output_t *fd_packet_output_head;
 
 void fd_packet_initialize(void) {
@@ -7,6 +9,12 @@ void fd_packet_initialize(void) {
 }
 
 void fd_packet_output_initialize(fd_packet_output_t *packet_output, fd_lock_owner_t owner, fd_packet_is_available_t is_available, fd_packet_write_t write) {
+    fd_packet_output_t *p = fd_packet_output_head;
+    while (p != 0) {
+        fd_log_assert(p != packet_output);
+        p = p->next;
+    }
+
     packet_output->owner = owner;
     packet_output->is_available = is_available;
     packet_output->write = write;

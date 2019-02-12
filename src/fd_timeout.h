@@ -10,7 +10,8 @@ typedef struct {
 } fd_timeout_t;
 
 void fd_timeout_initialize(fd_timeout_t *timeout, float duration);
-
+float fd_timeout_elapsed(fd_timeout_t *timeout);
 bool fd_timeout_is_over(fd_timeout_t *timeout);
+void fd_timeout_stop(fd_timeout_t *timeout);
 
 #endif

@@ -1,6 +1,38 @@
 #include "fd_i2cm.h"
 
+#include "fd_delay.h"
 #include "fd_nrf5.h"
+
+void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus) {
+    fd_gpio_configure_output_open_drain_pull_up(bus->scl);
+    fd_gpio_set(bus->scl, true);
+    fd_gpio_configure_input_pull_up(bus->sda);
+
+    fd_delay_us(4);
+    for (int i = 0; i < 9; i++) {
+#if 0
+        if (fd_gpio_get(bus->sda)) {
+            if (i == 0) {
+                return;
+            } else {
+                break;
+            }
+        }
+#endif
+        fd_gpio_set(bus->scl, false);
+        fd_delay_us(4);
+        fd_gpio_set(bus->scl, true);
+        fd_delay_us(4);
+    }
+    fd_gpio_configure_output_open_drain_pull_up(bus->sda);
+    fd_gpio_set(bus->sda, false);
+    fd_delay_us(4);
+    fd_gpio_set(bus->sda, true);
+    fd_delay_us(4);
+
+    fd_gpio_configure_default(bus->scl);
+    fd_gpio_configure_default(bus->sda);
+}
 
 void fd_i2cm_initialize(
     const fd_i2cm_bus_t *buses, uint32_t bus_count,
@@ -9,6 +41,7 @@ void fd_i2cm_initialize(
     for (uint32_t i = 0; i < bus_count; ++i) {
         const fd_i2cm_bus_t *bus = &buses[i];
         fd_i2cm_bus_disable(bus);
+        fd_i2cm_clear_bus(bus);
     }
 }
 

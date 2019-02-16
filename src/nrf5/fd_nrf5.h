@@ -17,6 +17,10 @@
 #include "nrf_nvmc.h"
 #include "nrf_temp.h"
 
+#include "crys_hash.h"
+#include "ssi_aes.h"
+#include "sns_silib.h"
+
 #include "app_scheduler.h"
 
 #pragma GCC diagnostic pop

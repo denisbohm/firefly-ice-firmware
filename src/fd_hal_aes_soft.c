@@ -591,18 +591,3 @@ void fd_hal_aes_decrypt_blocks(fd_hal_aes_decrypt_t *decrypt __attribute__((unus
 
 void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused))) {
 }
-
-void fd_hal_aes_hash_start(fd_hal_aes_hash_t *hash __attribute__((unused)), const uint8_t *key __attribute__((unused)), const uint8_t *iv __attribute__((unused))) {
-}
-
-void fd_hal_aes_hash_blocks(fd_hal_aes_hash_t *hash __attribute__((unused)), uint8_t *in __attribute__((unused)), uint32_t length __attribute__((unused))) {
-}
-
-void fd_hal_aes_hash_stop(fd_hal_aes_hash_t *hash __attribute__((unused)), uint8_t *result __attribute__((unused))) {
-}
-
-void fd_hal_aes_hash_start_default(fd_hal_aes_hash_t *hash __attribute__((unused))) {
-}
-
-void fd_hal_aes_hash_default(fd_hal_aes_source_t source __attribute__((unused)), uint32_t address __attribute__((unused)), uint32_t length __attribute__((unused)), uint8_t *result __attribute__((unused))) {
-}

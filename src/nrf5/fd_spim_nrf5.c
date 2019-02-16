@@ -2,6 +2,38 @@
 
 #include "fd_nrf5.h"
 
+static inline
+NRF_GPIO_Type *fd_spim_get_nrf_gpio(uint32_t port) {
+    return (NRF_GPIO_Type *)(NRF_P0_BASE + port * 0x300UL);
+}
+
+static
+void fd_spim_configure(
+    fd_gpio_t gpio,
+    nrf_gpio_pin_dir_t dir,
+    nrf_gpio_pin_input_t input,
+    nrf_gpio_pin_pull_t pull,
+    nrf_gpio_pin_drive_t drive,
+    nrf_gpio_pin_sense_t sense
+) {
+    NRF_GPIO_Type *nrf_gpio = fd_spim_get_nrf_gpio(gpio.port);
+    nrf_gpio->PIN_CNF[gpio.pin] = ((uint32_t)dir << GPIO_PIN_CNF_DIR_Pos)
+                                | ((uint32_t)input << GPIO_PIN_CNF_INPUT_Pos)
+                                | ((uint32_t)pull << GPIO_PIN_CNF_PULL_Pos)
+                                | ((uint32_t)drive << GPIO_PIN_CNF_DRIVE_Pos)
+                                | ((uint32_t)sense << GPIO_PIN_CNF_SENSE_Pos);
+}
+
+void fd_spim_configure_output(fd_gpio_t gpio) {
+    fd_spim_configure(gpio,
+        NRF_GPIO_PIN_DIR_OUTPUT,
+        NRF_GPIO_PIN_INPUT_DISCONNECT,
+        NRF_GPIO_PIN_NOPULL,
+        NRF_GPIO_PIN_H0H1,
+        NRF_GPIO_PIN_NOSENSE
+    );
+}
+
 void fd_spim_initialize(
     const fd_spim_bus_t *buses, uint32_t bus_count,
     const fd_spim_device_t *devices, uint32_t device_count
@@ -13,9 +45,9 @@ void fd_spim_initialize(
     }
     for (uint32_t i = 0; i < bus_count; ++i) {
         const fd_spim_bus_t *bus = &buses[i];
-        fd_gpio_configure_output(bus->sclk);
+        fd_spim_configure_output(bus->sclk);
         fd_gpio_set(bus->sclk, true);
-        fd_gpio_configure_output(bus->mosi);
+        fd_spim_configure_output(bus->mosi);
         fd_gpio_set(bus->mosi, true);
         fd_gpio_configure_input_pull_up(bus->miso);
 
@@ -29,7 +61,18 @@ void fd_spim_bus_enable(const fd_spim_bus_t *bus) {
     }
 
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
-    spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
+    switch (bus->frequency) {
+        default:
+        case 8000000:
+            spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
+            break;
+        case 16000000:
+            spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M16;
+            break;
+        case 32000000:
+            spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M32;
+            break;
+    }
     spim->CONFIG = (SPIM_CONFIG_CPOL_ActiveLow << SPIM_CONFIG_CPOL_Pos) | (SPIM_CONFIG_CPHA_Trailing << SPIM_CONFIG_CPHA_Pos);
     spim->PSEL.SCK = NRF_GPIO_PIN_MAP(bus->sclk.port, bus->sclk.pin);
     spim->PSEL.MOSI = NRF_GPIO_PIN_MAP(bus->mosi.port, bus->mosi.pin);

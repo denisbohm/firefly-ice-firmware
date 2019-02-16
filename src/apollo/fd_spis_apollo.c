@@ -132,8 +132,9 @@ size_t fd_spis_get_master_out_size(const fd_spis_device_t *device __attribute__(
     return fd_spis_ios_config.ui32RAMBase - fd_spis_ios_config.ui32FIFOBase;
 }
 
-void fd_spis_device_before(const fd_spis_device_t *device) {
+void fd_spis_device_ready(const fd_spis_device_t *device) {
     fd_gpio_set(device->ready, false);
+    fd_gpio_set(device->ready, true);
 }
 
 size_t fd_spis_device_slave_in(const fd_spis_device_t *device, uint8_t *data, size_t size) {
@@ -164,8 +165,4 @@ void fd_spis_device_master_out(const fd_spis_device_t *device, const uint8_t *da
     *IOSLAVE_FIFOPTR = (FIFOSIZ << 8) | (FIFOPTR << 0);
     volatile uint32_t *IOSLAVE_FIFOCTR = (uint32_t *)(REG_IOSLAVE_BASEADDR + AM_REG_IOSLAVE_FIFOCTR_O);
     *IOSLAVE_FIFOCTR = length;
-}
-
-void fd_spis_device_after(const fd_spis_device_t *device) {
-    fd_gpio_set(device->ready, true);
 }

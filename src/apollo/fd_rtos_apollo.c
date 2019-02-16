@@ -7,6 +7,8 @@
 
 typedef struct {
     uint32_t stack_pointer;
+    uint32_t stack_base;
+    uint32_t stack_size;
     uint32_t priority;
     bool runnable;
 } fd_rtos_task_t;
@@ -31,6 +33,7 @@ typedef struct {
     fd_rtos_hardware_stack_frame_t hardware;
 } fd_rtos_stack_frame_t;
 
+uint32_t fd_rtos_interrupt_level;
 #define fd_rtos_task_size 8
 fd_rtos_task_t fd_rtos_tasks[fd_rtos_task_size];
 uint32_t fd_rtos_task_count;
@@ -39,7 +42,7 @@ bool fd_rtos_task_start;
 uint32_t fd_rtos_delay_task_index;
 uint32_t fd_rtos_assertion_failure_count;
 
-uint8_t fd_rtos_sleep_stack[1024];
+uint8_t fd_rtos_sleep_stack[4096];
 
 void fd_rtos_assert(bool value) {
     if (!value) {
@@ -55,6 +58,7 @@ void fd_rtos_sleep_task(void) {
 }
 
 void fd_rtos_initialize(void) {
+    fd_rtos_interrupt_level = 0;
     memset(fd_rtos_tasks, 0, sizeof(fd_rtos_tasks));
     fd_rtos_task_count = 0;
     fd_rtos_task_index = 0;
@@ -86,6 +90,8 @@ void fd_rtos_add_task(fd_rtos_entry_point_t entry_point, void *stack, size_t sta
     fd_rtos_task_t *task = &fd_rtos_tasks[fd_rtos_task_count];
     task->stack_pointer = ((uint32_t)stack) + stack_size;
     task->stack_pointer -= sizeof(fd_rtos_stack_frame_t);
+    task->stack_base = (uint32_t)stack;
+    task->stack_size = stack_size;
     fd_rtos_stack_frame_t *stack_frame = (fd_rtos_stack_frame_t *)task->stack_pointer;
     memset(stack_frame, 0, sizeof(stack_frame));
     stack_frame->hardware.lr = (uint32_t)fd_rtos_task_fallthrough;
@@ -119,6 +125,11 @@ void am_pendsv_isr(void) {
             "mov %[stack_pointer], r0\n"
             : [stack_pointer] "=r" (stack_pointer));
         task->stack_pointer = stack_pointer;
+        uint32_t top = task->stack_base + task->stack_size;
+        fd_rtos_assert((task->stack_base <= stack_pointer) && (stack_pointer < top));
+        fd_rtos_hardware_stack_frame_t *stack_frame = (fd_rtos_hardware_stack_frame_t *)(stack_pointer + sizeof(fd_rtos_hardware_stack_frame_t));
+        uint32_t pc = stack_frame->pc;
+        fd_rtos_assert((0x10 <= pc) && (pc < 0x100000));
     }
 
     // find new task to run
@@ -139,7 +150,11 @@ void am_pendsv_isr(void) {
     // resume task to run
     // pop r4-r11 from the program stack
     uint32_t stack_pointer = task->stack_pointer;
-    fd_rtos_assert((0x10000000 <= stack_pointer) && (stack_pointer <= 0x10040000));
+    uint32_t top = task->stack_base + task->stack_size;
+    fd_rtos_assert((task->stack_base <= stack_pointer) && (stack_pointer < top));
+    fd_rtos_hardware_stack_frame_t *stack_frame = (fd_rtos_hardware_stack_frame_t *)(stack_pointer + sizeof(fd_rtos_hardware_stack_frame_t));
+    uint32_t pc = stack_frame->pc;
+    fd_rtos_assert((0x10 <= pc) && (pc < 0x100000));
     __asm(
         "MOV r0, %[stack_pointer]\n"
         "LDMFD r0!, {r4-r11}\n"
@@ -147,6 +162,7 @@ void am_pendsv_isr(void) {
         : : [stack_pointer] "r" (stack_pointer));
 
     // return from this exception handler
+    const uint32_t EXC_RETURN_THREAD_MSP = 0xfffffff9;
     const uint32_t EXC_RETURN_THREAD_PSP = 0xfffffffd;
     __asm("bx %[EXC_RETURN_THREAD_PSP]" : : [EXC_RETURN_THREAD_PSP] "r" (EXC_RETURN_THREAD_PSP));
 }
@@ -162,6 +178,70 @@ void fd_rtos_yield(void) {
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
+void fd_rtos_interrupt_disable(void) {
+    __disable_irq();
+    ++fd_rtos_interrupt_level;
+}
+
+void fd_rtos_interrupt_enable(void) {
+    fd_rtos_assert(fd_rtos_interrupt_level > 0);
+    --fd_rtos_interrupt_level;
+    if (fd_rtos_interrupt_level == 0) {
+        __enable_irq();
+    }
+}
+
+void fd_rtos_condition_initialize(fd_rtos_condition_t *condition) {
+    memset(condition, 0, sizeof(fd_rtos_condition_t));
+}
+
+void fd_rtos_condition_lock(fd_rtos_condition_t *condition) {
+#if 0
+    uint32_t *value_pointer = &condition->value;
+    __asm(
+        " MOV R1, #1\n"
+        "fd_rtos_spin_lock:\n"
+        " LDREX r0, [%[value_pointer]]\n"
+        " CMP r0, r1\n"
+        " IT NE\n"
+        " STREXNE r0, r1, [%[value_pointer]]\n"
+        " ITE NE\n"
+        " CMPNE r0, #1\n"
+        " BEQ fd_rtos_spin_lock\n"
+        " DMB\n"
+        : [value_pointer] "=r" (value_pointer));
+#endif
+}
+
+void fd_rtos_condition_wait(fd_rtos_condition_t *condition) {
+    fd_rtos_assert(condition->task == 0);
+    fd_rtos_task_t *task = &fd_rtos_tasks[fd_rtos_task_index];
+    condition->task = task;
+    task->runnable = false;
+    fd_rtos_interrupt_enable();
+    fd_rtos_yield();
+}
+
+void fd_rtos_condition_signal(fd_rtos_condition_t *condition) {
+    fd_rtos_task_t *task = (fd_rtos_task_t *)condition->task;
+    if (task != 0) {
+        task->runnable = true;
+        condition->task = 0;
+    }
+}
+
+void fd_rtos_condition_unlock(fd_rtos_condition_t *condition) {
+#if 0
+    uint32_t *value_pointer = &condition->value;
+    __asm(
+        " MOV R1, #0\n"
+        " DMB\n"
+        " STR r1, [%[value_pointer]]\n"
+        : [value_pointer] "=r" (value_pointer));
+#endif
+}
+
+#if 0
 void am_stimer_cmpr0_isr(void) {
     am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
     am_hal_stimer_int_disable(AM_HAL_STIMER_INT_COMPAREA);
@@ -201,3 +281,5 @@ void fd_rtos_test(void) {
 
     fd_rtos_run();
 }
+
+#endif

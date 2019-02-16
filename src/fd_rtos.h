@@ -7,6 +7,11 @@
 
 typedef void (*fd_rtos_entry_point_t)(void);
 
+typedef struct {
+    uint32_t value;
+    void *task;
+} fd_rtos_condition_t;
+
 void fd_rtos_initialize(void);
 
 void fd_rtos_add_task(fd_rtos_entry_point_t entry_point, void *stack, size_t stack_size, uint32_t priority);
@@ -15,6 +20,13 @@ void fd_rtos_yield(void);
 
 void fd_rtos_run(void);
 
-void fd_rtos_test(void);
+void fd_rtos_interrupt_disable(void);
+void fd_rtos_interrupt_enable(void);
+
+void fd_rtos_condition_initialize(fd_rtos_condition_t *condition);
+void fd_rtos_condition_lock(fd_rtos_condition_t *condition);
+void fd_rtos_condition_wait(fd_rtos_condition_t *condition);
+void fd_rtos_condition_signal(fd_rtos_condition_t *condition);
+void fd_rtos_condition_unlock(fd_rtos_condition_t *condition);
 
 #endif

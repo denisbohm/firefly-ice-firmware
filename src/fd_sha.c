@@ -2,7 +2,16 @@
 
 #include "sha.h"
 
-void fd_sha1(fd_sha1_source_t source, uint32_t address, uint32_t length, uint8_t *hash) {
+#include <string.h>
+
+void fd_sha_initialize(void) {
+}
+
+void fd_sha_source(FD_SHA_POINTER_UINT_TYPE address, uint8_t *data, uint32_t length) {
+    memcpy(data, (void *)address, length);
+}
+
+void fd_sha1(fd_sha_source_t source, FD_SHA_POINTER_UINT_TYPE address, uint32_t length, uint8_t *hash) {
     SHA_CTX context;
     SHA1_Init(&context);
     sha1_byte data[SHA1_BLOCK_LENGTH];

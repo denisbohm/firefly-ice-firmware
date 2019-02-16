@@ -31,12 +31,10 @@ void fd_spis_device_disable(const fd_spis_device_t *device);
 
 size_t fd_spis_get_buffer_size(const fd_spis_device_t *device);
 
-void fd_spis_device_before(const fd_spis_device_t *device);
-
 size_t fd_spis_device_slave_in(const fd_spis_device_t *device, uint8_t *data, size_t size);
 
 void fd_spis_device_master_out(const fd_spis_device_t *device, const uint8_t *data, size_t length);
 
-void fd_spis_device_after(const fd_spis_device_t *device);
+void fd_spis_device_ready(const fd_spis_device_t *device);
 
 #endif

@@ -29,7 +29,7 @@ void fd_spim_configure_output(fd_gpio_t gpio) {
         NRF_GPIO_PIN_DIR_OUTPUT,
         NRF_GPIO_PIN_INPUT_DISCONNECT,
         NRF_GPIO_PIN_NOPULL,
-        NRF_GPIO_PIN_H0H1,
+        NRF_GPIO_PIN_S0S1,
         NRF_GPIO_PIN_NOSENSE
     );
 }

@@ -66,6 +66,7 @@ void fd_rtos_initialize(void) {
     fd_rtos_delay_task_index = 0;
     fd_rtos_assertion_failure_count = 0;
 
+#if 0
     NVIC_SetPriority(PendSV_IRQn, 1);
 
     am_hal_stimer_config(AM_HAL_STIMER_HFRC_3MHZ | AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
@@ -74,6 +75,7 @@ void fd_rtos_initialize(void) {
     NVIC_SetPriority(STIMER_CMPR0_IRQn, 2);
 
     fd_rtos_add_task(fd_rtos_sleep_task, fd_rtos_sleep_stack, sizeof(fd_rtos_sleep_stack), 0);
+#endif
 }
 
 void fd_rtos_task_fallthrough(void) {
@@ -178,17 +180,12 @@ void fd_rtos_yield(void) {
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
-void fd_rtos_interrupt_disable(void) {
-    __disable_irq();
-    ++fd_rtos_interrupt_level;
+uint32_t fd_rtos_interrupt_disable(void) {
+    return am_hal_interrupt_master_disable();
 }
 
-void fd_rtos_interrupt_enable(void) {
-    fd_rtos_assert(fd_rtos_interrupt_level > 0);
-    --fd_rtos_interrupt_level;
-    if (fd_rtos_interrupt_level == 0) {
-        __enable_irq();
-    }
+void fd_rtos_interrupt_enable(uint32_t state) {
+    am_hal_interrupt_master_set(state);
 }
 
 void fd_rtos_condition_initialize(fd_rtos_condition_t *condition) {
@@ -218,7 +215,6 @@ void fd_rtos_condition_wait(fd_rtos_condition_t *condition) {
     fd_rtos_task_t *task = &fd_rtos_tasks[fd_rtos_task_index];
     condition->task = task;
     task->runnable = false;
-    fd_rtos_interrupt_enable();
     fd_rtos_yield();
 }
 

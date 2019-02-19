@@ -20,8 +20,8 @@ void fd_rtos_yield(void);
 
 void fd_rtos_run(void);
 
-void fd_rtos_interrupt_disable(void);
-void fd_rtos_interrupt_enable(void);
+uint32_t fd_rtos_interrupt_disable(void);
+void fd_rtos_interrupt_enable(uint32_t state);
 
 void fd_rtos_condition_initialize(fd_rtos_condition_t *condition);
 void fd_rtos_condition_lock(fd_rtos_condition_t *condition);

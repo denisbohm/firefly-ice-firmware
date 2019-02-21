@@ -50,7 +50,7 @@ bool fd_rtos_task_start;
 uint32_t fd_rtos_delay_task_index;
 uint32_t fd_rtos_assertion_failure_count;
 
-uint8_t fd_rtos_sleep_stack[4096];
+uint8_t fd_rtos_sleep_stack[1024] __attribute__((aligned(8)));
 
 void fd_rtos_assert(bool value) {
     if (!value) {

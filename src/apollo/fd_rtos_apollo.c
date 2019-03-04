@@ -248,6 +248,9 @@ void fd_rtos_condition_unlock(fd_rtos_condition_t *condition) {
 #endif
 }
 
+void fd_rtos_delay(float sleep) {
+}
+
 #if 0
 void am_stimer_cmpr0_isr(void) {
     am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);

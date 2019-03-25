@@ -70,7 +70,7 @@ void fd_spis_initialize(const fd_spis_device_t *devices, uint32_t device_count) 
         am_hal_ios_int_enable(AM_HAL_IOS_INT_XCMPWR | AM_HAL_IOS_INT_XCMPRF);
 
         // Preparation of FIFO
-        am_hal_ios_fifo_buffer_init( &g_pui8TxFifoBuffer[0], AM_IOS_TX_BUFSIZE_MAX);
+        am_hal_ios_fifo_buffer_init(&g_pui8TxFifoBuffer[0], AM_IOS_TX_BUFSIZE_MAX);
 
         //
         // Set the bit in the NVIC to accept access interrupts from the IO Slave.
@@ -80,6 +80,8 @@ void fd_spis_initialize(const fd_spis_device_t *devices, uint32_t device_count) 
 
         fd_gpio_configure_output(device->ready);
         fd_gpio_set(device->ready, false);
+
+        am_hal_ios_disable(device->instance);
     }
 }
 

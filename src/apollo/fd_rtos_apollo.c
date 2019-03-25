@@ -248,48 +248,27 @@ void fd_rtos_condition_unlock(fd_rtos_condition_t *condition) {
 #endif
 }
 
-void fd_rtos_delay(float sleep) {
-}
-
-#if 0
 void am_stimer_cmpr0_isr(void) {
-    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
     am_hal_stimer_int_disable(AM_HAL_STIMER_INT_COMPAREA);
 
     fd_rtos_task_t *task = &fd_rtos_tasks[fd_rtos_delay_task_index];
     task->runnable = true;
 }
 
-void fd_rtos_delay_delta(uint32_t delta) {
+void fd_rtos_delay(float sleep) {
+    // 3 mHz stimer clock
+    uint32_t compare_delta = (uint32_t)(sleep * 3000000.0f);
+    if (compare_delta < 3) {
+        return;
+    }
+    uint32_t state = fd_rtos_interrupt_disable();
     fd_rtos_delay_task_index = fd_rtos_task_index;
     fd_rtos_task_t *task = &fd_rtos_tasks[fd_rtos_delay_task_index];
     task->runnable = false;
+    fd_rtos_interrupt_enable(state);
     am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
     uint32_t compare_a = 0;
-    am_hal_stimer_compare_delta_set(compare_a, delta);
-
+    am_hal_stimer_compare_delta_set(compare_a, compare_delta);
     fd_rtos_yield();
+    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
 }
-
-// 3 mHz stimer clock & round up
-#define fd_rtos_delay(s) fd_rtos_delay_delta((uint32_t)((s) * 3000000.0) + 1)
-
-uint8_t fd_rtos_test_delay_stack[1024];
-uint32_t fd_rtos_test_delay_count = 0;
-
-void fd_rtos_test_delay_task(void) {
-    while (true) {
-        ++fd_rtos_test_delay_count;
-        fd_rtos_delay(1.0);
-    }
-}
-
-void fd_rtos_test(void) {
-    fd_rtos_initialize();
-
-    fd_rtos_add_task(fd_rtos_test_delay_task, fd_rtos_test_delay_stack, sizeof(fd_rtos_test_delay_stack), 1);
-
-    fd_rtos_run();
-}
-
-#endif

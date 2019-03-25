@@ -26,4 +26,6 @@ fd_time_t fd_hal_rtc_get_accurate_time(void);
 void fd_hal_rtc_set_countdown(uint32_t countdown);
 uint32_t fd_hal_rtc_get_countdown(void);
 
+uint32_t fd_hal_rtc_get_tick(void);
+
 #endif

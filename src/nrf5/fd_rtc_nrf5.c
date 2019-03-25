@@ -81,6 +81,43 @@ void fd_rtc_disable(const fd_rtc_t *fd_rtc) {
     rtc->CC[1] = 0;
 }
 
+#define FD_RTC_GPIOTE_CHANNEL 0
+#define FD_RTC_PPI_CHANNEL 0
+
+void fd_rtc_enable_pin(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
+    NRF_RTC_Type *rtc = (NRF_RTC_Type *)fd_rtc->instance;
+
+    // To use compare 1 event to toggle the gpio.
+    NRF_GPIOTE->CONFIG[FD_RTC_GPIOTE_CHANNEL] =
+        (GPIOTE_CONFIG_MODE_Task       << GPIOTE_CONFIG_MODE_Pos)     | 
+        (GPIOTE_CONFIG_OUTINIT_Low     << GPIOTE_CONFIG_OUTINIT_Pos)  |
+        (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos) | 
+        (gpio.port                     << GPIOTE_CONFIG_PORT_Pos)     |
+        (gpio.pin                      << GPIOTE_CONFIG_PSEL_Pos);
+
+    // Connect RTC1 tick event to GPIOTE toggle task
+#if 1
+    sd_ppi_channel_assign(FD_RTC_PPI_CHANNEL, &rtc->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[0]);
+    sd_ppi_channel_enable_set(1 << FD_RTC_PPI_CHANNEL);
+#else
+    NRF_PPI->CH[FD_RTC_PPI_CHANNEL].EEP = (uint32_t) &rtc->EVENTS_COMPARE[1];
+    NRF_PPI->CH[FD_RTC_PPI_CHANNEL].TEP = (uint32_t) &NRF_GPIOTE->TASKS_OUT[0];
+    NRF_PPI->CHEN |= 1 << FD_RTC_PPI_CHANNEL;
+#endif
+}
+
+void fd_rtc_disable_pin(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
+    NRF_GPIOTE->CONFIG[FD_RTC_GPIOTE_CHANNEL] = 0;
+#if 1
+    sd_ppi_channel_enable_clr(1 << FD_RTC_PPI_CHANNEL);
+//?    nrf_drv_ppi_channel_free(FD_RTC_PPI_CHANNEL);
+#else
+    NRF_PPI->CHEN &= ~(1 << FD_RTC_PPI_CHANNEL);
+    NRF_PPI->CH[FD_RTC_PPI_CHANNEL].EEP = 0;
+    NRF_PPI->CH[FD_RTC_PPI_CHANNEL].TEP = 0;
+#endif
+}
+
 void fd_rtc_enable(const fd_rtc_t *fd_rtc) {
     NRF_RTC_Type *rtc = (NRF_RTC_Type *)fd_rtc->instance;
     fd_rtc_info_t *info = fd_rtc_get_info(fd_rtc->instance);

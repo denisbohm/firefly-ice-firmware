@@ -58,9 +58,24 @@ void fd_rtos_assert(bool value) {
     }
 }
 
+bool fd_rtos_is_any_task_runnable(void) {
+    // skip sleep task, which is always runnable
+    for (uint32_t i = 1; i < fd_rtos_task_count; ++i) {
+        fd_rtos_task_t *task = &fd_rtos_tasks[i];
+        if (task->runnable) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void fd_rtos_sleep_task(void) {
     while (true) {
-        am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
+        uint32_t state = fd_rtos_interrupt_disable();
+        if (!fd_rtos_is_any_task_runnable()) {
+            am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
+        }
+        fd_rtos_interrupt_enable(state);
         fd_rtos_yield();
     }
 }
@@ -250,6 +265,7 @@ void fd_rtos_condition_unlock(fd_rtos_condition_t *condition) {
 
 void am_stimer_cmpr0_isr(void) {
     am_hal_stimer_int_disable(AM_HAL_STIMER_INT_COMPAREA);
+    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
 
     fd_rtos_task_t *task = &fd_rtos_tasks[fd_rtos_delay_task_index];
     task->runnable = true;
@@ -270,5 +286,4 @@ void fd_rtos_delay(float sleep) {
     uint32_t compare_a = 0;
     am_hal_stimer_compare_delta_set(compare_a, compare_delta);
     fd_rtos_yield();
-    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
 }

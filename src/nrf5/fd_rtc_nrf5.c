@@ -1,6 +1,7 @@
 #include "fd_rtc.h"
 
 #include "fd_hal_processor.h"
+#include "fd_hal_rtc.h"
 
 #include "fd_nrf5.h"
 
@@ -84,7 +85,7 @@ void fd_rtc_disable(const fd_rtc_t *fd_rtc) {
 #define FD_RTC_GPIOTE_CHANNEL 0
 #define FD_RTC_PPI_CHANNEL 0
 
-void fd_rtc_enable_pin(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
+void fd_hal_rtc_enable_pin_output(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
     NRF_RTC_Type *rtc = (NRF_RTC_Type *)fd_rtc->instance;
 
     // To use compare 1 event to toggle the gpio.
@@ -106,7 +107,7 @@ void fd_rtc_enable_pin(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
 #endif
 }
 
-void fd_rtc_disable_pin(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
+void fd_hal_rtc_disable_pin_output(const fd_rtc_t *fd_rtc, fd_gpio_t gpio) {
     NRF_GPIOTE->CONFIG[FD_RTC_GPIOTE_CHANNEL] = 0;
 #if 1
     sd_ppi_channel_enable_clr(1 << FD_RTC_PPI_CHANNEL);

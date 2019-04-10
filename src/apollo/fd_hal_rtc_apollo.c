@@ -16,25 +16,66 @@ int32_t fd_hal_rtc_get_utc_offset(void) {
 }
 
 #define FD_HAL_RTC_CTIMER_NUMBER 2
+#define FD_HAL_RTC_MS_CTIMER_NUMBER 3
 
 void fd_hal_rtc_initialize(void) {
     fd_hal_rtc_utc_offset = 0;
     fd_hal_rtc_time_offset = (fd_time_t){ .seconds = 0, .microseconds = 0 };
     fd_hal_rtc_countdown = 0;
 
-
-//    PAD20INPEN - need to set this so can use clock pin input
-
     am_hal_ctimer_config_t ctimer_config = {
         // link timers
         .ui32Link = 1,
         // Timer A
         .ui32TimerAConfig = AM_HAL_CTIMER_FN_CONTINUOUS | AM_HAL_CTIMER_LFRC_512HZ,
-//        AM_HAL_CTIMER_FN_CONTINUOUS | AM_HAL_CTIMER_CLK_PIN,
         // Timer B
         .ui32TimerBConfig = 0,
     };
     am_hal_ctimer_clear(FD_HAL_RTC_CTIMER_NUMBER, AM_HAL_CTIMER_BOTH);
+    am_hal_ctimer_config(FD_HAL_RTC_CTIMER_NUMBER, &ctimer_config);
+    am_hal_ctimer_start(FD_HAL_RTC_CTIMER_NUMBER, AM_HAL_CTIMER_BOTH);
+
+#if 0
+    // clock from nRF is 16Hz, so create a ms timer on this side...
+    !!! start ms timer - every second rollover - for accurate timing -denis
+    am_hal_ctimer_clear(FD_HAL_RTC_MS_CTIMER_NUMBER, AM_HAL_CTIMER_TIMERA);
+#define AM_HAL_CTIMER_LFRC_1KHZ AM_REG_CTIMER_CTRL0_TMRA0CLK(0xB)
+    am_hal_ctimer_config_single(
+        FD_HAL_RTC_MS_CTIMER_NUMBER, AM_HAL_CTIMER_TIMERA,
+        AM_HAL_CTIMER_FN_ONCE | AM_HAL_CTIMER_LFRC_1KHZ
+    );
+    am_hal_ctimer_period_set(FD_HAL_RTC_MS_CTIMER_NUMBER, AM_HAL_CTIMER_TIMERA, 32 - 1, 16);
+    am_hal_ctimer_start(FD_HAL_RTC_MS_CTIMER_NUMBER, AM_HAL_CTIMER_TIMERA);
+#endif
+}
+
+void fd_hal_rtc_enable_pin_input(const fd_rtc_t *rtc __attribute__((unused)), fd_gpio_t gpio) {
+//    PAD20 TCTA2 INPEN - need to set this so can use clock pin input
+    uint32_t pin_number = gpio.port * 32 + gpio.pin;
+    am_hal_gpio_pin_config(pin_number, AM_HAL_GPIO_FUNC(2) | AM_HAL_GPIO_INPEN);
+    am_hal_ctimer_config_t ctimer_config = {
+        // link timers
+        .ui32Link = 1,
+        // Timer A
+        .ui32TimerAConfig = AM_HAL_CTIMER_FN_CONTINUOUS | AM_HAL_CTIMER_CLK_PIN,
+        // Timer B
+        .ui32TimerBConfig = 0,
+    };
+    am_hal_ctimer_config(FD_HAL_RTC_CTIMER_NUMBER, &ctimer_config);
+    am_hal_ctimer_start(FD_HAL_RTC_CTIMER_NUMBER, AM_HAL_CTIMER_BOTH);
+}
+
+void fd_hal_rtc_disable_pin_input(const fd_rtc_t *rtc __attribute__((unused)), fd_gpio_t gpio) {
+    uint32_t pin_number = gpio.port * 32 + gpio.pin;
+    am_hal_gpio_pin_config(pin_number, AM_HAL_GPIO_FUNC(0) | AM_HAL_GPIO_INPEN);
+    am_hal_ctimer_config_t ctimer_config = {
+        // link timers
+        .ui32Link = 1,
+        // Timer A
+        .ui32TimerAConfig = AM_HAL_CTIMER_FN_CONTINUOUS | AM_HAL_CTIMER_LFRC_512HZ,
+        // Timer B
+        .ui32TimerBConfig = 0,
+    };
     am_hal_ctimer_config(FD_HAL_RTC_CTIMER_NUMBER, &ctimer_config);
     am_hal_ctimer_start(FD_HAL_RTC_CTIMER_NUMBER, AM_HAL_CTIMER_BOTH);
 }

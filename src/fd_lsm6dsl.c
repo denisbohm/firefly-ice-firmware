@@ -136,6 +136,10 @@ uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device) {
 uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count) {
     uint32_t word_count = fd_lsm6dsl_read_fifo_word_count(device);
     uint32_t axis_count = fd_lsm6dsl_get_axis_count();
+    fd_log_assert(axis_count != 0);
+    if (axis_count == 0) {
+        axis_count = 1;
+    }
     uint32_t count = word_count / axis_count;
     if (count > sample_count) {
         count = sample_count;
@@ -182,7 +186,7 @@ uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl
             byte_index += 1;
             uint32_t steps1 = bytes[byte_index];
             byte_index += 1;
-            uint32_t steps = (steps1 << 8) | steps0;
+            uint32_t steps __attribute__((unused)) = (steps1 << 8) | steps0;
         }
     }
     fd_spim_device_deselect(device);

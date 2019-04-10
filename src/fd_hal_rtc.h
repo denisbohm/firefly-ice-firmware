@@ -1,6 +1,8 @@
 #ifndef FD_HAL_RTC_H
 #define FD_HAL_RTC_H
 
+#include "fd_gpio.h"
+#include "fd_rtc.h"
 #include "fd_time.h"
 
 #include <stdint.h>
@@ -8,6 +10,12 @@
 fd_time_t fd_hal_rtc_get_time_retained(void);
 
 void fd_hal_rtc_initialize(void);
+
+void fd_hal_rtc_enable_pin_input(const fd_rtc_t *rtc, fd_gpio_t gpio);
+void fd_hal_rtc_disable_pin_input(const fd_rtc_t *rtc, fd_gpio_t gpio);
+
+void fd_hal_rtc_enable_pin_output(const fd_rtc_t *rtc, fd_gpio_t gpio);
+void fd_hal_rtc_disable_pin_output(const fd_rtc_t *rtc, fd_gpio_t gpio);
 
 void fd_hal_rtc_sleep(void);
 void fd_hal_rtc_wake(void);

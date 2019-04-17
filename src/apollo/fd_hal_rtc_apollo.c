@@ -15,8 +15,8 @@ int32_t fd_hal_rtc_get_utc_offset(void) {
     return fd_hal_rtc_utc_offset;
 }
 
-#define FD_HAL_RTC_CTIMER_NUMBER 2
-#define FD_HAL_RTC_MS_CTIMER_NUMBER 3
+#define FD_HAL_RTC_CTIMER_NUMBER 0
+#define FD_HAL_RTC_MS_CTIMER_NUMBER 1
 
 void fd_hal_rtc_initialize(void) {
     fd_hal_rtc_utc_offset = 0;

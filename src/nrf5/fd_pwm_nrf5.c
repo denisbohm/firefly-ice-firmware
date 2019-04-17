@@ -14,7 +14,7 @@ typedef struct {
 
 fd_pwm_module_state_t fd_pwm_module_states[4];
 
-void fd_pwm_initialize(const fd_pwm_module_t *modules, uint32_t module_count) {
+void fd_pwm_initialize(const fd_pwm_module_t *modules, uint32_t module_count, const fd_pwm_channel_t *channels __attribute__((unused)), uint32_t channel_count __attribute__((unused))) {
     memset(fd_pwm_module_states, 0, sizeof(fd_pwm_module_states));
     for (uint32_t i = 0; i < module_count; ++i) {
         const fd_pwm_module_t *module = &modules[i];

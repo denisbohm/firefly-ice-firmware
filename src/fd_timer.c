@@ -133,4 +133,7 @@ void fd_timer_start_next(fd_timer_t *timer, uint32_t interval) {
 
 void fd_timer_stop(fd_timer_t *timer) {
     timer->active = false;
+    timer->scheduled = false;
+    timer->triggered = false;
+    timer->countdown = 0;
 }

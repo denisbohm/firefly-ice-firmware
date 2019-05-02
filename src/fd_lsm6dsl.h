@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     fd_lsm6dsl_accelerometer_sample_t accelerometer;
     fd_lsm6dsl_gyro_sample_t gyro;
+    uint32_t steps;
     uint32_t timestamp;
 } fd_lsm6dsl_sample_t;
 

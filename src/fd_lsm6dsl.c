@@ -186,7 +186,7 @@ uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl
             byte_index += 1;
             uint32_t steps1 = bytes[byte_index];
             byte_index += 1;
-            uint32_t steps __attribute__((unused)) = (steps1 << 8) | steps0;
+            sample->steps = (steps1 << 8) | steps0;
         }
     }
     fd_spim_device_deselect(device);
@@ -265,7 +265,7 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
         (configuration->gyro_high_pass_filter << 4)
     );
     fd_lsm6dsl_timestamp_and_steps_enabled = configuration->timestamp_and_steps_enable;
-    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00100000 : 0b00000000); // enable timestamp
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00110010 : 0b00000000); // enable timestamp, pedometer, and reset step counter
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL4, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00001000 : 0b00000000); // no timestamp decimation
     fd_lsm6dsl_write16(device, FD_LSM6DSL_REGISTER_FIFO_CTRL1,

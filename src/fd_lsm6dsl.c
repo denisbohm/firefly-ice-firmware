@@ -243,7 +243,17 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
     if (!configuration->gyro_enable) {
         gyro_output_data_rate = FD_LSM6DSL_ODR_POWER_DOWN;
     }
-    
+
+    if (configuration->timestamp_and_steps_enable) {
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FUNC_CFG_ACCESS, 0x80);
+        uint8_t value = 0x0e; // pedometer minimum threshold value
+        if (configuration->accelerometer_full_scale_range >= FD_LSM6DSL_ODR_26_HZ) {
+            value |= 0x80; // PEDO_FS = ±4 g
+        }
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FUNC_CONFIG_PEDO_THS_MIN, value);
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FUNC_CFG_ACCESS, 0x00);
+    }
+
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL1_XL,
         (accelerometer_output_data_rate << 4) |
         (configuration->accelerometer_full_scale_range << 2) |
@@ -265,7 +275,12 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
         (configuration->gyro_high_pass_filter << 4)
     );
     fd_lsm6dsl_timestamp_and_steps_enabled = configuration->timestamp_and_steps_enable;
-    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00110010 : 0b00000000); // enable timestamp, pedometer, and reset step counter
+    if (fd_lsm6dsl_timestamp_and_steps_enabled) {
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110110); // enable timestamp, pedometer, enable functions, and reset step counter
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110100); // enable timestamp, pedometer, enable functions
+    } else {
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00000000);
+    }
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FIFO_CTRL4, fd_lsm6dsl_timestamp_and_steps_enabled ? 0b00001000 : 0b00000000); // no timestamp decimation
     fd_lsm6dsl_write16(device, FD_LSM6DSL_REGISTER_FIFO_CTRL1,
@@ -282,6 +297,13 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
         (axis_count != 0) ? ((configuration->fifo_output_data_rate << 3) | 0b110 /* continuous  */ ) : 0
     );
     fd_lsm6dsl_fifo_flush(device);
+}
+
+void fd_lsm6dsl_reset_step_counter(const fd_spim_device_t *device) {
+    if (fd_lsm6dsl_timestamp_and_steps_enabled) {
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110110); // enable timestamp, pedometer, enable functions, and reset step counter
+        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110100); // enable timestamp, pedometer, enable functions
+    }
 }
 
 typedef struct {

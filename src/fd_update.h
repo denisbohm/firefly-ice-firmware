@@ -9,6 +9,7 @@
 #define FD_UPDATE_COMMIT_FAIL_HASH_MISMATCH 1
 #define FD_UPDATE_COMMIT_FAIL_CRYPT_HASH_MISMATCH 2
 #define FD_UPDATE_COMMIT_FAIL_UNSUPPORTED 3
+#define FD_UPDATE_COMMIT_FAIL_INVALID_METADATA 4
 
 void fd_update_get_external_hash(uint8_t area, uint32_t address, uint32_t length, uint8_t *hash);
 void fd_update_get_sector_hash(uint8_t area, uint32_t sector, uint8_t *hash);

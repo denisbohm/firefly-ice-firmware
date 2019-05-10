@@ -246,14 +246,14 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
 
     if (configuration->timestamp_and_steps_enable) {
         fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FUNC_CFG_ACCESS, 0x80);
-        uint8_t value = 0x0e; // pedometer minimum threshold value
+        uint8_t value = configuration->steps_threshold;
         if (configuration->accelerometer_full_scale_range >= FD_LSM6DSL_ODR_26_HZ) {
             value |= 0x80; // PEDO_FS = ±4 g
         }
         fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FUNC_CONFIG_PEDO_THS_MIN, value);
         fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_FUNC_CFG_ACCESS, 0x00);
     }
-
+    
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL1_XL,
         (accelerometer_output_data_rate << 4) |
         (configuration->accelerometer_full_scale_range << 2) |

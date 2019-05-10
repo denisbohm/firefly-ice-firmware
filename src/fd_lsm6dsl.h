@@ -198,6 +198,7 @@ typedef struct {
     uint8_t gyro_high_pass_filter;
     bool gyro_enable;
     bool timestamp_and_steps_enable;
+    uint8_t steps_threshold;
 } fd_lsm6dsl_configuration_t;
 
 void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration);

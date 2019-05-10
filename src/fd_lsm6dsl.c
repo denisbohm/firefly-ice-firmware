@@ -226,6 +226,22 @@ void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device) {
     fd_spim_device_deselect(device);
 }
 
+void fd_lsm6dsl_clear_step_count(const fd_spim_device_t *device) {
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110110); // enable timestamp, pedometer, enable functions, and reset step counter
+    uint32_t step_counter = 0;
+    for (int i = 0; i < 10; ++i) {
+        fd_delay_ms(1);
+        uint32_t step_counter_l = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_STEP_COUNTER_L);
+        uint32_t step_counter_h = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_STEP_COUNTER_H);
+        step_counter = (step_counter_h << 8) | step_counter_l;
+        if (step_counter == 0) {
+            break;
+        }
+    }
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110100); // enable timestamp, pedometer, enable functions
+    fd_log_assert(step_counter == 0);
+}
+
 void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration) {
     fd_lsm6ds3_who_am_i = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_WHO_AM_I);
 
@@ -276,8 +292,7 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
     );
     fd_lsm6dsl_timestamp_and_steps_enabled = configuration->timestamp_and_steps_enable;
     if (fd_lsm6dsl_timestamp_and_steps_enabled) {
-        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110110); // enable timestamp, pedometer, enable functions, and reset step counter
-        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110100); // enable timestamp, pedometer, enable functions
+        fd_lsm6dsl_clear_step_count(device);
     } else {
         fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00000000);
     }
@@ -301,8 +316,7 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
 
 void fd_lsm6dsl_reset_step_counter(const fd_spim_device_t *device) {
     if (fd_lsm6dsl_timestamp_and_steps_enabled) {
-        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110110); // enable timestamp, pedometer, enable functions, and reset step counter
-        fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL10_C, 0b00110100); // enable timestamp, pedometer, enable functions
+        fd_lsm6dsl_clear_step_count(device);
     }
 }
 

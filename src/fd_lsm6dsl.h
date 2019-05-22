@@ -207,6 +207,7 @@ void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device);
 uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device);
 uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count);
 
+uint32_t fd_lsm6dsl_get_step_count(const fd_spim_device_t *device);
 void fd_lsm6dsl_reset_step_counter(const fd_spim_device_t *device);
 
 bool fd_lsm6dsl_self_test(const fd_spim_device_t *device);

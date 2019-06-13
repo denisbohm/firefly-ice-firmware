@@ -8,9 +8,13 @@
 
 typedef void (*fd_control_command_t)(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length);
 
+typedef void (*fd_control_get_property_fn_t)(fd_binary_t *binary, fd_packet_output_t *packet_output);
+typedef void (*fd_control_set_property_fn_t)(fd_binary_t *binary, fd_packet_output_t *packet_output);
+
 void fd_control_initialize(void);
 
 void fd_control_set_command(uint8_t code, fd_control_command_t command);
+void fd_control_add_property(uint32_t identifier, fd_control_get_property_fn_t get, fd_control_get_property_fn_t set);
 
 fd_binary_t *fd_control_send_start(fd_packet_output_t *packet_output, uint8_t type);
 bool fd_control_send_complete(fd_packet_output_t *packet_output);

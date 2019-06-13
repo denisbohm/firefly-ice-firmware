@@ -60,6 +60,13 @@ fd_control_command_t fd_control_commands[256];
 fd_control_callback_t fd_control_before_callback;
 fd_control_callback_t fd_control_after_callback;
 
+typedef struct {
+    fd_control_get_property_fn_t get;
+    fd_control_set_property_fn_t set;
+} fd_control_property_t;
+
+fd_control_property_t fd_control_propertys[32];
+
 void fd_control_initialize(void) {
     fd_control_input_buffer_count = 0;
     fd_control_inputs_count = 0;
@@ -237,7 +244,8 @@ void fd_control_reset(fd_packet_output_t *packet_output __attribute__((unused)),
     fd_hal_reset_by(type);
 }
 
-void fd_control_get_property_version(fd_binary_t *binary) {
+static
+void fd_control_get_property_version(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_version_revision_t version;
     fd_hal_system_get_firmware_version(FD_HAL_SYSTEM_AREA_APPLICATION, &version);
     fd_binary_put_uint16(binary, version.major);
@@ -247,11 +255,13 @@ void fd_control_get_property_version(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, version.commit, FD_VERSION_COMMIT_SIZE);
 }
 
-void fd_control_get_property_hardware_id(fd_binary_t *binary) {
+static
+void fd_control_get_property_hardware_id(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_hal_processor_get_hardware_id(binary);
 }
 
-void fd_control_get_property_site(fd_binary_t *binary) {
+static
+void fd_control_get_property_site(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint8_t *site = 0;
     uint16_t site_length = 0;
     uint8_t *address = fd_hal_processor_get_provision_map_address();
@@ -263,40 +273,48 @@ void fd_control_get_property_site(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, site, site_length);
 }
 
-void fd_control_get_property_reset(fd_binary_t *binary) {
+static
+void fd_control_get_property_reset(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint32(binary, fd_hal_reset_last.cause);
     fd_binary_put_time64(binary, fd_hal_reset_last.time);
 }
 
-void fd_control_get_property_retained(fd_binary_t *binary) {
+static
+void fd_control_get_property_retained(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint8(binary, fd_hal_reset_retained_was_valid_on_startup());
     fd_binary_put_uint32(binary, sizeof(fd_hal_reset_retained_at_initialize));
     fd_binary_put_bytes(binary, (uint8_t *)&fd_hal_reset_retained_at_initialize, sizeof(fd_hal_reset_retained_at_initialize));
 }
 
-void fd_control_get_property_storage(fd_binary_t *binary) {
+static
+void fd_control_get_property_storage(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint32(binary, fd_storage_used_page_count());
 }
 
-void fd_control_get_property_debug_lock(fd_binary_t *binary) {
+static
+void fd_control_get_property_debug_lock(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint8(binary, fd_hal_processor_get_debug_lock());
 }
 
-void fd_control_set_property_debug_lock(fd_binary_t *binary __attribute__((unused))) {
+static
+void fd_control_set_property_debug_lock(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_hal_processor_set_debug_lock();
 }
 
-void fd_control_get_property_rtc(fd_binary_t *binary) {
+static
+void fd_control_get_property_rtc(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_time_t time = fd_hal_rtc_get_time();
     fd_binary_put_time64(binary, time);
 }
 
-void fd_control_set_property_rtc(fd_binary_t *binary) {
+static
+void fd_control_set_property_rtc(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_time_t time = fd_binary_get_time64(binary);
     fd_hal_rtc_set_time(time);
 }
 
-void fd_control_get_property_power(fd_binary_t *binary) {
+static
+void fd_control_get_property_power(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_power_t power;
     fd_power_get(&power);
     fd_binary_put_float32(binary, power.battery_level);
@@ -307,30 +325,36 @@ void fd_control_get_property_power(fd_binary_t *binary) {
     fd_binary_put_float32(binary, power.temperature);
 }
 
-void fd_control_set_property_power(fd_binary_t *binary) {
+static
+void fd_control_set_property_power(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     float battery_level = fd_binary_get_float32(binary);
     fd_power_set(battery_level);
 }
 
-void fd_control_get_property_mode(fd_binary_t *binary) {
+static
+void fd_control_get_property_mode(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint8(binary, fd_main_get_mode());
 }
 
-void fd_control_set_property_mode(fd_binary_t *binary) {
+static
+void fd_control_set_property_mode(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint8_t mode = fd_binary_get_uint8(binary);
     fd_main_set_mode(mode);
 }
 
-void fd_control_get_property_tx_power(fd_binary_t *binary) {
+static
+void fd_control_get_property_tx_power(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint8(binary, fd_bluetooth_get_tx_power());
 }
 
-void fd_control_set_property_tx_power(fd_binary_t *binary) {
+static
+void fd_control_set_property_tx_power(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint8_t level = fd_binary_get_uint8(binary);
     fd_bluetooth_set_tx_power(level);
 }
 
-void fd_control_get_property_boot_version(fd_binary_t *binary) {
+static
+void fd_control_get_property_boot_version(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_version_revision_t version;
     fd_hal_system_get_firmware_version(FD_HAL_SYSTEM_AREA_BOOTLOADER, &version);
     fd_binary_put_uint16(binary, version.major);
@@ -340,23 +364,27 @@ void fd_control_get_property_boot_version(fd_binary_t *binary) {
     fd_binary_put_bytes(binary, version.commit, FD_VERSION_COMMIT_SIZE);
 }
 
-void fd_control_get_property_regulator(fd_binary_t *binary) {
+static
+void fd_control_get_property_regulator(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     bool switching = fd_hal_system_get_regulator();
     fd_binary_put_uint8(binary, switching ? 1 : 0);
 }
 
-void fd_control_set_property_regulator(fd_binary_t *binary) {
+static
+void fd_control_set_property_regulator(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     bool switching = fd_binary_get_uint8(binary) != 0;
     fd_hal_system_set_regulator(switching);
 }
 
-void fd_control_get_property_logging(fd_binary_t *binary) {
+static
+void fd_control_get_property_logging(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint32(binary, FD_CONTROL_LOGGING_STATE | FD_CONTROL_LOGGING_COUNT);
     fd_binary_put_uint32(binary, fd_log_get_storage() ? FD_CONTROL_LOGGING_STORAGE : 0);
     fd_binary_put_uint32(binary, fd_log_get_count());
 }
 
-void fd_control_set_property_logging(fd_binary_t *binary) {
+static
+void fd_control_set_property_logging(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint32_t flags = fd_binary_get_uint32(binary);
     if (flags & FD_CONTROL_LOGGING_STATE) {
         uint32_t state = fd_binary_get_uint32(binary);
@@ -368,7 +396,8 @@ void fd_control_set_property_logging(fd_binary_t *binary) {
     }
 }
 
-void fd_control_get_property_name(fd_binary_t *binary) {
+static
+void fd_control_get_property_name(fd_binary_t *binary, fd_packet_output_t *packet_output) {
 //    uint8_t *name;
 //    uint8_t length = fd_control_provision_get_utf8("name", name);
     uint8_t name[20];
@@ -383,7 +412,8 @@ static void fd_control_set_name(uint8_t *data, uint32_t length) {
     fd_bluetooth_set_name(data, length);
 }
 
-void fd_control_set_property_name(fd_binary_t *binary) {
+static
+void fd_control_set_property_name(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint8_t name[20];
     uint8_t length = fd_binary_get_uint8(binary);
     if (length > sizeof(name)) {
@@ -393,26 +423,31 @@ void fd_control_set_property_name(fd_binary_t *binary) {
     fd_control_set_name(name, length);
 }
 
-void fd_control_get_property_adc_vdd(fd_binary_t *binary __attribute__((unused))) {
+static
+void fd_control_get_property_adc_vdd(fd_binary_t *binary, fd_packet_output_t *packet_output) {
 //    fd_binary_put_float16(binary, fd_adc_get_vdd());
     fd_binary_put_float16(binary, fd_hal_system_get_regulated_voltage());
 }
 
-void fd_control_set_property_adc_vdd(fd_binary_t *binary __attribute__((unused))) {
+static
+void fd_control_set_property_adc_vdd(fd_binary_t *binary, fd_packet_output_t *packet_output) {
 //    fd_adc_set_vdd(fd_binary_get_float16(binary));
 }
 
-void fd_control_get_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner) {
-    bool indicate = fd_hal_ui_get_indicate(owner);
+static
+void fd_control_get_property_indicate(fd_binary_t *binary, fd_packet_output_t *packet_output) {
+    bool indicate = fd_hal_ui_get_indicate(packet_output->owner);
     fd_binary_put_uint8(binary, indicate ? 1 : 0);
 }
 
-void fd_control_set_property_indicate(fd_binary_t *binary, fd_lock_owner_t owner) {
+static
+void fd_control_set_property_indicate(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     bool indicate = fd_binary_get_uint8(binary) != 0;
-    fd_hal_ui_set_indicate(owner, indicate);
+    fd_hal_ui_set_indicate(packet_output->owner, indicate);
 }
 
-void fd_control_get_property_hardware_version(fd_binary_t *binary) {
+static
+void fd_control_get_property_hardware_version(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_version_hardware_t version;
     fd_hal_system_get_hardware_version(&version);
     fd_binary_put_uint16(binary, version.major);
@@ -421,128 +456,59 @@ void fd_control_get_property_hardware_version(fd_binary_t *binary) {
 
 #ifndef FD_NO_SENSING
 
-void fd_control_get_property_sensing_count(fd_binary_t *binary) {
+static
+void fd_control_get_property_sensing_count(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint32_t count = fd_sensing_get_stream_sample_count();
     fd_binary_put_uint32(binary, count);
 }
 
-void fd_control_set_property_sensing_count(fd_binary_t *binary) {
+static
+void fd_control_set_property_sensing_count(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint32_t count = fd_binary_get_uint32(binary);
     fd_sensing_set_stream_sample_count(count);
 }
 
-void fd_control_get_property_recognition(fd_binary_t *binary) {
+static
+void fd_control_get_property_recognition(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint8(binary, fd_recognition_get_enable());
 }
 
-void fd_control_set_property_recognition(fd_binary_t *binary) {
+static
+void fd_control_set_property_recognition(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     bool enable = fd_binary_get_uint8(binary) != 0;
     fd_recognition_set_enable(enable);
 }
 
 #endif
 
+static
 void fd_control_get_property_subscribe(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     fd_binary_put_uint32(binary, packet_output->subscribed_properties);
 }
 
+static
 void fd_control_set_property_subscribe(fd_binary_t *binary, fd_packet_output_t *packet_output) {
     uint32_t properties = fd_binary_get_uint32(binary);
     packet_output->subscribed_properties = properties;
 }
 
-#define GET_PROPERTY_MASK \
- (FD_CONTROL_PROPERTY_VERSION |\
- FD_CONTROL_PROPERTY_HARDWARE_ID |\
- FD_CONTROL_PROPERTY_DEBUG_LOCK |\
- FD_CONTROL_PROPERTY_RTC |\
- FD_CONTROL_PROPERTY_POWER |\
- FD_CONTROL_PROPERTY_SITE |\
- FD_CONTROL_PROPERTY_RESET |\
- FD_CONTROL_PROPERTY_STORAGE |\
- FD_CONTROL_PROPERTY_MODE |\
- FD_CONTROL_PROPERTY_TX_POWER |\
- FD_CONTROL_PROPERTY_BOOT_VERSION |\
- FD_CONTROL_PROPERTY_LOGGING |\
- FD_CONTROL_PROPERTY_NAME |\
- FD_CONTROL_PROPERTY_RETAINED |\
- FD_CONTROL_PROPERTY_REGULATOR |\
- FD_CONTROL_PROPERTY_SENSING_COUNT |\
- FD_CONTROL_PROPERTY_INDICATE |\
- FD_CONTROL_PROPERTY_RECOGNITION |\
- FD_CONTROL_PROPERTY_HARDWARE_VERSION)
-
 bool fd_control_send_properties(fd_packet_output_t *packet_output, uint8_t type, uint32_t properties) {
     fd_binary_t *binary_out = fd_control_send_start(packet_output, type);
-    fd_binary_put_uint32(binary_out, properties & GET_PROPERTY_MASK);
-    for (uint32_t property = 1; property != 0; property <<= 1) {
-        if (property & properties) {
-            switch (property) {
-                case FD_CONTROL_PROPERTY_VERSION: {
-                    fd_control_get_property_version(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_HARDWARE_ID: {
-                    fd_control_get_property_hardware_id(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_DEBUG_LOCK: {
-                    fd_control_get_property_debug_lock(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_RTC: {
-                    fd_control_get_property_rtc(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_POWER: {
-                    fd_control_get_property_power(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_SITE: {
-                    fd_control_get_property_site(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_RESET: {
-                    fd_control_get_property_reset(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_STORAGE: {
-                    fd_control_get_property_storage(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_MODE: {
-                    fd_control_get_property_mode(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_TX_POWER: {
-                    fd_control_get_property_tx_power(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_BOOT_VERSION: {
-                    fd_control_get_property_boot_version(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_LOGGING: {
-                    fd_control_get_property_logging(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_NAME: {
-                    fd_control_get_property_name(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_RETAINED: {
-                    fd_control_get_property_retained(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_ADC_VDD: {
-                    fd_control_get_property_adc_vdd(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_REGULATOR: {
-                    fd_control_get_property_regulator(binary_out);
-                } break;
-#ifndef FD_NO_SENSING
-                case FD_CONTROL_PROPERTY_SENSING_COUNT: {
-                    fd_control_get_property_sensing_count(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_RECOGNITION: {
-                    fd_control_get_property_recognition(binary_out);
-                } break;
-#endif
-                case FD_CONTROL_PROPERTY_INDICATE: {
-                    fd_control_get_property_indicate(binary_out, packet_output->owner);
-                } break;
-                case FD_CONTROL_PROPERTY_HARDWARE_VERSION: {
-                    fd_control_get_property_hardware_version(binary_out);
-                } break;
-                case FD_CONTROL_PROPERTY_SUBSCRIBE: {
-                    fd_control_get_property_subscribe(binary_out, packet_output);
-                }
+    uint32_t mask = 0;
+    for (uint32_t i = 0; i < 32; ++i) {
+        if (properties & (1 << i)) {
+            fd_control_property_t *property = &fd_control_propertys[i];
+            if (property->get) {
+                mask |= (1 << i);
+            }
+        }
+    }
+    fd_binary_put_uint32(binary_out, mask);
+    for (uint32_t i = 0; i < 32; ++i) {
+        if (mask & (1 << i)) {
+            fd_control_property_t *property = &fd_control_propertys[i];
+            if (property->get) {
+                property->get(binary_out, packet_output);
             }
         }
     }
@@ -556,54 +522,15 @@ void fd_control_get_properties(fd_packet_output_t *packet_output, uint8_t *data,
     fd_control_send_properties(packet_output, FD_CONTROL_GET_PROPERTIES, properties);
 }
 
-void fd_control_set_properties(fd_packet_output_t *packet_output __attribute__((unused)), uint8_t *data, uint32_t length) {
+void fd_control_set_properties(fd_packet_output_t *packet_output, uint8_t *data, uint32_t length) {
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint32_t properties = fd_binary_get_uint32(&binary);
-    for (uint32_t property = 1; property != 0; property <<= 1) {
-        if (property & properties) {
-            switch (property) {
-                case FD_CONTROL_PROPERTY_DEBUG_LOCK: {
-                    fd_control_set_property_debug_lock(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_RTC: {
-                    fd_control_set_property_rtc(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_POWER: {
-                    fd_control_set_property_power(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_MODE: {
-                    fd_control_set_property_mode(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_TX_POWER: {
-                    fd_control_set_property_tx_power(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_LOGGING: {
-                    fd_control_set_property_logging(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_NAME: {
-                    fd_control_set_property_name(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_ADC_VDD: {
-                    fd_control_set_property_adc_vdd(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_REGULATOR: {
-                    fd_control_set_property_regulator(&binary);
-                } break;
-#ifndef FD_NO_SENSING
-                case FD_CONTROL_PROPERTY_SENSING_COUNT: {
-                    fd_control_set_property_sensing_count(&binary);
-                } break;
-                case FD_CONTROL_PROPERTY_RECOGNITION: {
-                    fd_control_set_property_recognition(&binary);
-                } break;
-#endif
-                case FD_CONTROL_PROPERTY_INDICATE: {
-                    fd_control_set_property_indicate(&binary, packet_output->owner);
-                } break;
-                case FD_CONTROL_PROPERTY_SUBSCRIBE: {
-                    fd_control_set_property_subscribe(&binary, packet_output);
-                }
+    for (uint32_t i = 0; i < 32; ++i) {
+        if (properties & (1 << i)) {
+            fd_control_property_t *property = &fd_control_propertys[i];
+            if (property->set) {
+                property->set(&binary, packet_output);
             }
         }
     }
@@ -918,6 +845,24 @@ void fd_control_diagnostics(fd_packet_output_t *packet_output, uint8_t *data, ui
     fd_control_send_complete(packet_output);
 }
 
+static int fd_control_ffs(int mask) {
+    if (mask == 0) {
+        return 0;
+    }
+    int bit;
+    for (bit = 0; !(mask & 1); bit++) {
+        mask >>= 1;
+    }
+    return bit;
+}
+
+void fd_control_add_property(uint32_t mask, fd_control_get_property_fn_t get, fd_control_get_property_fn_t set) {
+    int i = fd_control_ffs(mask);
+    fd_control_property_t *property = &fd_control_propertys[i];
+    property->get = get;
+    property->set = set;
+}
+
 void fd_control_initialize_commands(void) {
     fd_control_commands[FD_CONTROL_PING] = fd_control_ping;
     fd_control_commands[FD_CONTROL_GET_PROPERTIES] = fd_control_get_properties;
@@ -955,6 +900,31 @@ void fd_control_initialize_commands(void) {
 #ifndef FD_NO_SENSING
     fd_control_commands[FD_CONTROL_SENSING_SYNTHESIZE] = fd_sensing_synthesize;
 #endif
+    
+    memset(&fd_control_propertys, 0, sizeof(fd_control_propertys));
+    fd_control_add_property(FD_CONTROL_PROPERTY_VERSION, fd_control_get_property_version, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_HARDWARE_ID, fd_control_get_property_hardware_id, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_DEBUG_LOCK, fd_control_get_property_debug_lock, fd_control_set_property_debug_lock);
+    fd_control_add_property(FD_CONTROL_PROPERTY_RTC, fd_control_get_property_rtc, fd_control_set_property_rtc);
+    fd_control_add_property(FD_CONTROL_PROPERTY_POWER, fd_control_get_property_power, fd_control_set_property_power);
+    fd_control_add_property(FD_CONTROL_PROPERTY_SITE, fd_control_get_property_site, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_RESET, fd_control_get_property_reset, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_STORAGE, fd_control_get_property_storage, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_MODE, fd_control_get_property_mode, fd_control_set_property_mode);
+    fd_control_add_property(FD_CONTROL_PROPERTY_TX_POWER, fd_control_get_property_tx_power, fd_control_set_property_tx_power);
+    fd_control_add_property(FD_CONTROL_PROPERTY_BOOT_VERSION, fd_control_get_property_boot_version, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_LOGGING, fd_control_get_property_logging, fd_control_set_property_logging);
+    fd_control_add_property(FD_CONTROL_PROPERTY_NAME, fd_control_get_property_name, fd_control_set_property_name);
+    fd_control_add_property(FD_CONTROL_PROPERTY_RETAINED, fd_control_get_property_retained, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_ADC_VDD, fd_control_get_property_adc_vdd, fd_control_set_property_adc_vdd);
+    fd_control_add_property(FD_CONTROL_PROPERTY_REGULATOR, fd_control_get_property_regulator, fd_control_set_property_regulator);
+#ifndef FD_NO_SENSING
+    fd_control_add_property(FD_CONTROL_PROPERTY_SENSING_COUNT, fd_control_get_property_sensing_count, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_RECOGNITION, fd_control_get_property_recognition, 0);
+#endif
+    fd_control_add_property(FD_CONTROL_PROPERTY_INDICATE, fd_control_get_property_indicate, fd_control_set_property_indicate);
+    fd_control_add_property(FD_CONTROL_PROPERTY_HARDWARE_VERSION, fd_control_get_property_hardware_version, 0);
+    fd_control_add_property(FD_CONTROL_PROPERTY_SUBSCRIBE, fd_control_get_property_subscribe, fd_control_set_property_subscribe);
 }
 
 void fd_control_check_notify_properties(void) {

@@ -407,6 +407,7 @@ void fd_control_get_property_name(fd_binary_t *binary, fd_packet_output_t *packe
 }
 
 static void fd_control_set_name(uint8_t *data, uint32_t length) {
+    fd_hal_processor_write_user_data(0, 0); // erase provision data
     fd_control_provision_put_utf8("name", data, length);
 
     fd_bluetooth_set_name(data, length);

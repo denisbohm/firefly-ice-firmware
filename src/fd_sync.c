@@ -46,7 +46,7 @@ void fd_sync_start(fd_packet_output_t *packet_output, uint8_t *data, uint32_t le
     }
 
     if (metadata.length > FD_STORAGE_MAX_DATA_LENGTH) {
-        fd_log_assert_fail("");
+        fd_log_assert_fail("metadata length");
         metadata.length = FD_STORAGE_MAX_DATA_LENGTH;
     }
 
@@ -64,7 +64,7 @@ void fd_sync_start(fd_packet_output_t *packet_output, uint8_t *data, uint32_t le
 
     bool result = packet_output->write(fd_sync_output_buffer, sync_length);
     if (!result) {
-        fd_log_assert_fail("");
+        fd_log_assert_fail("write failure");
     }
 }
 

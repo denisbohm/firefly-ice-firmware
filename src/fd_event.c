@@ -38,7 +38,7 @@ void fd_event_initialize(void) {
 
 void fd_event_add_em2_check(fd_event_em2_check_t em2_check) {
     if (fd_event_em2_check_count >= CHECK_LIMIT) {
-        fd_log_assert_fail("");
+        fd_log_assert_fail("check limit");
         return;
     }
 
@@ -47,7 +47,7 @@ void fd_event_add_em2_check(fd_event_em2_check_t em2_check) {
 
 void fd_event_add_callback_with_identifier(uint32_t events, fd_event_callback_t callback, const char *identifier __attribute__((unused))) {
     if (fd_event_item_count >= ITEM_LIMIT) {
-        fd_log_assert_fail("");
+        fd_log_assert_fail("callback limit");
         return;
     }
 

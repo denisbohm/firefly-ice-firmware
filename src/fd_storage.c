@@ -131,6 +131,11 @@ void fd_storage_free_first_page(fd_storage_area_t *area) {
     fd_hal_external_flash_sleep();
 
     increment_page(area->first_page);
+    
+    fd_control_notify(FD_CONTROL_PROPERTY_STORAGE);
+    if (fd_storage_count_callback) {
+        fd_storage_count_callback();
+    }
 }
 
 void fd_storage_area_free_all_pages(fd_storage_area_t *area) {
@@ -143,6 +148,11 @@ void fd_storage_area_free_all_pages(fd_storage_area_t *area) {
         increment_page(area->first_page);
     }
     fd_hal_external_flash_sleep();
+    
+    fd_control_notify(FD_CONTROL_PROPERTY_STORAGE);
+    if (fd_storage_count_callback) {
+        fd_storage_count_callback();
+    }
 }
 
 void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t *data, uint32_t length) {

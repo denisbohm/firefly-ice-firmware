@@ -215,12 +215,12 @@ uint32_t fd_control_provision_get_utf8(const char *key, uint8_t **value) {
     return length;
 }
 
-void fd_control_provision_put_utf8(const char *key, uint8_t *value, uint16_t value_length) {
+bool fd_control_provision_put_utf8(const char *key, uint8_t *value, uint16_t value_length) {
     uint8_t *map = fd_hal_processor_get_provision_map_address();
     if (map != 0) {
         uint8_t buffer[128];
         fd_provision_t provision;
-        provision.version = 1;
+        provision.version = FD_PROVISION_VERSION;
         provision.flags = 0;
         memset(provision.key, 0, FD_HAL_AES_KEY_SIZE);
         memcpy(buffer, &provision, sizeof(provision));
@@ -228,8 +228,10 @@ void fd_control_provision_put_utf8(const char *key, uint8_t *value, uint16_t val
         uint16_t new_map_length = sizeof(buffer) - sizeof(provision);
         if (fd_map_put(map, new_map, &new_map_length, key, FD_MAP_TYPE_UTF8, value, value_length)) {
             fd_hal_processor_write_user_data(buffer, sizeof(provision) + new_map_length);
+            return true;
         }
     }
+    return false;
 }
 
 uint32_t fd_control_get_name(uint8_t **name) {
@@ -407,8 +409,8 @@ void fd_control_get_property_name(fd_binary_t *binary, fd_packet_output_t *packe
 }
 
 static void fd_control_set_name(uint8_t *data, uint32_t length) {
-    fd_hal_processor_write_user_data(0, 0); // erase provision data
-    fd_control_provision_put_utf8("name", data, length);
+    bool result = fd_control_provision_put_utf8("name", data, length);
+    fd_log_assert(result);
 
     fd_bluetooth_set_name(data, length);
 }

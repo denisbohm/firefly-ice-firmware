@@ -19,6 +19,7 @@ void fd_control_add_property(uint32_t identifier, fd_control_get_property_fn_t g
 fd_binary_t *fd_control_send_start(fd_packet_output_t *packet_output, uint8_t type);
 bool fd_control_send_complete(fd_packet_output_t *packet_output);
 
+bool fd_control_provision_put_utf8(const char *key, uint8_t *value, uint16_t value_length);
 uint32_t fd_control_provision_get_utf8(const char *key, uint8_t **value);
 uint32_t fd_control_get_name(uint8_t **name);
 

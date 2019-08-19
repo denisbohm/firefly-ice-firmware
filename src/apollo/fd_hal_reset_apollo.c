@@ -27,25 +27,25 @@ bool is_ram_retained_reset(uint32_t cause) {
     }
 
     if (cause & 1) {
-        return false; // Power On Reset
+        return true; // External Pin Reset
     }
     if (cause & 2) {
-        return false; // Brown Out Detector Unregulated Domain Reset
+        return false; // Power On Reset
     }
     if (cause & 4) {
         return false; // Brown Out Detector Regulated Domain Reset
     }
     if (cause & 8) {
-        return true; // External Pin Reset
+        return true; // System Request Reset (POR)
     }
     if (cause & 16) {
-        return true; // Watchdog Reset
+        return true; // Software Reset (POI)
     }
     if (cause & 32) {
-        return true; // LOCKUP Reset
+        return true; // Debugger Reset
     }
     if (cause & 64) {
-        return true; // System Request Reset
+        return true; // Watchdog Reset
     }
 
     return false;
@@ -76,6 +76,13 @@ void fd_hal_reset_start_watchdog(void) {
 #ifdef DEBUG
 #warning debug is defined - watchdog is not enabled
 #else
+    am_hal_wdt_config_t config = {
+        .ui32Config = AM_HAL_WDT_ENABLE_RESET | AM_HAL_WDT_DISABLE_INTERRUPT | AM_HAL_WDT_LFRC_CLK_128HZ,
+        .ui16InterruptCount = 255,
+        .ui16ResetCount = 255,
+    };
+    am_hal_wdt_init(&config);
+    am_hal_wdt_lock_and_start();
 #endif
 
 #ifdef DEBUG_WATCHDOG
@@ -84,6 +91,9 @@ void fd_hal_reset_start_watchdog(void) {
 }
 
 void fd_hal_reset_feed_watchdog(void) {
+#ifndef DEBUG
+    am_hal_wdt_restart();
+#endif
 }
 
 void fd_hal_reset_push_watchdog_context(const char *context, char *save) {

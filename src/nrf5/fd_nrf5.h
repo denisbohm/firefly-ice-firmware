@@ -7,13 +7,17 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+#ifdef SOFTDEVICE_PRESENT
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdm.h"
 #include "nrf_soc.h"
+#include "nrf_mbr.h"
+#endif
+
+#include "nrf_crypto.h"
 #include "nrf_delay.h"
 #include "nrf_gpio.h"
-#include "nrf_mbr.h"
 #include "nrf_nvmc.h"
 #include "nrf_temp.h"
 

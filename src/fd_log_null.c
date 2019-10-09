@@ -36,7 +36,7 @@ void fd_log_at(char *file, int line, char *message) {
         } else {
             ++name;
         }
-        sprintf(fd_log_message, "%s %d: %s", name, line, message);
+        snprintf(fd_log_message, sizeof(fd_log_message), "%s %d: %s", name, line, message);
     }
     fd_log_did_log = true;
     ++fd_log_count;

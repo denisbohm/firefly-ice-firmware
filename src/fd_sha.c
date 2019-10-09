@@ -11,6 +11,7 @@
 void fd_sha1(fd_sha_source_t source, FD_SHA_POINTER_UINT_TYPE address, uint32_t length, uint8_t *hash) {
     mbedtls_sha1_context context;
     mbedtls_sha1_init(&context);
+    mbedtls_sha1_starts(&context);
     uint8_t data[SHA1_BLOCK_LENGTH];
     uint32_t remaining = length;
     while (remaining > 0) {

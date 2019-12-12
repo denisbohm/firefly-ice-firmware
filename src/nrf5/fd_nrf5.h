@@ -6,6 +6,9 @@
 #pragma GCC diagnostic ignored "-Wold-style-declaration"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wexpansion-to-defined"
 
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_sdh.h"

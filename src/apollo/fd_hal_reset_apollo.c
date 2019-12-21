@@ -4,7 +4,6 @@
 
 #include <string.h>
 
-#include "apollo2.h"
 #include <am_mcu_apollo.h>
 
 #define MAGIC 0xa610efcc

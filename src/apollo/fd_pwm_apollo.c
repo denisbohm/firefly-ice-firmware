@@ -1,7 +1,7 @@
 #include "fd_pwm.h"
 
-#include "apollo2.h"
 #include <am_mcu_apollo.h>
+#include <am_hal_interrupt.h>
 
 const fd_pwm_module_t *fd_pwm_modules;
 uint32_t fd_pwm_module_count;

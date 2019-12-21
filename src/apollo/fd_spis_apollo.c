@@ -6,7 +6,6 @@
 #include "fd_gpio.h"
 #include "fd_spim.h"
 
-#include "apollo2.h"
 #include <am_mcu_apollo.h>
 
 #include <string.h>

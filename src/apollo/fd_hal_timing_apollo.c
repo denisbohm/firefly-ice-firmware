@@ -1,6 +1,5 @@
 #include "fd_timing.h"
 
-#include "apollo2.h"
 #include <am_mcu_apollo.h>
 
 void fd_hal_timing_start(void) {

@@ -1,3 +1,7 @@
+#include "fd_ble.h"
+
+#ifdef SOFTDEVICE_PRESENT
+
 #pragma GCC diagnostic push
 
 #pragma GCC diagnostic ignored "-Wold-style-declaration"
@@ -22,8 +26,6 @@
 #include "app_timer.h"
 
 #pragma GCC diagnostic pop
-
-#include "fd_ble.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -888,3 +890,5 @@ void fd_ble_main_loop(void) {
         APP_ERROR_CHECK(result);
     }
 }
+
+#endif

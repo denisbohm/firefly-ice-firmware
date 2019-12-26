@@ -1,6 +1,5 @@
 #include "fd_hal_rtc.h"
 
-#include "apollo2.h"
 #include <am_mcu_apollo.h>
 
 int32_t fd_hal_rtc_utc_offset;
@@ -52,7 +51,15 @@ void fd_hal_rtc_initialize(void) {
 void fd_hal_rtc_enable_pin_input(const fd_rtc_t *rtc __attribute__((unused)), fd_gpio_t gpio) {
 //    PAD20 TCTA2 INPEN - need to set this so can use clock pin input
     uint32_t pin_number = gpio.port * 32 + gpio.pin;
+#ifdef AM_PART_APOLLO2
     am_hal_gpio_pin_config(pin_number, AM_HAL_GPIO_FUNC(2) | AM_HAL_GPIO_INPEN);
+#else
+    am_hal_gpio_pincfg_t pincfg = {
+        .uFuncSel = 2,
+        .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+    };
+    am_hal_gpio_pin_config(pin_number, pincfg);
+#endif
     am_hal_ctimer_config_t ctimer_config = {
         // link timers
         .ui32Link = 1,
@@ -67,7 +74,11 @@ void fd_hal_rtc_enable_pin_input(const fd_rtc_t *rtc __attribute__((unused)), fd
 
 void fd_hal_rtc_disable_pin_input(const fd_rtc_t *rtc __attribute__((unused)), fd_gpio_t gpio) {
     uint32_t pin_number = gpio.port * 32 + gpio.pin;
+#ifdef AM_PART_APOLLO2
     am_hal_gpio_pin_config(pin_number, AM_HAL_GPIO_FUNC(0) | AM_HAL_GPIO_INPEN);
+#else
+    am_hal_gpio_pin_config(pin_number, g_AM_HAL_GPIO_INPUT);
+#endif
     am_hal_ctimer_config_t ctimer_config = {
         // link timers
         .ui32Link = 1,

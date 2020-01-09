@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if defined(AM_PART_APOLLO2)
+#define HardFault_Handler am_fault_isr
+#endif
+
 /* The prototype shows it is a naked function - in effect this is just an assembly function. */
 void HardFault_Handler(void) __attribute__((naked));
 

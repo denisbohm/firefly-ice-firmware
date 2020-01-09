@@ -73,8 +73,17 @@ void fd_spis_initialize(const fd_spis_device_t *devices, uint32_t device_count) 
         am_hal_ios_fifo_buffer_init(&g_pui8TxFifoBuffer[0], AM_IOS_TX_BUFSIZE_MAX);
 
         //
+        // Reduce interrupt urgency so that PWM functions are serviced as higher priority.
+        //
         // Set the bit in the NVIC to accept access interrupts from the IO Slave.
         //
+#if 0
+        const uint32_t group = 6;
+        NVIC_SetPriorityGrouping(group); // one group priority bit
+        uint32_t priority = NVIC_EncodePriority(group, 1, 0);
+        am_hal_interrupt_priority_set(AM_HAL_INTERRUPT_IOSACC, priority);
+        am_hal_interrupt_priority_set(AM_HAL_INTERRUPT_IOSLAVE, priority);
+#endif
         am_hal_interrupt_enable(AM_HAL_INTERRUPT_IOSACC);
         am_hal_interrupt_enable(AM_HAL_INTERRUPT_IOSLAVE);
 

@@ -60,6 +60,10 @@ static uint32_t fd_power_state_start;
 #define FD_POWER_HIGH_DURATION (2 * 60)
 #define FD_POWER_LOW_DURATION (5 * 60)
 
+bool fd_power_is_low_battery(void) {
+    return fd_power_low_battery;
+}
+
 static
 void fd_power_sanity_check(void) {
     bool is_usb_powered = fd_hal_usb_is_powered();

@@ -13,7 +13,7 @@ typedef struct {
 #endif
 } fd_event_item_t;
 
-#define ITEM_LIMIT 32
+#define ITEM_LIMIT 48
 
 static
 fd_event_item_t fd_event_items[ITEM_LIMIT];

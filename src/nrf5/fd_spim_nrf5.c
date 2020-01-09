@@ -66,12 +66,16 @@ void fd_spim_bus_enable(const fd_spim_bus_t *bus) {
         case 8000000:
             spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
             break;
+#ifdef SPIM_FREQUENCY_FREQUENCY_M16
         case 16000000:
             spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M16;
             break;
+#endif
+#ifdef SPIM_FREQUENCY_FREQUENCY_M32
         case 32000000:
             spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M32;
             break;
+#endif
     }
     spim->CONFIG = (SPIM_CONFIG_CPOL_ActiveLow << SPIM_CONFIG_CPOL_Pos) | (SPIM_CONFIG_CPHA_Trailing << SPIM_CONFIG_CPHA_Pos);
     spim->PSEL.SCK = NRF_GPIO_PIN_MAP(bus->sclk.port, bus->sclk.pin);

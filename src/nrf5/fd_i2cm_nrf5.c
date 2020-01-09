@@ -85,12 +85,22 @@ bool fd_i2cm_bus_is_enabled(const fd_i2cm_bus_t *bus) {
 }
 
 bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
+    bool error = false;
     NRF_TWIM_Type *twim = (NRF_TWIM_Type *)device->bus->instance;
     twim->ADDRESS = device->address;
-    twim->EVENTS_ERROR = 0;
     twim->EVENTS_STOPPED = 0;
+    twim->EVENTS_ERROR = 0;
+    twim->EVENTS_SUSPENDED = 0;
+    twim->EVENTS_RXSTARTED = 0;
+    twim->EVENTS_TXSTARTED = 0;
+    twim->EVENTS_LASTRX = 0;
+    twim->EVENTS_LASTTX = 0;
     twim->ERRORSRC = TWIM_ERRORSRC_ANACK_Msk | TWIM_ERRORSRC_DNACK_Msk | TWIM_ERRORSRC_OVERRUN_Msk;
 
+    uint32_t timeout = device->bus->timeout;
+    if (timeout == 0) {
+        timeout = UINT32_MAX;
+    }
     for (uint32_t i = 0; i < io->transfer_count; ++i) {
         bool last = i == (io->transfer_count - 1);
         twim->EVENTS_SUSPENDED = 0;
@@ -103,27 +113,48 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
         } else {
             twim->RXD.MAXCNT = transfer->byte_count;
             twim->RXD.PTR = (uint32_t)transfer->bytes;
+#ifdef NRF52832_XXAA
+            // !!! nRF52832 only has shortcut for "last tx suspend" and not "last rx suspend",
+            // so that case is not supported on that MCU. An rx can only be the last transfer. -denis
+            twim->SHORTS = TWIM_SHORTS_LASTRX_STOP_Msk;
+#else // nRF52840
             twim->SHORTS = last ? TWIM_SHORTS_LASTRX_STOP_Msk : TWIM_SHORTS_LASTRX_SUSPEND_Msk;
+#endif
             twim->TASKS_STARTRX = 1;
         }
         if (i > 0) {
             twim->TASKS_RESUME = 1;
         }
+        error = false;
+        uint32_t count = 0;
         if (last) {
-            while ((twim->EVENTS_STOPPED == 0) && (twim->EVENTS_ERROR == 0));
+            while ((twim->EVENTS_STOPPED == 0) && (twim->EVENTS_ERROR == 0)) {
+                if (++count >= timeout) {
+                    error = true;
+                    break;
+                }
+            }
         } else {
-            while ((twim->EVENTS_SUSPENDED == 0) && (twim->EVENTS_ERROR == 0));
+            while ((twim->EVENTS_SUSPENDED == 0) && (twim->EVENTS_ERROR == 0)) {
+                if (++count >= timeout) {
+                    error = true;
+                    break;
+                }
+            }
         }
         if (twim->EVENTS_ERROR != 0) {
-            if (!twim->EVENTS_STOPPED) {
-                twim->TASKS_STOP = 1;
-                while (twim->EVENTS_STOPPED == 0);
-            }
+            break;
+        }
+        if (error) {
             break;
         }
     }
 
-    return twim->EVENTS_ERROR == 0;
+    if ((twim->EVENTS_ERROR != 0) || error) {
+        fd_i2cm_clear_bus(device->bus);
+    }
+
+    return (twim->EVENTS_ERROR == 0) && !error;
 }
 
 bool fd_i2cm_bus_wait(const fd_i2cm_bus_t *bus) {

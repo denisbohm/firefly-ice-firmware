@@ -188,7 +188,7 @@ void fd_quiescent_test(void) {
     fd_gpio_configure_input_pull_up(bq_int);
     fd_gpio_t bq_lsctrl = { .port = 1, .pin = 14 };
     fd_gpio_configure_output(bq_lsctrl);
-    fd_gpio_set(bq_lsctrl, true);
+    fd_gpio_set(bq_lsctrl, false);
     fd_gpio_t v5_en = { .port = 0, .pin = 2 };
     fd_gpio_configure_output(v5_en);
     fd_gpio_set(v5_en, false);

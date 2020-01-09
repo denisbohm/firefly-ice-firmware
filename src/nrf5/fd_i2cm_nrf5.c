@@ -4,6 +4,11 @@
 #include "fd_nrf5.h"
 
 void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus) {
+    bool enabled = fd_i2cm_bus_is_enabled(bus);
+    if (enabled) {
+        fd_i2cm_bus_disable(bus);
+    }
+
     fd_gpio_configure_output_open_drain_pull_up(bus->scl);
     fd_gpio_set(bus->scl, true);
     fd_gpio_configure_input_pull_up(bus->sda);
@@ -32,6 +37,10 @@ void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus) {
 
     fd_gpio_configure_default(bus->scl);
     fd_gpio_configure_default(bus->sda);
+
+    if (enabled) {
+        fd_i2cm_bus_enable(bus);
+    }
 }
 
 void fd_i2cm_initialize(
@@ -150,7 +159,7 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
         }
     }
 
-    if ((twim->EVENTS_ERROR != 0) || error) {
+    if (error) {
         fd_i2cm_clear_bus(device->bus);
     }
 

@@ -1,10 +1,10 @@
-#include "fd_hal_processor.h"
 #include "fd_hal_reset.h"
+
+#include "fd_apollo.h"
+#include "fd_hal_processor.h"
 #include "fd_hal_rtc.h"
 
 #include <string.h>
-
-#include <am_mcu_apollo.h>
 
 #define MAGIC 0xa610efcc
 

@@ -2,11 +2,10 @@
 
 #define fd_assert(e)
 #define fd_assertion_failure()
+#include "fd_apollo.h"
 #include "fd_event.h"
 #include "fd_gpio.h"
 #include "fd_spim.h"
-
-#include <am_mcu_apollo.h>
 
 #include <string.h>
 
@@ -76,13 +75,8 @@ void fd_spis_initialize(const fd_spis_device_t *devices, uint32_t device_count) 
         //
         // Set the bit in the NVIC to accept access interrupts from the IO Slave.
         //
-#if 0
-        const uint32_t group = 6;
-        NVIC_SetPriorityGrouping(group); // one group priority bit
-        uint32_t priority = NVIC_EncodePriority(group, 1, 0);
-        am_hal_interrupt_priority_set(AM_HAL_INTERRUPT_IOSACC, priority);
-        am_hal_interrupt_priority_set(AM_HAL_INTERRUPT_IOSLAVE, priority);
-#endif
+        NVIC_SetPriority(IOSLAVEACC_IRQn, 1);
+        NVIC_SetPriority(IOSLAVE_IRQn, 1);
         am_hal_interrupt_enable(AM_HAL_INTERRUPT_IOSACC);
         am_hal_interrupt_enable(AM_HAL_INTERRUPT_IOSLAVE);
 

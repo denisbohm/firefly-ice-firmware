@@ -1,6 +1,6 @@
 #include "fd_timing.h"
 
-#include <am_mcu_apollo.h>
+#include "fd_apollo.h"
 
 void fd_hal_timing_start(void) {
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;

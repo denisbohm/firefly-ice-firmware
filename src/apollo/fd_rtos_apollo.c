@@ -1,8 +1,7 @@
 #include "fd_rtos.h"
 
+#include "fd_apollo.h"
 #include "fd_hal_reset.h"
-
-#include <am_mcu_apollo.h>
 
 #include <string.h>
 
@@ -90,12 +89,12 @@ void fd_rtos_initialize(void) {
     fd_rtos_delay_task_index = 0;
     fd_rtos_assertion_failure_count = 0;
 
-    NVIC_SetPriority(PendSV_IRQn, 1);
+    NVIC_SetPriority(PendSV_IRQn, 2);
 
     am_hal_stimer_config(AM_HAL_STIMER_HFRC_3MHZ | AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
     NVIC_ClearPendingIRQ(STIMER_CMPR0_IRQn);
     NVIC_EnableIRQ(STIMER_CMPR0_IRQn);
-    NVIC_SetPriority(STIMER_CMPR0_IRQn, 2);
+    NVIC_SetPriority(STIMER_CMPR0_IRQn, 3);
 
     fd_rtos_add_task(fd_rtos_sleep_task, fd_rtos_sleep_stack, sizeof(fd_rtos_sleep_stack), 0);
 }

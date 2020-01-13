@@ -1,7 +1,6 @@
 #include "fd_pwm.h"
 
-#include <am_mcu_apollo.h>
-#include <am_hal_interrupt.h>
+#include "fd_apollo.h"
 
 const fd_pwm_module_t *fd_pwm_modules;
 uint32_t fd_pwm_module_count;
@@ -25,12 +24,7 @@ void fd_pwm_initialize(const fd_pwm_module_t *modules __attribute__((unused)), u
             am_hal_ctimer_int_enable(interrupt << 8);
         }
     }
-#if 1
-    const uint32_t group = 6;
-    NVIC_SetPriorityGrouping(group); // one group priority bit
-    uint32_t priority = NVIC_EncodePriority(group, 1, 0);
-    am_hal_interrupt_priority_set(AM_HAL_INTERRUPT_CTIMER, priority);
-#endif
+    NVIC_SetPriority(CTIMER_IRQn, 0);
     am_hal_interrupt_enable(AM_HAL_INTERRUPT_CTIMER);
     am_hal_interrupt_master_enable();
 }

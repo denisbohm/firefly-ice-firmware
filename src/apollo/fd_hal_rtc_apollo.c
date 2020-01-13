@@ -1,6 +1,6 @@
 #include "fd_hal_rtc.h"
 
-#include <am_mcu_apollo.h>
+#include "fd_apollo.h"
 
 int32_t fd_hal_rtc_utc_offset;
 fd_time_t fd_hal_rtc_time_offset;

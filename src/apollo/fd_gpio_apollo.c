@@ -1,7 +1,6 @@
 #include "fd_gpio.h"
 
-#include <am_mcu_apollo.h>
-#include <am_hal_gpio.h>
+#include "fd_apollo.h"
 
 void fd_gpio_configure_default(fd_gpio_t gpio) {
     uint32_t pin_number = gpio.port * 32 + gpio.pin;

@@ -19,7 +19,7 @@ void fd_sha_source(uint32_t address, uint8_t *data, uint32_t length) {
     memcpy(data, (void *)address, length);
 }
 
-#ifndef CRYPTOCELL_IRQn
+#if !NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310)
 
 void fd_sha_initialize(void) {
 }

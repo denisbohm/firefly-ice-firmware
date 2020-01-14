@@ -4,7 +4,7 @@
 
 #include "fd_nrf5.h"
 
-#ifndef CRYPTOCELL_IRQn
+#if !NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310)
 
 static nrf_crypto_aes_context_t cbc_mac_ctx;
 

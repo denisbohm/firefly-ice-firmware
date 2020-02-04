@@ -36,7 +36,6 @@ void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused
 void fd_hal_aes_decrypt_start(fd_hal_aes_decrypt_t *decrypt, const uint8_t *key, const uint8_t *iv) {
     NVIC_EnableIRQ(CRYPTOCELL_IRQn);
     NRF_CRYPTOCELL->ENABLE = 1;
-
     SA_SilibRetCode_t ret = SaSi_LibInit();
     fd_log_assert(ret == SA_SILIB_RET_OK);
 
@@ -76,6 +75,10 @@ void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused
     size_t out_size = 0;
     SA_SilibRetCode_t ret = SaSi_AesFinish(context, out_size, in, out_size, out, &out_size);
     fd_log_assert(ret == SA_SILIB_RET_OK);
+
+    SaSi_LibFini();
+    NVIC_DisableIRQ(CRYPTOCELL_IRQn);
+    NRF_CRYPTOCELL->ENABLE = 0;
 }
 
 #endif

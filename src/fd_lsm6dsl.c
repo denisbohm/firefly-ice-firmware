@@ -257,7 +257,7 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
     fd_lsm6ds3_who_am_i = fd_lsm6dsl_read(device, FD_LSM6DSL_REGISTER_WHO_AM_I);
 
     fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL4_C, 0b00000100); // disable I2C
-    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL3_C, 0b01110100); // block data update, int1/2 open drain active low, address automatically incremented
+    fd_lsm6dsl_write(device, FD_LSM6DSL_REGISTER_CTRL3_C, 0b01100100); // block data update, int1/2 push pull, address automatically incremented
 
     fd_lsm6dsl_accelerometer_enabled = configuration->accelerometer_enable;
     uint32_t accelerometer_output_data_rate = configuration->accelerometer_output_data_rate;

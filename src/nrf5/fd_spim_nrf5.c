@@ -107,10 +107,12 @@ void fd_spim_bus_disable(const fd_spim_bus_t *bus) {
     spim->EVENTS_END = 0;
     spim->ENABLE = SPIM_ENABLE_ENABLE_Disabled << SPIM_ENABLE_ENABLE_Pos;
 
+#ifdef NRF52840_XXAA
     if (spim == NRF_SPIM3) {
         // [195] SPIM: SPIM3 continues to draw current after disable
         *(volatile uint32_t *)0x4002F004 = 1;
     }
+#endif
 
     spim->PSEL.SCK = 0xFFFFFFFF;
     spim->PSEL.MOSI = 0xFFFFFFFF;

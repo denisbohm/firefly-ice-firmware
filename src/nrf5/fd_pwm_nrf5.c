@@ -71,9 +71,11 @@ fd_pwm_module_state_t *fd_pwm_get_state(uint32_t instance) {
     if (instance == (uint32_t)NRF_PWM2) {
         return &fd_pwm_module_states[2];
     }
+#ifdef NRF52840_XXAA
     if (instance == (uint32_t)NRF_PWM3) {
         return &fd_pwm_module_states[3];
     }
+#endif
     return 0;
 }
 

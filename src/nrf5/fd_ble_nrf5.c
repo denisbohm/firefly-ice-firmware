@@ -1,5 +1,7 @@
 #include "fd_ble.h"
 
+#ifdef SOFTDEVICE_PRESENT
+
 #include "fd_ble_beacon_nrf5.h"
 #include "fd_log.h"
 
@@ -153,6 +155,7 @@ fd_ble_characteristic_nrf5_t *fd_ble_get_characteristic_nrf5(uint16_t uuid) {
             }
         }
     }
+    return 0;
 }
 
 bool fd_ble_set_characteristic_value(uint16_t uuid, uint8_t *value, uint32_t length) {
@@ -844,7 +847,7 @@ void fd_ble_soc_evt_handler(uint32_t event_id, void FD_UNUSED *p_context) {
 
 APP_TIMER_DEF(fd_ble_timer_id);
 
-void fd_ble_timer_handler(void *context) {
+void fd_ble_timer_handler(void *context FD_UNUSED) {
     if (fd_ble_configuration->on_tick) {
         fd_ble_configuration->on_tick();
     }
@@ -933,3 +936,5 @@ void fd_ble_main_loop(void) {
         APP_ERROR_CHECK(result);
     }
 }
+
+#endif

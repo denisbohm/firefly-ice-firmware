@@ -261,7 +261,9 @@ void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_edge_t edge, fd_gpio_function_
     NRF_GPIOTE->CONFIG[fd_gpio_nrf5_callback_count] =
         (GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos) |
         (gpio.pin << GPIOTE_CONFIG_PSEL_Pos) |
+#ifdef GPIOTE_CONFIG_PORT_Pos
         (gpio.port << GPIOTE_CONFIG_PORT_Pos) |
+#endif
         (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos);
 
     NRF_GPIOTE->INTENSET |= 1 << fd_gpio_nrf5_callback_count;

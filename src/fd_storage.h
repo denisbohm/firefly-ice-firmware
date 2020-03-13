@@ -25,7 +25,10 @@ typedef struct fd_storage_area_t {
     uint32_t free_page;
 } fd_storage_area_t;
 
+typedef void (*fd_storage_count_callback_t)(void);
+
 void fd_storage_initialize(void);
+void fd_storage_set_count_callback(fd_storage_count_callback_t callback);
 uint32_t fd_storage_used_page_count(void);
 bool fd_storage_read_first_page(fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length);
 uint32_t fd_storage_read_nth_page(uint32_t n, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length);

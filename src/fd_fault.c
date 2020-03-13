@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if defined(AM_PART_APOLLO2)
+#define HardFault_Handler am_fault_isr
+#endif
+
 /* The prototype shows it is a naked function - in effect this is just an assembly function. */
 void HardFault_Handler(void) __attribute__((naked));
 
@@ -67,9 +71,11 @@ void fdFaultGetRegistersFromStack(uint32_t *pulFaultStackAddress) {
     // Bus Fault Address Register
     uint32_t __attribute__((unused)) BFAR = (*((volatile unsigned long *)(0xE000ED38))) ;
 
+#ifndef FD_FAULT_NO_LOGGING
     char buffer[80];
     sprintf(buffer, "pc=%x lr=%x", (unsigned int)pc, (unsigned int)lr);
     fd_log_assert_fail(buffer);
+#endif
 
     /* When the following line is hit, the variables contain the register values. */
     while (true);

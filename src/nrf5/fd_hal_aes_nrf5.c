@@ -4,6 +4,35 @@
 
 #include "fd_nrf5.h"
 
+#if !NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310)
+
+static nrf_crypto_aes_context_t cbc_mac_ctx;
+
+void fd_hal_aes_decrypt_start(fd_hal_aes_decrypt_t *decrypt __attribute__((unused)), const uint8_t *key, const uint8_t *iv) {
+    nrf_crypto_aes_context_t *p_ctx = &cbc_mac_ctx;
+    ret_code_t ret_val = nrf_crypto_aes_init(p_ctx, &g_nrf_crypto_aes_cbc_128_info, NRF_CRYPTO_DECRYPT);
+    fd_log_assert(ret_val == NRF_SUCCESS);
+
+    ret_val = nrf_crypto_aes_key_set(p_ctx, (uint8_t *)key);
+    fd_log_assert(ret_val == NRF_SUCCESS);
+
+    ret_val = nrf_crypto_aes_iv_set(p_ctx, (uint8_t *)iv);
+    fd_log_assert(ret_val == NRF_SUCCESS);
+}
+
+void fd_hal_aes_decrypt_blocks(fd_hal_aes_decrypt_t *decrypt __attribute__((unused)), uint8_t *in, uint8_t *out, uint32_t length) {
+    nrf_crypto_aes_context_t *p_ctx = &cbc_mac_ctx;
+    ret_code_t ret_val = nrf_crypto_aes_update(p_ctx, in, length, out);
+    fd_log_assert(ret_val == NRF_SUCCESS);
+}
+
+void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused))) {
+    nrf_crypto_aes_context_t *p_ctx = &cbc_mac_ctx;
+    nrf_crypto_aes_uninit(p_ctx);
+}
+
+#else
+
 void fd_hal_aes_decrypt_start(fd_hal_aes_decrypt_t *decrypt, const uint8_t *key, const uint8_t *iv) {
     NVIC_EnableIRQ(CRYPTOCELL_IRQn);
     NRF_CRYPTOCELL->ENABLE = 1;
@@ -46,4 +75,10 @@ void fd_hal_aes_decrypt_stop(fd_hal_aes_decrypt_t *decrypt __attribute__((unused
     size_t out_size = 0;
     SA_SilibRetCode_t ret = SaSi_AesFinish(context, out_size, in, out_size, out, &out_size);
     fd_log_assert(ret == SA_SILIB_RET_OK);
+
+    SaSi_LibFini();
+    NVIC_DisableIRQ(CRYPTOCELL_IRQn);
+    NRF_CRYPTOCELL->ENABLE = 0;
 }
+
+#endif

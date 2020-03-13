@@ -145,7 +145,7 @@ bool fd_binary_get_check(fd_binary_t *binary, uint32_t length) {
         return true;
     }
     binary->flags |= FD_BINARY_FLAG_OVERFLOW;
-    fd_log_assert_fail("");
+    fd_log_assert_fail("underflow");
     return false;
 }
 
@@ -291,7 +291,7 @@ bool fd_binary_put_check(fd_binary_t *binary, uint32_t length) {
         return true;
     }
     binary->flags |= FD_BINARY_FLAG_OVERFLOW;
-    fd_log_assert_fail("");
+    fd_log_assert_fail("overflow");
     return false;
 }
 

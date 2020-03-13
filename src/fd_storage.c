@@ -31,10 +31,16 @@ typedef struct {
 } fd_storage_area_collection_t;
 
 static fd_storage_area_collection_t storage_area_collection;
+static fd_storage_count_callback_t fd_storage_count_callback;
 
 void fd_storage_initialize(void) {
     storage_area_collection.first = 0;
     storage_area_collection.last = 0;
+    fd_storage_count_callback = 0;
+}
+
+void fd_storage_set_count_callback(fd_storage_count_callback_t callback) {
+    fd_storage_count_callback = callback;
 }
 
 void fd_storage_area_collection_push(fd_storage_area_t *storage_area) {
@@ -125,6 +131,11 @@ void fd_storage_free_first_page(fd_storage_area_t *area) {
     fd_hal_external_flash_sleep();
 
     increment_page(area->first_page);
+    
+    fd_control_notify(FD_CONTROL_PROPERTY_STORAGE);
+    if (fd_storage_count_callback) {
+        fd_storage_count_callback();
+    }
 }
 
 void fd_storage_area_free_all_pages(fd_storage_area_t *area) {
@@ -137,6 +148,11 @@ void fd_storage_area_free_all_pages(fd_storage_area_t *area) {
         increment_page(area->first_page);
     }
     fd_hal_external_flash_sleep();
+    
+    fd_control_notify(FD_CONTROL_PROPERTY_STORAGE);
+    if (fd_storage_count_callback) {
+        fd_storage_count_callback();
+    }
 }
 
 void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t *data, uint32_t length) {
@@ -180,6 +196,9 @@ void fd_storage_area_append_page(fd_storage_area_t *area, uint32_t type, uint8_t
     }
     
     fd_control_notify(FD_CONTROL_PROPERTY_STORAGE);
+    if (fd_storage_count_callback) {
+        fd_storage_count_callback();
+    }
 }
 
 void fd_storage_area_read_nth_page(fd_storage_area_t *area, uint32_t n, fd_storage_metadata_t *metadata, uint8_t *data, uint32_t length) {

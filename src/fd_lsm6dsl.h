@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     fd_lsm6dsl_accelerometer_sample_t accelerometer;
     fd_lsm6dsl_gyro_sample_t gyro;
+    uint32_t steps;
     uint32_t timestamp;
 } fd_lsm6dsl_sample_t;
 
@@ -119,6 +120,8 @@ typedef struct {
 #define FD_LSM6DSL_REGISTER_Y_OFS_USR 0x74
 #define FD_LSM6DSL_REGISTER_Z_OFS_USR 0x75
 
+#define FD_LSM6DSL_REGISTER_FUNC_CONFIG_PEDO_THS_MIN 0x0f
+
 #define FD_LSM6DSL_WHO_AM_I_VALUE 0x6A
 
 #define FD_LSM6DSLSTATUS_XLDA 0x01
@@ -195,6 +198,7 @@ typedef struct {
     uint8_t gyro_high_pass_filter;
     bool gyro_enable;
     bool timestamp_and_steps_enable;
+    uint8_t steps_threshold;
 } fd_lsm6dsl_configuration_t;
 
 void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_configuration_t *configuration);
@@ -202,6 +206,9 @@ void fd_lsm6ds3_configure(const fd_spim_device_t *device, const fd_lsm6dsl_confi
 void fd_lsm6dsl_fifo_flush(const fd_spim_device_t *device);
 uint32_t fd_lsm6dsl_read_fifo_word_count(const fd_spim_device_t *device);
 uint32_t fd_lsm6dsl_read_fifo_samples(const fd_spim_device_t *device, fd_lsm6dsl_sample_t *samples, uint32_t sample_count);
+
+uint32_t fd_lsm6dsl_get_step_count(const fd_spim_device_t *device);
+void fd_lsm6dsl_reset_step_counter(const fd_spim_device_t *device);
 
 bool fd_lsm6dsl_self_test(const fd_spim_device_t *device);
 

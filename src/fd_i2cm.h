@@ -28,6 +28,7 @@ typedef struct {
     fd_gpio_t scl;
     fd_gpio_t sda;
     uint32_t frequency;
+    uint32_t timeout;
 } fd_i2cm_bus_t;
 
 typedef struct {
@@ -39,6 +40,8 @@ void fd_i2cm_initialize(
     const fd_i2cm_bus_t *buses, uint32_t bus_count,
     const fd_i2cm_device_t *devices, uint32_t device_count
 );
+
+void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus);
 
 void fd_i2cm_bus_enable(const fd_i2cm_bus_t *bus);
 void fd_i2cm_bus_disable(const fd_i2cm_bus_t *bus);

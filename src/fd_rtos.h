@@ -29,4 +29,6 @@ void fd_rtos_condition_wait(fd_rtos_condition_t *condition, uint32_t state);
 void fd_rtos_condition_signal(fd_rtos_condition_t *condition);
 void fd_rtos_condition_unlock(fd_rtos_condition_t *condition);
 
+void fd_rtos_delay(float sleep);
+
 #endif

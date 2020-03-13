@@ -1,5 +1,6 @@
 #include "fd_spim.h"
 
+#include "fd_log.h"
 #include "fd_nrf5.h"
 
 static inline
@@ -49,7 +50,7 @@ void fd_spim_initialize(
         fd_gpio_set(bus->sclk, true);
         fd_spim_configure_output(bus->mosi);
         fd_gpio_set(bus->mosi, true);
-        fd_gpio_configure_input_pull_up(bus->miso);
+        fd_gpio_configure_default(bus->miso);
 
         fd_spim_bus_disable(bus);
     }
@@ -60,18 +61,28 @@ void fd_spim_bus_enable(const fd_spim_bus_t *bus) {
         return;
     }
 
+    fd_spim_configure_output(bus->sclk);
+    fd_gpio_set(bus->sclk, true);
+    fd_spim_configure_output(bus->mosi);
+    fd_gpio_set(bus->mosi, true);
+    fd_gpio_configure_input_pull_up(bus->miso);
+
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     switch (bus->frequency) {
         default:
         case 8000000:
             spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M8;
             break;
+#ifdef SPIM_FREQUENCY_FREQUENCY_M16
         case 16000000:
             spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M16;
             break;
+#endif
+#ifdef SPIM_FREQUENCY_FREQUENCY_M32
         case 32000000:
             spim->FREQUENCY = SPIM_FREQUENCY_FREQUENCY_M32;
             break;
+#endif
     }
     spim->CONFIG = (SPIM_CONFIG_CPOL_ActiveLow << SPIM_CONFIG_CPOL_Pos) | (SPIM_CONFIG_CPHA_Trailing << SPIM_CONFIG_CPHA_Pos);
     spim->PSEL.SCK = NRF_GPIO_PIN_MAP(bus->sclk.port, bus->sclk.pin);
@@ -96,9 +107,22 @@ void fd_spim_bus_disable(const fd_spim_bus_t *bus) {
     spim->EVENTS_END = 0;
     spim->ENABLE = SPIM_ENABLE_ENABLE_Disabled << SPIM_ENABLE_ENABLE_Pos;
 
+#ifdef NRF52840_XXAA
+    if (spim == NRF_SPIM3) {
+        // [195] SPIM: SPIM3 continues to draw current after disable
+        *(volatile uint32_t *)0x4002F004 = 1;
+    }
+#endif
+
     spim->PSEL.SCK = 0xFFFFFFFF;
     spim->PSEL.MOSI = 0xFFFFFFFF;
     spim->PSEL.MISO = 0xFFFFFFFF;
+
+    fd_spim_configure_output(bus->sclk);
+    fd_gpio_set(bus->sclk, true);
+    fd_spim_configure_output(bus->mosi);
+    fd_gpio_set(bus->mosi, true);
+    fd_gpio_configure_default(bus->miso);
 }
 
 bool fd_spim_bus_is_enabled(const fd_spim_bus_t *bus) {
@@ -108,10 +132,12 @@ bool fd_spim_bus_is_enabled(const fd_spim_bus_t *bus) {
 }
 
 void fd_spim_device_select(const fd_spim_device_t *device) {
+    fd_log_assert(fd_spim_bus_is_enabled(device->bus));
     fd_gpio_set(device->csn, false);
 }
 
 void fd_spim_device_deselect(const fd_spim_device_t *device) {
+    fd_log_assert(fd_spim_bus_is_enabled(device->bus));
     fd_gpio_set(device->csn, true);
 }
 
@@ -121,6 +147,7 @@ bool fd_spim_device_is_selected(const fd_spim_device_t *device) {
 
 static
 void fd_spim_transfer(const fd_spim_bus_t *bus, const uint8_t *tx_bytes, uint32_t tx_byte_count, uint8_t *rx_bytes, uint32_t rx_byte_count) {
+    fd_log_assert(fd_spim_bus_is_enabled(bus));
     NRF_SPIM_Type *spim = (NRF_SPIM_Type *)bus->instance;
     spim->TXD.PTR = (uint32_t)tx_bytes;
     spim->RXD.PTR = (uint32_t)rx_bytes;
@@ -148,4 +175,5 @@ void fd_spim_bus_io(const fd_spim_bus_t *bus, const fd_spim_io_t *io) {
 }
 
 void fd_spim_bus_wait(const fd_spim_bus_t *bus) {
+    fd_log_assert(fd_spim_bus_is_enabled(bus));
 }

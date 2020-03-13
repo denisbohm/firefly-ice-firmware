@@ -4,7 +4,7 @@
 #include "fd_log.h"
 #include "fd_timer.h"
 
-#define TIMERS_LIMIT 16
+#define TIMERS_LIMIT 32
 
 static fd_timer_t *timers[TIMERS_LIMIT];
 static uint32_t timer_count;
@@ -133,4 +133,7 @@ void fd_timer_start_next(fd_timer_t *timer, uint32_t interval) {
 
 void fd_timer_stop(fd_timer_t *timer) {
     timer->active = false;
+    timer->scheduled = false;
+    timer->triggered = false;
+    timer->countdown = 0;
 }

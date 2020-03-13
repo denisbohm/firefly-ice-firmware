@@ -37,6 +37,32 @@ bool fd_test_suite_crystal_test(uint32_t source, uint32_t timeout) {
     return false;
 }
 
+void fd_output_lfclk(fd_gpio_t gpio) {
+    NRF_CLOCK->LFCLKSRC = 1; // 1 == external crystal
+    NRF_CLOCK->TASKS_LFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0) {
+    }
+
+//    fd_gpio_configure_output(gpio);
+    NRF_GPIOTE->CONFIG[0] = (GPIOTE_CONFIG_MODE_Task       << GPIOTE_CONFIG_MODE_Pos)     | 
+                            (GPIOTE_CONFIG_OUTINIT_Low     << GPIOTE_CONFIG_OUTINIT_Pos)  |
+                            (GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos) |
+                            (gpio.port                     << GPIOTE_CONFIG_PORT_Pos)     |
+                            (gpio.pin                      << GPIOTE_CONFIG_PSEL_Pos);
+
+    // Configure RTC1 to generate tick event
+    NRF_RTC1->PRESCALER = 0;
+    NRF_RTC1->EVTENSET  = RTC_EVTENSET_TICK_Msk;
+
+    // Connect RTC1 tick event to GPIOTE toggle task
+    NRF_PPI->CH[0].EEP = (uint32_t) &NRF_RTC1->EVENTS_TICK;
+    NRF_PPI->CH[0].TEP = (uint32_t) &NRF_GPIOTE->TASKS_OUT[0];
+    NRF_PPI->CHEN      = PPI_CHENCLR_CH0_Msk;
+                     
+    // Start RTC1
+    NRF_RTC1->TASKS_START = 1;
+}
+
 void main(void) {
     void* tasks[] = {
         halt,
@@ -106,4 +132,13 @@ void main(void) {
     };
 
     fd_quiescent_test();
+
+    // red LED on PET
+    fd_gpio_t gpio = { .port = 0, .pin = 21 };
+    fd_output_lfclk(gpio);
+    while (true) {
+        __SEV();
+        __WFE();
+        __WFE();
+    }
 }

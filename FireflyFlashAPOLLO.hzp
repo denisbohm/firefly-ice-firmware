@@ -1,0 +1,135 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="FireflyFlashAPOLLO" target="8" version="2">
+  <project Name="FireflyFlashAPOLLO">
+    <configuration
+      CMSIS_CORE="Yes"
+      Name="Common"
+      Placement="RAM"
+      Target="AMAPH1KK-KBR"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_interwork="No"
+      arm_linker_heap_size="256"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/Apollo/Simulator/Apollo_SimulatorMemory_$(HostOS)_$(HostArch)$(HostDLLExt)"
+      arm_simulator_memory_simulation_parameter="Apollo;FLASH,0x00000000,0x00100000,ROM;RAM,0x10000000,0x00040000,RAM"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_interface_type="SWD"
+      arm_target_loader_applicable_loaders=""
+      arm_target_loader_default_loader=""
+      c_user_include_directories="$(DeviceIncludePath);$(ProjectDir)/apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2;$(ProjectDir)/apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal;$(ProjectDir)/apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/regs;$(ProjectDir)/apollo/AmbiqSuite-Rel1.2.12/utils;$(ProjectDir)/apollo/AmbiqSuite-Rel1.2.12/devices"
+      debug_register_definition_file="$(DeviceRegisterDefinitionFile)"
+      gcc_cplusplus_language_standard="gnu++11"
+      gcc_entry_point="Reset_Handler"
+      linker_memory_map_file="$(DeviceMemoryMapFile)"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/ram_placement.xml"
+      macros="DeviceIncludePath=$(TargetsDir)/Apollo/CMSIS/Device/Include;DeviceHeaderFile=$(TargetsDir)/Apollo/CMSIS/Device/Include/apollo2.h;DeviceLoaderFile=$(TargetsDir)/Apollo/Loader/Apollo2_Loader.elf;DeviceMemoryMapFile=$(TargetsDir)/Apollo/XML/AMAPH1KK-KBR_MemoryMap.xml;DeviceRegisterDefinitionFile=$(TargetsDir)/Apollo/XML/apollo2_Registers.xml;DeviceSystemFile=$(TargetsDir)/Apollo/CMSIS/Device/Source/system_apollo2.c;DeviceVectorsFile=$(TargetsDir)/Apollo/Source/apollo2_Vectors.s;DeviceFamily=Apollo"
+      package_dependencies="Apollo"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/Apollo/XML/property_groups.xml"
+      target_get_partname_script="GetPartName()"
+      target_match_partname_script="MatchPartName(&quot;$(Target)&quot;)"
+      target_reset_script="Reset();"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <configuration
+      Name="Flash"
+      arm_target_flash_loader_file_path="$(DeviceLoaderFile)" />
+    <folder Name="CMSIS Files">
+      <file file_name="$(DeviceHeaderFile)" />
+      <file file_name="$(DeviceSystemFile)">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="$(TargetsDir)/Apollo/Scripts/Apollo_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+    </folder>
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/Apollo/Source/Apollo_Startup.s" />
+      <file file_name="$(DeviceVectorsFile)">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <file file_name="apollo/FireflyFlash.c" />
+    </folder>
+    <folder Name="AmbiqSuite">
+      <folder Name="mcu">
+        <folder Name="apollo2">
+          <folder Name="hal">
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_adc.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_adc.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_cachectrl.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_cachectrl.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_clkgen.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_clkgen.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ctimer.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ctimer.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_debug.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_debug.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_flash.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_flash.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_global.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_global.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_gpio.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_gpio.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_i2c_bit_bang.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_i2c_bit_bang.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_interrupt.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_interrupt.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_iom.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_iom.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ios.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_ios.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_itm.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_itm.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_mcuctrl.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_mcuctrl.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_otp.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_otp.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pdm.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pdm.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pin.h" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pwrctrl.c" />
+            <file file_name="apollo/AmbiqSuite-Rel1.2.12/mcu/apollo2/hal/am_hal_pwrctrl.h" />
+          </folder>
+        </folder>
+      </folder>
+    </folder>
+  </project>
+  <configuration Name="THUMB Debug" inherited_configurations="THUMB;Debug" />
+  <configuration
+    Name="THUMB"
+    Platform="ARM"
+    arm_instruction_set="Thumb"
+    arm_library_instruction_set="Thumb"
+    c_preprocessor_definitions="__THUMB"
+    hidden="Yes" />
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="None"
+    hidden="Yes" />
+  <configuration
+    Name="THUMB Release"
+    inherited_configurations="THUMB;Release" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG"
+    gcc_debugging_level="None"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="Level 1"
+    hidden="Yes" />
+</solution>

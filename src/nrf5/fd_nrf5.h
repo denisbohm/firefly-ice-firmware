@@ -17,9 +17,11 @@
 #include "nrf_nvmc.h"
 #include "nrf_temp.h"
 
+#ifndef FD_NRF5_NO_CRYPTO
 #include "crys_hash.h"
 #include "ssi_aes.h"
 #include "sns_silib.h"
+#endif
 
 #include "app_scheduler.h"
 

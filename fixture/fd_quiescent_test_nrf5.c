@@ -5,6 +5,7 @@
 #include "fd_gpio.h"
 #include "fd_i2cm.h"
 #include "fd_lsm6dsl.h"
+#include "fd_perform_tek.h"
 #include "fd_pwm.h"
 #include "fd_spi_flash.h"
 #include "fd_spim.h"
@@ -150,6 +151,33 @@ void fd_quiescent_test_spi_initialize(void) {
     fd_spim_bus_disable(lsm6dsl_bus);
 }
 
+void fd_quiescent_test_perform_tek_initialize(void) {
+    fd_gpio_t pin_hr_wake = { .port = 0, .pin = 31 };
+
+    fd_i2cm_bus_t buses[] = {
+        {
+            .instance = (uint32_t)NRF_TWIM0,
+            .scl = { .port = 0, .pin = 29 },
+            .sda = { .port = 0, .pin = 30 },
+            .frequency = 100000
+        },
+    };
+    fd_i2cm_bus_t *bus = &buses[0];
+    fd_i2cm_device_t devices[] = {
+        { .bus = bus, .address = 0x44 /* perform tek 7-bit address */ },
+    };
+    fd_i2cm_device_t *device = &devices[0];
+    fd_i2cm_initialize(buses, 1, devices, 1);
+
+    // wait for perform tek to start up
+    fd_delay_ms(1000);
+
+    // put perform tek into lowest power mode
+    fd_perform_tek_initialize(pin_hr_wake, bus, device);
+
+//    fd_gpio_configure_default(pin_hr_wake);
+}
+
 #if 0
 void fd_quiescent_vibrate(void) {
     const fd_pwm_module_t aw_pwm_modules[] = {
@@ -188,10 +216,10 @@ void fd_quiescent_test(void) {
     fd_gpio_configure_input_pull_up(bq_int);
     fd_gpio_t bq_lsctrl = { .port = 1, .pin = 14 };
     fd_gpio_configure_output(bq_lsctrl);
-    fd_gpio_set(bq_lsctrl, true);
+    fd_gpio_set(bq_lsctrl, false);
     fd_gpio_t v5_en = { .port = 0, .pin = 2 };
     fd_gpio_configure_output(v5_en);
-    fd_gpio_set(v5_en, false);
+    fd_gpio_set(v5_en, true);
 
     fd_gpio_t motor_en = { .port = 0, .pin = 20 };
     fd_gpio_configure_output(motor_en);
@@ -205,6 +233,7 @@ void fd_quiescent_test(void) {
     fd_quiescent_test_button_initialize();
     fd_quiescent_test_set_system_voltage();
     fd_quiescent_test_spi_initialize();
+    fd_quiescent_test_perform_tek_initialize();
 
 #if 0
     fd_quiescent_vibrate();

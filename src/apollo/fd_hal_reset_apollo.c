@@ -81,12 +81,16 @@ void fd_hal_reset_start_watchdog(void) {
         .ui16ResetCount = 255,
     };
     am_hal_wdt_init(&config);
-    am_hal_wdt_lock_and_start();
+    am_hal_wdt_start();
 #endif
 
 #ifdef DEBUG_WATCHDOG
 #warning watchdog debug is enabled
 #endif
+}
+
+void fd_hal_reset_stop_watchdog(void) {
+    am_hal_wdt_halt();
 }
 
 void fd_hal_reset_feed_watchdog(void) {

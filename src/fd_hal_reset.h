@@ -52,6 +52,7 @@ extern fd_hal_reset_retained_t fd_hal_reset_retained_at_initialize;
 void fd_hal_reset_by(uint8_t type);
 
 void fd_hal_reset_start_watchdog(void);
+void fd_hal_reset_stop_watchdog(void);
 void fd_hal_reset_feed_watchdog(void);
 void fd_hal_reset_push_watchdog_context(const char *context, char *save);
 void fd_hal_reset_pop_watchdog_context(const char *save);

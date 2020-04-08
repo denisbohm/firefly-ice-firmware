@@ -19,6 +19,7 @@ void fd_rtos_add_task(fd_rtos_entry_point_t entry_point, void *stack, size_t sta
 void fd_rtos_yield(void);
 
 void fd_rtos_run(void);
+void fd_rtos_deep_sleep(void);
 
 uint32_t fd_rtos_interrupt_disable(void);
 void fd_rtos_interrupt_enable(uint32_t state);

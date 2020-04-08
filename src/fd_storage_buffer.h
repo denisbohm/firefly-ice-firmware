@@ -34,6 +34,10 @@ void fd_storage_buffer_add_time_series_us(
     fd_storage_buffer_t *storage_buffer, fd_time_t time, uint32_t interval_us, uint8_t *data, uint32_t length
 );
 
+void fd_storage_buffer_add_time_series_us_rtc(
+    fd_storage_buffer_t *storage_buffer, fd_time_t time, uint32_t interval_us, fd_time_t rtc, uint8_t *data, uint32_t length
+);
+
 void fd_storage_buffer_add_time_series_s_float16(
     fd_storage_buffer_t *storage_buffer, uint32_t time_s, uint16_t interval_s, float value
 );

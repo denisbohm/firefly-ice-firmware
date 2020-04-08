@@ -80,6 +80,13 @@ void fd_rtos_sleep_task(void) {
     }
 }
 
+void fd_rtos_deep_sleep(void) {
+    am_hal_interrupt_master_disable();
+    while (true) {
+        am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
+    }
+}
+
 void fd_rtos_initialize(void) {
     fd_rtos_interrupt_level = 0;
     memset(fd_rtos_tasks, 0, sizeof(fd_rtos_tasks));

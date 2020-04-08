@@ -2,6 +2,9 @@
 
 #ifdef SOFTDEVICE_PRESENT
 
+#include "fd_ble_beacon_nrf5.h"
+#include "fd_log.h"
+
 #pragma GCC diagnostic push
 
 #pragma GCC diagnostic ignored "-Wold-style-declaration"
@@ -347,6 +350,8 @@ void fd_ble_advertising_start(void) {
 
     err_code = sd_ble_gap_adv_start(fd_ble_adv_handle, APP_BLE_CONN_CFG_TAG);
     APP_ERROR_CHECK(err_code);
+
+    fd_ble_beacon_start();
 }
 
 void fd_ble_evt_user_mem_request(ble_evt_t const FD_UNUSED *p_ble_evt) {
@@ -357,6 +362,8 @@ void fd_ble_evt_user_mem_release(ble_evt_t const FD_UNUSED *p_ble_evt) {
 }
 
 void fd_ble_gap_evt_connected(ble_evt_t const *p_ble_evt) {
+    fd_ble_beacon_stop();
+
     fd_ble_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 
     ble_gap_conn_params_t gap_conn_params = fd_ble_gap_conn_params();
@@ -825,6 +832,7 @@ void fd_ble_flash_write(uint32_t address, const void *data, size_t length) {
 }
 
 void fd_ble_soc_evt_handler(uint32_t event_id, void FD_UNUSED *p_context) {
+    fd_ble_beacon_on_sys_evt(event_id);
     switch (event_id) {
         case NRF_EVT_FLASH_OPERATION_SUCCESS:
             fd_ble_flash_operation_result = flash_operation_result_success;
@@ -843,6 +851,43 @@ void fd_ble_timer_handler(void *context FD_UNUSED) {
     if (fd_ble_configuration->on_tick) {
         fd_ble_configuration->on_tick();
     }
+}
+
+static
+void fd_ble_beacon_error_handler(uint32_t nrf_error) {
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "beacon: %d", nrf_error);
+    fd_log(buffer);
+}
+
+#define APP_COMPANY_IDENTIFIER               0x0059                                     /**< Company identifier for Nordic Semiconductor ASA. as per www.bluetooth.org. */
+
+#define BEACON_UUID 0xff, 0xfe, 0x2d, 0x12, 0x1e, 0x4b, 0x0f, 0xa4,\
+                    0x99, 0x4e, 0xce, 0xb5, 0x31, 0xf4, 0x05, 0x45
+#define BEACON_ADV_INTERVAL                  400                                        /**< The Beacon's advertising interval, in milliseconds*/
+#define BEACON_MAJOR                         0x1234                                     /**< The Beacon's Major*/
+#define BEACON_MINOR                         0x5678                                     /**< The Beacon's Minor*/
+#define BEACON_RSSI                          0xC3                                       /**< The Beacon's measured RSSI at 1 meter distance in dBm. */
+
+void fd_ble_initialize_beacon(void) {
+    fd_ble_beacon_init_t beacon_init;
+
+    static uint8_t beacon_uuid[] = {BEACON_UUID};
+
+    memcpy(beacon_init.uuid.uuid128, beacon_uuid, sizeof(beacon_uuid));
+    beacon_init.adv_interval  = BEACON_ADV_INTERVAL;
+    beacon_init.major         = BEACON_MAJOR;
+    beacon_init.minor         = BEACON_MINOR;
+    beacon_init.manuf_id      = APP_COMPANY_IDENTIFIER;
+    beacon_init.rssi          = BEACON_RSSI;
+    beacon_init.error_handler = fd_ble_beacon_error_handler;
+
+    uint32_t err_code = sd_ble_gap_addr_get(&beacon_init.beacon_addr);
+    APP_ERROR_CHECK(err_code);
+    // Increment device address by 2 for beacon advertising.
+    beacon_init.beacon_addr.addr[0] += 2;
+
+    fd_ble_beacon_init(&beacon_init);
 }
 
 void fd_ble_initialize(fd_ble_configuration_t *configuration) {
@@ -873,6 +918,7 @@ void fd_ble_initialize(fd_ble_configuration_t *configuration) {
     fd_ble_l2cap_initialize();
     fd_ble_services_initialize(configuration->services, configuration->service_count);
     fd_ble_advertising_initialize();
+    fd_ble_initialize_beacon();
     fd_ble_advertising_start();
 
     uint32_t err_code = app_timer_init();

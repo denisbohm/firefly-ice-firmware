@@ -496,7 +496,7 @@
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
       c_additional_options="-fms-extensions"
-      c_preprocessor_definitions="NRF52840_XXAA;SOFTDEVICE_PRESENT;S140;STARTUP_FROM_RESET"
+      c_preprocessor_definitions="FD_NRF5_NO_CRYPTO;NRF52840_XXAA;SOFTDEVICE_PRESENT;S140;STARTUP_FROM_RESET"
       c_user_include_directories="$(ProjectDir);$(ProjectDir)/../src;$(ProjectDir)/../src/nrf5;$(ProjectDir)/nRF5_SDK/modules/nrfx;$(ProjectDir)/nRF5_SDK/modules/nrfx/hal;$(ProjectDir)/nRF5_SDK/modules/nrfx/mdk;$(ProjectDir)/nRF5_SDK/integration/nrfx;$(ProjectDir)/nRF5_SDK/components/ble/ble_dtm;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_bas;$(ProjectDir)/nRF5_SDK/components/ble/ble_services/ble_dis;$(ProjectDir)/nRF5_SDK/components/ble/common;$(ProjectDir)/nRF5_SDK/components/device;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ble_flash;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/clock;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/common;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/comp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/gpiote;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/hal;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/i2s;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/lpcomp;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pdm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/power;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/ppi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/pwm;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qdec;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/qspi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/radio_config;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rng;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/rtc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/saadc;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/sdio;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/spi_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/swi;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/systick;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/timer;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twi_master;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/twis_slave;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/uart;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/usbd;$(ProjectDir)/nRF5_SDK/components/drivers_nrf/wdt;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_log/src;$(ProjectDir)/nRF5_SDK/components/libraries/experimental_section_vars;$(ProjectDir)/nRF5_SDK/components/libraries/delay;$(ProjectDir)/nRF5_SDK/components/libraries/gpiote;$(ProjectDir)/nRF5_SDK/components/libraries/scheduler;$(ProjectDir)/nRF5_SDK/components/libraries/timer;$(ProjectDir)/nRF5_SDK/components/libraries/util;$(ProjectDir)/nRF5_SDK/components/softdevice/common;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers;$(ProjectDir)/nRF5_SDK/components/softdevice/s140/headers/nrf52;$(ProjectDir)/nRF5_SDK/config;$(TargetsDir)/nRF51/CMSIS;$(TargetsDir)/CMSIS_3/CMSIS/Include"
       debug_register_definition_file="$(TargetsDir)/nRF51/nRF52840_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/nRF51/nRF52840_xxAA_MemoryMap.xml"
@@ -568,6 +568,10 @@
       <file file_name="fd_quiescent_test.h" />
       <file file_name="fd_quiescent_test_nrf5.c" />
       <file file_name="fd_test_suite_nrf5.c" />
+      <file file_name="../src/fd_perform_tek.c" />
+      <file file_name="../src/fd_perform_tek.h" />
+      <file file_name="../src/fd_log_null.c" />
+      <file file_name="../src/fd_log.h" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/source/thumb_crt0.s" />

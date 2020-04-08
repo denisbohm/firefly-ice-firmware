@@ -117,7 +117,11 @@ void fd_gpio_set(fd_gpio_t gpio, bool value) {
 
 bool fd_gpio_get(fd_gpio_t gpio) {
     NRF_GPIO_Type *nrf_gpio = fd_gpio_get_nrf_gpio(gpio.port);
-    return ((nrf_gpio->IN >> gpio.pin) & 1UL) != 0;
+    if (nrf_gpio->DIR & (1 << gpio.pin)) {
+        return ((nrf_gpio->OUT >> gpio.pin) & 1UL) != 0;
+    } else {
+        return ((nrf_gpio->IN >> gpio.pin) & 1UL) != 0;
+    }
 }
 
 #ifdef FD_GPIO_NRF5_PORT_EVENTS

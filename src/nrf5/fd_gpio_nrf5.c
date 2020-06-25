@@ -124,6 +124,16 @@ bool fd_gpio_get(fd_gpio_t gpio) {
     }
 }
 
+#ifdef FD_GPIO_NRFX
+
+void fd_gpio_initialize_implementation(void) {
+}
+
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_edge_t edge, fd_gpio_function_t function, void *context) {
+}
+
+#else
+
 #ifdef FD_GPIO_NRF5_PORT_EVENTS
 
 typedef struct {
@@ -303,6 +313,8 @@ void GPIOTE_IRQHandler(void) {
         }
     }
 }
+
+#endif
 
 #endif
 

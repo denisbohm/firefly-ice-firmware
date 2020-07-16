@@ -9,6 +9,70 @@ NRF_GPIO_Type *fd_gpio_get_nrf_gpio(uint32_t port) {
     return (NRF_GPIO_Type *)(NRF_P0_BASE + port * 0x300UL);
 }
 
+#ifdef FD_GPIO_NRF52840_QFN
+const static bool fd_gpio_high_drive[] = {
+    true,  // P0.00
+    true,  // P0.01
+    false, // P0.02
+    false, // P0.03
+    false, // P0.04
+    false, // P0.05
+    false, // P0.06
+    false, // P0.07
+    true,  // P0.08
+    false, // P0.09
+    false, // P0.10
+    false, // P0.11
+    false, // P0.12
+    true,  // P0.13
+    true,  // P0.14
+    true,  // P0.15
+    true,  // P0.16
+    true,  // P0.17
+    true,  // P0.18
+    true,  // P0.19
+    true,  // P0.20
+    true,  // P0.21
+    true,  // P0.22
+    true,  // P0.23
+    true,  // P0.24
+    true,  // P0.25
+    true,  // P0.26
+    true,  // P0.27
+    true,  // P0.28
+    true,  // P0.29
+    true,  // P0.30
+    true,  // P0.31
+
+    true,  // P1.00
+    false, // P1.01
+    false, // P1.02
+    false, // P1.03
+    false, // P1.04
+    false, // P1.05
+    false, // P1.06
+    false, // P1.07
+    true,  // P1.08
+    true,  // P1.09
+    false, // P1.10
+    false, // P1.11
+    false, // P1.12
+    false, // P1.13
+    false, // P1.14
+    false, // P1.15
+};
+#else
+const static bool fd_gpio_high_drive[] = {};
+#endif
+
+static bool fd_gpio_is_high_drive(fd_gpio_t gpio) {
+    int index = gpio.port * 32 + gpio.pin;
+    if (index > sizeof(fd_gpio_high_drive)) {
+        return false;
+    }
+    return fd_gpio_high_drive[index];
+}
+
 static
 void fd_gpio_configure(
     fd_gpio_t gpio,
@@ -41,7 +105,7 @@ void fd_gpio_configure_output(fd_gpio_t gpio) {
         NRF_GPIO_PIN_DIR_OUTPUT,
         NRF_GPIO_PIN_INPUT_DISCONNECT,
         NRF_GPIO_PIN_NOPULL,
-        NRF_GPIO_PIN_S0S1,
+        fd_gpio_is_high_drive(gpio) ? NRF_GPIO_PIN_H0H1 : NRF_GPIO_PIN_S0S1,
         NRF_GPIO_PIN_NOSENSE
     );
 }
@@ -51,7 +115,7 @@ void fd_gpio_configure_output_open_drain(fd_gpio_t gpio) {
         GPIO_PIN_CNF_DIR_Output,
         GPIO_PIN_CNF_INPUT_Disconnect,
         GPIO_PIN_CNF_PULL_Disabled,
-        GPIO_PIN_CNF_DRIVE_S0D1,
+        fd_gpio_is_high_drive(gpio) ? GPIO_PIN_CNF_DRIVE_H0D1 : GPIO_PIN_CNF_DRIVE_S0D1,
         GPIO_PIN_CNF_SENSE_Disabled
     );
 }
@@ -61,7 +125,7 @@ void fd_gpio_configure_output_open_drain_pull_up(fd_gpio_t gpio) {
         GPIO_PIN_CNF_DIR_Output,
         GPIO_PIN_CNF_INPUT_Disconnect,
         GPIO_PIN_CNF_PULL_Pullup,
-        GPIO_PIN_CNF_DRIVE_S0D1,
+        fd_gpio_is_high_drive(gpio) ? GPIO_PIN_CNF_DRIVE_H0D1 : GPIO_PIN_CNF_DRIVE_S0D1,
         GPIO_PIN_CNF_SENSE_Disabled
     );
 }
@@ -71,7 +135,7 @@ void fd_gpio_configure_output_open_source_pull_down(fd_gpio_t gpio) {
         GPIO_PIN_CNF_DIR_Output,
         GPIO_PIN_CNF_INPUT_Disconnect,
         GPIO_PIN_CNF_PULL_Pulldown,
-        GPIO_PIN_CNF_DRIVE_D0S1,
+        fd_gpio_is_high_drive(gpio) ? GPIO_PIN_CNF_DRIVE_D0H1 : GPIO_PIN_CNF_DRIVE_D0S1,
         GPIO_PIN_CNF_SENSE_Disabled
     );
 }

@@ -159,9 +159,11 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
         }
     }
 
+#ifndef FD_I2CM_DO_NOT_CLEAR_BUS_ON_ERROR
     if (error) {
         fd_i2cm_clear_bus(device->bus);
     }
+#endif
 
     return (twim->EVENTS_ERROR == 0) && !error;
 }

@@ -27,11 +27,11 @@
 
 #include <string.h>
 
-#define COMMAND_BUFFER_SIZE 300
+#define COMMAND_BUFFER_SIZE 1024
 
 uint8_t fd_control_command_buffer[COMMAND_BUFFER_SIZE];
 
-#define INPUT_BUFFER_SIZE 600
+#define INPUT_BUFFER_SIZE 1024
 
 uint8_t fd_control_input_buffer[INPUT_BUFFER_SIZE];
 uint32_t fd_control_input_buffer_count;
@@ -46,7 +46,7 @@ typedef struct {
 fd_control_input_t fd_control_inputs[INPUTS_SIZE];
 uint32_t fd_control_inputs_count;
 
-#define FD_CONTROL_OUTPUT_BUFFER_SIZE 300
+#define FD_CONTROL_OUTPUT_BUFFER_SIZE 1024
 
 uint8_t fd_control_output_buffer[FD_CONTROL_OUTPUT_BUFFER_SIZE];
 fd_binary_t fd_control_output_binary;

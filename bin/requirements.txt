@@ -1,0 +1,6 @@
+gitpython
+intelhex
+parse
+pycrypto
+pynrfjprog
+pyserial

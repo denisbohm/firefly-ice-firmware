@@ -69,7 +69,14 @@ void fd_i2cm_bus_enable(const fd_i2cm_bus_t *bus) {
     twim->PSEL.SCL = NRF_GPIO_PIN_MAP(bus->scl.port, bus->scl.pin);
     twim->PSEL.SDA = NRF_GPIO_PIN_MAP(bus->sda.port, bus->sda.pin);
 
-    twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K100 << TWIM_FREQUENCY_FREQUENCY_Pos;
+    if (bus->frequency == 400000) {
+        twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K400 << TWIM_FREQUENCY_FREQUENCY_Pos;
+    } else
+    if (bus->frequency == 250000) {
+        twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K250 << TWIM_FREQUENCY_FREQUENCY_Pos;
+    } else {
+        twim->FREQUENCY = TWIM_FREQUENCY_FREQUENCY_K100 << TWIM_FREQUENCY_FREQUENCY_Pos;
+    }
     twim->SHORTS = 0;
 
     twim->ENABLE = TWIM_ENABLE_ENABLE_Enabled << TWIM_ENABLE_ENABLE_Pos;
@@ -159,9 +166,11 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
         }
     }
 
+#ifndef FD_I2CM_DO_NOT_CLEAR_BUS_ON_ERROR
     if (error) {
         fd_i2cm_clear_bus(device->bus);
     }
+#endif
 
     return (twim->EVENTS_ERROR == 0) && !error;
 }

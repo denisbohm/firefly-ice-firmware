@@ -1,5 +1,6 @@
 #include "fd_gpio.h"
 
+#include "fd_log.h"
 #include "fd_nrf5.h"
 
 #include <string.h>
@@ -7,6 +8,70 @@
 static inline
 NRF_GPIO_Type *fd_gpio_get_nrf_gpio(uint32_t port) {
     return (NRF_GPIO_Type *)(NRF_P0_BASE + port * 0x300UL);
+}
+
+#ifdef FD_GPIO_NRF52840_QFN
+const static bool fd_gpio_high_drive[] = {
+    true,  // P0.00
+    true,  // P0.01
+    false, // P0.02
+    false, // P0.03
+    false, // P0.04
+    false, // P0.05
+    false, // P0.06
+    false, // P0.07
+    true,  // P0.08
+    false, // P0.09
+    false, // P0.10
+    false, // P0.11
+    false, // P0.12
+    true,  // P0.13
+    true,  // P0.14
+    true,  // P0.15
+    true,  // P0.16
+    true,  // P0.17
+    true,  // P0.18
+    true,  // P0.19
+    true,  // P0.20
+    true,  // P0.21
+    true,  // P0.22
+    true,  // P0.23
+    true,  // P0.24
+    true,  // P0.25
+    true,  // P0.26
+    true,  // P0.27
+    true,  // P0.28
+    true,  // P0.29
+    true,  // P0.30
+    true,  // P0.31
+
+    true,  // P1.00
+    false, // P1.01
+    false, // P1.02
+    false, // P1.03
+    false, // P1.04
+    false, // P1.05
+    false, // P1.06
+    false, // P1.07
+    true,  // P1.08
+    true,  // P1.09
+    false, // P1.10
+    false, // P1.11
+    false, // P1.12
+    false, // P1.13
+    false, // P1.14
+    false, // P1.15
+};
+#else
+const static bool fd_gpio_high_drive[] = {};
+#endif
+
+static bool fd_gpio_is_high_drive(fd_gpio_t gpio) {
+    int index = gpio.port * 32 + gpio.pin;
+    if (index > sizeof(fd_gpio_high_drive)) {
+        return false;
+    }
+    return fd_gpio_high_drive[index];
 }
 
 static
@@ -41,7 +106,7 @@ void fd_gpio_configure_output(fd_gpio_t gpio) {
         NRF_GPIO_PIN_DIR_OUTPUT,
         NRF_GPIO_PIN_INPUT_DISCONNECT,
         NRF_GPIO_PIN_NOPULL,
-        NRF_GPIO_PIN_S0S1,
+        fd_gpio_is_high_drive(gpio) ? NRF_GPIO_PIN_H0H1 : NRF_GPIO_PIN_S0S1,
         NRF_GPIO_PIN_NOSENSE
     );
 }
@@ -51,7 +116,7 @@ void fd_gpio_configure_output_open_drain(fd_gpio_t gpio) {
         GPIO_PIN_CNF_DIR_Output,
         GPIO_PIN_CNF_INPUT_Disconnect,
         GPIO_PIN_CNF_PULL_Disabled,
-        GPIO_PIN_CNF_DRIVE_S0D1,
+        fd_gpio_is_high_drive(gpio) ? GPIO_PIN_CNF_DRIVE_H0D1 : GPIO_PIN_CNF_DRIVE_S0D1,
         GPIO_PIN_CNF_SENSE_Disabled
     );
 }
@@ -61,7 +126,7 @@ void fd_gpio_configure_output_open_drain_pull_up(fd_gpio_t gpio) {
         GPIO_PIN_CNF_DIR_Output,
         GPIO_PIN_CNF_INPUT_Disconnect,
         GPIO_PIN_CNF_PULL_Pullup,
-        GPIO_PIN_CNF_DRIVE_S0D1,
+        fd_gpio_is_high_drive(gpio) ? GPIO_PIN_CNF_DRIVE_H0D1 : GPIO_PIN_CNF_DRIVE_S0D1,
         GPIO_PIN_CNF_SENSE_Disabled
     );
 }
@@ -71,7 +136,7 @@ void fd_gpio_configure_output_open_source_pull_down(fd_gpio_t gpio) {
         GPIO_PIN_CNF_DIR_Output,
         GPIO_PIN_CNF_INPUT_Disconnect,
         GPIO_PIN_CNF_PULL_Pulldown,
-        GPIO_PIN_CNF_DRIVE_D0S1,
+        fd_gpio_is_high_drive(gpio) ? GPIO_PIN_CNF_DRIVE_D0H1 : GPIO_PIN_CNF_DRIVE_D0S1,
         GPIO_PIN_CNF_SENSE_Disabled
     );
 }
@@ -117,8 +182,71 @@ void fd_gpio_set(fd_gpio_t gpio, bool value) {
 
 bool fd_gpio_get(fd_gpio_t gpio) {
     NRF_GPIO_Type *nrf_gpio = fd_gpio_get_nrf_gpio(gpio.port);
-    return ((nrf_gpio->IN >> gpio.pin) & 1UL) != 0;
+    if (nrf_gpio->DIR & (1 << gpio.pin)) {
+        return ((nrf_gpio->OUT >> gpio.pin) & 1UL) != 0;
+    } else {
+        return ((nrf_gpio->IN >> gpio.pin) & 1UL) != 0;
+    }
 }
+
+#ifdef FD_GPIO_NRFX
+
+#include "nrfx_gpiote.h"
+
+typedef struct {
+    fd_gpio_function_t function;
+    void *context;
+    uint32_t count;
+} fd_gpio_nrf5_callback_t;
+
+volatile fd_gpio_nrf5_callback_t fd_gpio_nrf5_callbacks[64];
+
+void fd_gpio_initialize_implementation(void) {
+    if (nrfx_gpiote_is_init()) {
+        return;
+    }
+    uint32_t err_code = nrfx_gpiote_init();
+    fd_log_assert(err_code == NRF_SUCCESS);
+}
+
+static void fd_gpio_nrfx_gpiote_evt_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
+    volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_callbacks[pin];
+    fd_gpio_t gpio = { .port = pin / 32, .pin = pin & 0x1f };
+    bool pin_state = fd_gpio_get(gpio);
+    callback->function(callback->context, pin_state);
+    ++callback->count;
+}
+
+void fd_gpio_add_callback(fd_gpio_t gpio, fd_gpio_edge_t edge, fd_gpio_function_t function, void *context) {
+    uint32_t pin = gpio.port * 32 + gpio.pin;
+    volatile fd_gpio_nrf5_callback_t *callback = &fd_gpio_nrf5_callbacks[pin];
+    callback->function = function;
+    callback->context = context;
+    callback->count = 0;
+    nrfx_gpiote_in_config_t config = {
+        .hi_accuracy = true,
+        .skip_gpio_setup = false,
+        .is_watcher = false,
+        .pull = NRF_GPIO_PIN_NOPULL,
+    };
+    switch (edge) {
+        case fd_gpio_edge_rising:
+            config.sense = NRF_GPIOTE_POLARITY_LOTOHI;
+            break;
+        case fd_gpio_edge_falling:
+            config.sense = NRF_GPIOTE_POLARITY_HITOLO;
+            break;
+        case fd_gpio_edge_toggle:
+        default:
+            config.sense = NRF_GPIOTE_POLARITY_TOGGLE;
+            break;
+    }
+    uint32_t err_code = nrfx_gpiote_in_init(pin, &config, fd_gpio_nrfx_gpiote_evt_handler);
+    fd_log_assert(err_code == NRF_SUCCESS);
+    nrfx_gpiote_in_event_enable(pin, true);
+}
+
+#else
 
 #ifdef FD_GPIO_NRF5_PORT_EVENTS
 
@@ -299,6 +427,8 @@ void GPIOTE_IRQHandler(void) {
         }
     }
 }
+
+#endif
 
 #endif
 

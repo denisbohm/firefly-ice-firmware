@@ -33,6 +33,7 @@ typedef struct {
 
 typedef struct {
     const fd_i2cm_bus_t *bus;
+    uint32_t channel;
     uint32_t address;
 } fd_i2cm_device_t;
 

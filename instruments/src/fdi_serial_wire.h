@@ -4,6 +4,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+typedef union {
+    struct {
+        uint32_t debug_port_bank_select:4;
+        uint32_t access_port_bank_select:4;
+        uint32_t reserved:16;
+        uint32_t access_port_id:8;
+    } fields;
+    uint32_t value;
+} fdi_serial_wire_debug_port_access_t;
+
 typedef struct {
     uint32_t gpio_power;
     uint32_t gpio_reset;
@@ -16,6 +26,9 @@ typedef struct {
     uint32_t ack_wait_retry_count;
     uint32_t register_retry_count;
     uint32_t half_bit_delay_ns;
+
+    uint32_t target_id;
+    fdi_serial_wire_debug_port_access_t debug_port_access;
 } fdi_serial_wire_t;
 
 #define fdi_serial_wire_count 2

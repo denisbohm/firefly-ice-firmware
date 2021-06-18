@@ -46,6 +46,11 @@ void fdi_serial_wire_debug_reset_debug_port(fdi_serial_wire_t *serial_wire) {
     fdi_serial_wire_shift_out_bytes(serial_wire, bytes, sizeof(bytes));
 }
 
+void fdi_serial_wire_debug_flush(fdi_serial_wire_t *serial_wire) {
+    uint8_t data = 0;
+    fdi_serial_wire_shift_out_bytes(serial_wire, &data, 1);
+}
+
 uint8_t fdi_serial_wire_debug_get_parity_uint8(uint8_t v) {
     return (0x6996 >> ((v ^ (v >> 4)) & 0xf)) & 1;
 }
@@ -225,28 +230,47 @@ bool fdi_serial_wire_debug_write_access_port(
     return fdi_serial_wire_debug_write_port(serial_wire, fdi_serial_wire_debug_port_access, register_offset, value, error);
 }
 
-bool fdi_serial_wire_debug_access_port_bank_select(
-    fdi_serial_wire_t *serial_wire,
-    fdi_serial_wire_debug_port_t access_port,
-    uint8_t register_offset,
-    fdi_serial_wire_debug_error_t *error
-) {
-    uint32_t value = (access_port << 24) | (register_offset & 0xf0);
+void fdi_serial_wire_debug_set_target_id(fdi_serial_wire_t *serial_wire, uint32_t target_id) {
+    serial_wire->target_id = target_id;
+}
+
+void fdi_serial_wire_debug_select_access_port_id(fdi_serial_wire_t *serial_wire, uint8_t access_port_id) {
+    serial_wire->debug_port_access.fields.access_port_id = access_port_id;
+}
+
+void fdi_serial_wire_debug_select_access_port_bank_select(fdi_serial_wire_t *serial_wire, uint8_t access_port_bank_select) {
+    serial_wire->debug_port_access.fields.access_port_bank_select = access_port_bank_select;
+}
+
+void fdi_serial_wire_debug_select_access_port_register(fdi_serial_wire_t *serial_wire, uint8_t access_port_register) {
+    fdi_serial_wire_debug_select_access_port_bank_select(serial_wire, (access_port_register >> 4) & 0xf);
+}
+
+void fdi_serial_wire_debug_select_debug_port_bank_select(fdi_serial_wire_t *serial_wire, uint8_t debug_port_bank_select) {
+    serial_wire->debug_port_access.fields.debug_port_bank_select = debug_port_bank_select;
+}
+
+void fdi_serial_wire_debug_select_debug_port_register(fdi_serial_wire_t *serial_wire, uint8_t debug_port_register) {
+    fdi_serial_wire_debug_select_debug_port_bank_select(serial_wire, (debug_port_register >> 4) & 0xf);
+}
+
+bool fdi_serial_wire_debug_port_select(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
+    uint32_t value = serial_wire->debug_port_access.value;
     return fdi_serial_wire_debug_write_port(serial_wire, fdi_serial_wire_debug_port_debug, SWD_DP_SELECT, value, error);
 }
 
 bool fdi_serial_wire_debug_select_and_read_access_port(
     fdi_serial_wire_t *serial_wire,
-    fdi_serial_wire_debug_port_t access_port,
-    uint8_t register_offset,
+    uint8_t access_port_register,
     uint32_t *value,
     fdi_serial_wire_debug_error_t *error
 ) {
-    if (!fdi_serial_wire_debug_access_port_bank_select(serial_wire, access_port, register_offset, error)) {
+    fdi_serial_wire_debug_select_access_port_register(serial_wire, access_port_register);
+    if (!fdi_serial_wire_debug_port_select(serial_wire, error)) {
         return false;
     }
     uint32_t dummy;
-    if (!fdi_serial_wire_debug_read_port(serial_wire, fdi_serial_wire_debug_port_access, register_offset, &dummy, error)) {
+    if (!fdi_serial_wire_debug_read_port(serial_wire, fdi_serial_wire_debug_port_access, access_port_register, &dummy, error)) {
         return false;
     }
     if (!fdi_serial_wire_debug_read_port(serial_wire, fdi_serial_wire_debug_port_debug, SWD_DP_RDBUFF, value, error)) {
@@ -255,22 +279,17 @@ bool fdi_serial_wire_debug_select_and_read_access_port(
     return true;
 }
 
-void fdi_serial_wire_debug_flush(fdi_serial_wire_t *serial_wire) {
-    uint8_t data = 0;
-    fdi_serial_wire_shift_out_bytes(serial_wire, &data, 1);
-}
-
 bool fdi_serial_wire_debug_select_and_write_access_port(
     fdi_serial_wire_t *serial_wire,
-    fdi_serial_wire_debug_port_t access_port,
-    uint8_t register_offset,
+    uint8_t access_port_register,
     uint32_t value,
     fdi_serial_wire_debug_error_t *error
 ) {
-    if (!fdi_serial_wire_debug_access_port_bank_select(serial_wire, access_port, register_offset, error)) {
+    fdi_serial_wire_debug_select_access_port_register(serial_wire, access_port_register);
+    if (!fdi_serial_wire_debug_port_select(serial_wire, error)) {
         return false;
     }
-    if (!fdi_serial_wire_debug_write_port(serial_wire, fdi_serial_wire_debug_port_access, register_offset, value, error)) {
+    if (!fdi_serial_wire_debug_write_port(serial_wire, fdi_serial_wire_debug_port_access, access_port_register, value, error)) {
         return false;
     }
     fdi_serial_wire_debug_flush(serial_wire);
@@ -323,10 +342,11 @@ bool fdi_serial_wire_debug_before_memory_transfer(
         return fdi_serial_wire_debug_error_return(error, fdi_serial_wire_debug_error_invalid, length);
     }
 
-    if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_TAR, address, error)) {
+    if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_AP_TAR, address, error)) {
         return false;
     }
-    if (!fdi_serial_wire_debug_access_port_bank_select(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_DRW, error)) {
+    fdi_serial_wire_debug_select_access_port_register(serial_wire, SWD_AP_DRW);
+    if (!fdi_serial_wire_debug_port_select(serial_wire, error)) {
         return false;
     }
     return fdi_serial_wire_debug_set_overrun_detection(serial_wire, true, error);
@@ -576,11 +596,11 @@ bool fdi_serial_wire_debug_initialize_debug_port(
 
     // cache values needed for various higher level routines (such as reading and writing to memory in bulk)
     uint32_t dpid;
-    if (!fdi_serial_wire_debug_read_debug_port(serial_wire, SWD_DP_IDCODE, &dpid, error)) {
+    if (!fdi_serial_wire_debug_read_debug_port(serial_wire, SWD_DP_DPIDR, &dpid, error)) {
         return false;
     }
     uint32_t apid;
-    if (!fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_IDR, &apid, error)) {
+    if (!fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_AP_IDR, &apid, error)) {
         return false;
     }
 
@@ -593,14 +613,14 @@ bool fdi_serial_wire_debug_read_memory_uint32(
     uint32_t *value,
     fdi_serial_wire_debug_error_t *error
 ) {
-    if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_TAR, address, error)) {
+    if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_AP_TAR, address, error)) {
         return false;
     }
     uint32_t tar;
-    if (!fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_TAR, &tar, error)) {
+    if (!fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_AP_TAR, &tar, error)) {
         return false;
     }
-    return fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_DRW, value, error);
+    return fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_AP_DRW, value, error);
 }
 
 bool fdi_serial_wire_debug_write_memory_uint32(
@@ -609,10 +629,10 @@ bool fdi_serial_wire_debug_write_memory_uint32(
     uint32_t value,
     fdi_serial_wire_debug_error_t *error
 ) {
-    if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_TAR, address, error)) {
+    if (!fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_AP_TAR, address, error)) {
         return false;
     }
-    return fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_DP_SELECT_APSEL_APB_AP, SWD_AP_DRW, value, error);
+    return fdi_serial_wire_debug_select_and_write_access_port(serial_wire, SWD_AP_DRW, value, error);
 }
 
 bool fdi_serial_wire_debug_wait_for_register_ready(
@@ -697,7 +717,6 @@ bool fdi_serial_wire_debug_run(fdi_serial_wire_t *serial_wire, fdi_serial_wire_d
 bool fdi_serial_wire_debug_initialize_access_port(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
   return fdi_serial_wire_debug_select_and_write_access_port(
       serial_wire,
-      SWD_DP_SELECT_APSEL_APB_AP,
       SWD_AP_CSW,
       SWD_AP_CSW_DBGSWENABLE | SWD_AP_CSW_MASTER_DEBUG | SWD_AP_CSW_HPROT | SWD_AP_CSW_INCREMENT_SINGLE | SWD_AP_CSW_32BIT,
       error);

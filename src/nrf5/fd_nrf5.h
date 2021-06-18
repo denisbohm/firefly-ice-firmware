@@ -18,13 +18,13 @@
 #include "nrf_mbr.h"
 #endif
 
-#include "nrf_crypto.h"
 #include "nrf_delay.h"
 #include "nrf_gpio.h"
 #include "nrf_nvmc.h"
 #include "nrf_temp.h"
 
 #ifndef FD_NRF5_NO_CRYPTO
+#include "nrf_crypto.h"
 #include "crys_hash.h"
 #include "ssi_aes.h"
 #include "sns_silib.h"

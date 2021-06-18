@@ -27,6 +27,9 @@ static const uint64_t apiTypeWriteFromStorage = 12;
 static const uint64_t apiTypeCompareToStorage = 13;
 static const uint64_t apiTypeTransfer = 14;
 static const uint64_t apiTypeSetHalfBitDelay = 15;
+static const uint64_t apiTypeSetTargetId = 16;
+static const uint64_t apiTypeSetAccessPortId = 17;
+static const uint64_t apiTypeConnect = 18;
 
 static const uint8_t outputIndicator = 0;
 static const uint8_t outputReset = 1;
@@ -399,6 +402,67 @@ void fdi_serial_wire_instrument_api_set_half_bit_delay(uint64_t identifier, uint
     instrument->serial_wire->half_bit_delay_ns = fd_binary_get_uint32(binary);
 }
 
+void fdi_serial_wire_instrument_api_set_target_id(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    instrument->serial_wire->target_id = fd_binary_get_uint32(binary);
+}
+
+void fdi_serial_wire_instrument_api_set_access_port_id(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    instrument->serial_wire->debug_port_access.fields.access_port_id = fd_binary_get_uint8(binary);
+}
+
+void fdi_serial_wire_instrument_api_connect(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
+    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
+    if (instrument == 0) {
+        return;
+    }
+
+    fdi_serial_wire_t *serial_wire = instrument->serial_wire;
+    fdi_serial_wire_debug_reset_debug_port(serial_wire);
+
+    fdi_serial_wire_debug_error_t error;
+    if (serial_wire->target_id != 0) {
+        uint32_t ack_wait_retry_count = serial_wire->ack_wait_retry_count;
+        serial_wire->ack_wait_retry_count = 1;
+        fdi_serial_wire_debug_write_debug_port(serial_wire, SWD_DP_TARGETSEL, serial_wire->target_id, &error);
+        serial_wire->ack_wait_retry_count = ack_wait_retry_count;
+    }
+
+    uint32_t dpid = 0;
+    bool success = fdi_serial_wire_debug_read_debug_port(serial_wire, SWD_DP_DPIDR, &dpid, &error);
+
+    if (success) {
+        success = fdi_serial_wire_debug_initialize_debug_port(serial_wire, &error);
+    }
+
+    if (success) {
+        success = fdi_serial_wire_debug_initialize_access_port(serial_wire, &error);
+    }
+
+    if (success) {
+        success = fdi_serial_wire_debug_halt(serial_wire, &error);
+    }
+
+    uint8_t response_data[32];
+    fd_binary_t response;
+    fd_binary_initialize(&response, response_data, sizeof(response_data));
+    fd_binary_put_varuint(&response, success ? 0 : error.code);
+    fd_binary_put_uint32(&response, dpid);
+    if (!fdi_api_send(instrument->super.identifier, apiTypeConnect, response_data, response.put_index)) {
+        fd_log_assert_fail("can't send");
+    }
+}
+
+
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {
         fdi_serial_wire_instrument_t *instrument = &fdi_serial_wire_instruments[i];
@@ -423,5 +487,8 @@ void fdi_serial_wire_instrument_initialize(void) {
         fdi_api_register(identifier, apiTypeCompareToStorage, fdi_serial_wire_instrument_api_compare_memory_to_storage);
         fdi_api_register(identifier, apiTypeTransfer, fdi_serial_wire_instrument_api_transfer);
         fdi_api_register(identifier, apiTypeSetHalfBitDelay, fdi_serial_wire_instrument_api_set_half_bit_delay);
+        fdi_api_register(identifier, apiTypeSetTargetId, fdi_serial_wire_instrument_api_set_target_id);
+        fdi_api_register(identifier, apiTypeSetAccessPortId, fdi_serial_wire_instrument_api_set_access_port_id);
+        fdi_api_register(identifier, apiTypeConnect, fdi_serial_wire_instrument_api_connect);
     }
 }

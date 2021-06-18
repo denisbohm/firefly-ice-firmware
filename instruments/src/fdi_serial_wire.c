@@ -111,6 +111,9 @@ void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire) {
     serial_wire->ack_wait_retry_count = 3;
     serial_wire->register_retry_count = 3;
     serial_wire->half_bit_delay_ns = 0;
+
+    serial_wire->target_id = 0;
+    serial_wire->debug_port_access.value = 0;
 }
 
 void fdi_serial_wire_initialize(void) {
@@ -126,6 +129,8 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->ack_wait_retry_count = 3;
         serial_wire->register_retry_count = 3;
         serial_wire->half_bit_delay_ns = 0;
+        serial_wire->target_id = 0;
+        serial_wire->debug_port_access.value = 0;
     }
     {
         fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
@@ -139,5 +144,7 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->ack_wait_retry_count = 3;
         serial_wire->register_retry_count = 3;
         serial_wire->half_bit_delay_ns = 0;
+        serial_wire->target_id = 0;
+        serial_wire->debug_port_access.value = 0;
     }
 }

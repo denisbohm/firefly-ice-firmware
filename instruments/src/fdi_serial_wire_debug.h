@@ -17,7 +17,7 @@ typedef struct {
 
 bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail);
 
-#define SWD_DP_DPIDR    0x00
+#define SWD_DP_DPIDR     0x00
 #define SWD_DP_ABORT     0x00
 #define SWD_DP_CTRL      0x04
 #define SWD_DP_STAT      0x04
@@ -305,6 +305,12 @@ bool fdi_serial_wire_debug_step(
 
 bool fdi_serial_wire_debug_run(
     fdi_serial_wire_t *serial_wire,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_connect(
+    fdi_serial_wire_t *serial_wire,
+    uint32_t *dpid,
     fdi_serial_wire_debug_error_t *error
 );
 

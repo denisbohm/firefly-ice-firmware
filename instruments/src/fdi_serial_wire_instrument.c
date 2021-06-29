@@ -315,6 +315,8 @@ void fdi_serial_wire_instrument_api_compare_memory_to_storage(uint64_t identifie
 #define FDSerialWireDebugTransferTypeWriteRegister 1
 #define FDSerialWireDebugTransferTypeReadMemory 2
 #define FDSerialWireDebugTransferTypeWriteMemory 3
+#define FDSerialWireDebugTransferTypeReadPort 4
+#define FDSerialWireDebugTransferTypeWritePort 5
 
 void fdi_serial_wire_instrument_api_transfer(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
@@ -337,6 +339,23 @@ void fdi_serial_wire_instrument_api_transfer(uint64_t identifier, uint64_t type 
     for (uint32_t i = 0; i < count; ++i) {
         uint32_t type = (uint32_t)fd_binary_get_varuint(binary);
         switch (type) {
+        case FDSerialWireDebugTransferTypeReadPort: {
+            ++response_count;
+            fd_binary_put_varuint(&response, type);
+            fdi_serial_wire_debug_port_t port = fd_binary_get_uint8(binary);
+            fd_binary_put_uint8(&response, port);
+            uint8_t register_offset = fd_binary_get_uint8(binary);
+            fd_binary_put_uint8(&response, register_offset);
+            uint32_t value;
+            success = fdi_serial_wire_debug_read_port(instrument->serial_wire, port, register_offset, &value, &error);
+            fd_binary_put_uint32(&response, value);
+        } break;
+        case FDSerialWireDebugTransferTypeWritePort: {
+            fdi_serial_wire_debug_port_t port = fd_binary_get_uint8(binary);
+            uint8_t register_offset = fd_binary_get_uint8(binary);
+            uint32_t value = fd_binary_get_uint32(binary);
+            success = fdi_serial_wire_debug_write_port(instrument->serial_wire, port, register_offset, value, &error);
+        } break;
         case FDSerialWireDebugTransferTypeReadRegister: {
             ++response_count;
             fd_binary_put_varuint(&response, type);
@@ -426,31 +445,10 @@ void fdi_serial_wire_instrument_api_connect(uint64_t identifier, uint64_t type _
         return;
     }
 
-    fdi_serial_wire_t *serial_wire = instrument->serial_wire;
-    fdi_serial_wire_debug_reset_debug_port(serial_wire);
-
     fdi_serial_wire_debug_error_t error;
-    if (serial_wire->target_id != 0) {
-        uint32_t ack_wait_retry_count = serial_wire->ack_wait_retry_count;
-        serial_wire->ack_wait_retry_count = 1;
-        fdi_serial_wire_debug_write_debug_port(serial_wire, SWD_DP_TARGETSEL, serial_wire->target_id, &error);
-        serial_wire->ack_wait_retry_count = ack_wait_retry_count;
-    }
-
+    memset(&error, 0, sizeof(error));
     uint32_t dpid = 0;
-    bool success = fdi_serial_wire_debug_read_debug_port(serial_wire, SWD_DP_DPIDR, &dpid, &error);
-
-    if (success) {
-        success = fdi_serial_wire_debug_initialize_debug_port(serial_wire, &error);
-    }
-
-    if (success) {
-        success = fdi_serial_wire_debug_initialize_access_port(serial_wire, &error);
-    }
-
-    if (success) {
-        success = fdi_serial_wire_debug_halt(serial_wire, &error);
-    }
+    bool success = fdi_serial_wire_debug_connect(instrument->serial_wire, &dpid, &error);
 
     uint8_t response_data[32];
     fd_binary_t response;

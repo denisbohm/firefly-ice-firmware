@@ -3,6 +3,7 @@
 #include "fd_log.h"
 
 #include <stddef.h>
+#include <string.h>
 
 bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, uint64_t code, uint64_t detail) {
     if (error) {
@@ -607,6 +608,14 @@ bool fdi_serial_wire_debug_initialize_debug_port(
     return true;
 }
 
+bool fdi_serial_wire_debug_initialize_access_port(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
+  return fdi_serial_wire_debug_select_and_write_access_port(
+      serial_wire,
+      SWD_AP_CSW,
+      SWD_AP_CSW_DBGSWENABLE | SWD_AP_CSW_MASTER_DEBUG | SWD_AP_CSW_HPROT | SWD_AP_CSW_INCREMENT_SINGLE | SWD_AP_CSW_32BIT,
+      error);
+}
+
 bool fdi_serial_wire_debug_read_memory_uint32(
     fdi_serial_wire_t *serial_wire,
     uint32_t address,
@@ -714,10 +723,35 @@ bool fdi_serial_wire_debug_run(fdi_serial_wire_t *serial_wire, fdi_serial_wire_d
     return fdi_serial_wire_debug_write_DHCSR(serial_wire, 0, error);
 }
 
-bool fdi_serial_wire_debug_initialize_access_port(fdi_serial_wire_t *serial_wire, fdi_serial_wire_debug_error_t *error) {
-  return fdi_serial_wire_debug_select_and_write_access_port(
-      serial_wire,
-      SWD_AP_CSW,
-      SWD_AP_CSW_DBGSWENABLE | SWD_AP_CSW_MASTER_DEBUG | SWD_AP_CSW_HPROT | SWD_AP_CSW_INCREMENT_SINGLE | SWD_AP_CSW_32BIT,
-      error);
+bool fdi_serial_wire_debug_connect(
+    fdi_serial_wire_t *serial_wire,
+    uint32_t *dpid,
+    fdi_serial_wire_debug_error_t *error
+) {
+    fdi_serial_wire_debug_reset_debug_port(serial_wire);
+
+    if (serial_wire->target_id != 0) {
+        fdi_serial_wire_debug_error_t error;
+        memset(&error, 0, sizeof(error));
+        uint32_t ack_wait_retry_count = serial_wire->ack_wait_retry_count;
+        serial_wire->ack_wait_retry_count = 1;
+        fdi_serial_wire_debug_write_debug_port(serial_wire, SWD_DP_TARGETSEL, serial_wire->target_id, &error);
+        serial_wire->ack_wait_retry_count = ack_wait_retry_count;
+    }
+
+    bool success = fdi_serial_wire_debug_read_debug_port(serial_wire, SWD_DP_DPIDR, dpid, error);
+
+    if (success) {
+        success = fdi_serial_wire_debug_initialize_debug_port(serial_wire, error);
+    }
+
+    if (success) {
+        success = fdi_serial_wire_debug_initialize_access_port(serial_wire, error);
+    }
+
+    if (success) {
+        success = fdi_serial_wire_debug_halt(serial_wire, error);
+    }
+
+    return success;
 }

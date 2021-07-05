@@ -25,7 +25,7 @@
       arm_target_loader_default_loader="Flash"
       arm_target_restrict_memory_accesses="Yes"
       c_only_additional_options="-Wall;-Wextra;-Wstrict-prototypes;-Wno-unused-function;-Wdouble-promotion"
-      c_preprocessor_definitions="STM32F411xE;USE_STDPERIPH_DRIVER;USE_USB_OTG_FS"
+      c_preprocessor_definitions="FDI_INSTRUMENT_ALL_IN_ONE;STM32F411xE;USE_STDPERIPH_DRIVER;USE_USB_OTG_FS"
       c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32f4;$(ProjectDir)/../src;STM32F4-Discovery_FW_V1.1.0/Libraries/CMSIS/Include;STM32F4-Discovery_FW_V1.1.0/Libraries/CMSIS/ST/STM32F4xx/Include;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32_USB_Device_Library/Core/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32_USB_Device_Library/Class/hid/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32F4xx_StdPeriph_Driver/inc;STM32F4-Discovery_FW_V1.1.0/Libraries/STM32_USB_OTG_Driver/inc;$(TargetsDir)/not/STM32/include;$(PackagesDir)/not/CMSIS_4/CMSIS/Include"
       debug_register_definition_file="$(TargetsDir)/STM32/STM32F411xx_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/STM32/STM32F411RE_MemoryMap.xml"
@@ -259,6 +259,7 @@
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
       arm_target_trace_interface_type="None"
+      c_preprocessor_definitions="FDI_INSTRUMENT_SERIAL_WIRE"
       c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32_cube;$(ProjectDir)/../src;$(TargetsDir)/STM32/include;$(ProjectDir)/external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc"
       debug_register_definition_file="$(TargetsDir)/STM32/STM32L4x6_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/STM32/STM32L486RG_MemoryMap.xml"
@@ -292,20 +293,6 @@
       gcc_debugging_level="None"
       gcc_optimization_level="Level 1" />
     <folder Name="Source Files">
-      <file file_name="src/fdi_api.c" />
-      <file file_name="src/fdi_api.h" />
-      <file file_name="src/fdi_clock.h" />
-      <file file_name="src/fdi_delay.c" />
-      <file file_name="src/fdi_delay.h" />
-      <file file_name="src/fdi_gpio.h" />
-      <file file_name="src/fdi_i2c.h" />
-      <file file_name="src/fdi_instrument.c" />
-      <file file_name="src/fdi_instrument.h" />
-      <file file_name="src/fdi_interrupt.h" />
-      <file file_name="src/fdi_relay_instrument.c" />
-      <file file_name="src/fdi_relay_instrument.h" />
-      <file file_name="src/fdi_relay.c" />
-      <file file_name="src/fdi_relay.h" />
       <file file_name="src/fdi_serial_wire_debug.c" />
       <file file_name="src/fdi_serial_wire_debug.h" />
       <file file_name="src/fdi_serial_wire_instrument.c" />
@@ -321,6 +308,14 @@
         <file file_name="../src/fd_sha.h" />
         <file file_name="../src/sha.h" />
         <file file_name="../src/sha1.c" />
+        <file file_name="../src/fd_detour.c" />
+        <file file_name="../src/fd_detour.h" />
+        <file file_name="../src/fd_i2cm_bitbang.c" />
+        <file file_name="../src/fd_i2cm.c" />
+        <file file_name="../src/fd_i2cm.h" />
+        <file file_name="../src/fd_delay.c" />
+        <file file_name="../src/fd_delay.h" />
+        <file file_name="../src/fd_gpio.h" />
       </folder>
       <folder Name="stm32_cube">
         <file file_name="src/stm32_cube/fdi_gpio.c" />
@@ -333,6 +328,7 @@
         <file file_name="src/stm32_cube/system_stm32l4xx.c" />
         <file file_name="src/stm32_cube/usbd_conf.c" />
         <file file_name="src/stm32_cube/usbd_desc.c" />
+        <file file_name="src/stm32_cube/fd_gpio.c" />
       </folder>
       <folder Name="STM32 Cube">
         <folder Name="HAL_Driver">
@@ -383,10 +379,197 @@
       <file file_name="src/fdi_s25fl116k.h" />
       <file file_name="src/fdi_storage_instrument.c" />
       <file file_name="src/fdi_storage_instrument.h" />
-      <file file_name="src/fdi_usb.h" />
       <file file_name="src/fdi_spi.c" />
       <file file_name="src/fdi_spi.h" />
       <file file_name="src/fdi_serial_wire_instrument_main.c" />
+      <folder Name="firefly instruments firmware">
+        <file file_name="src/fdi_api.h" />
+        <file file_name="src/fdi_api.c" />
+        <file file_name="src/fdi_clock.h" />
+        <file file_name="src/fdi_delay.c" />
+        <file file_name="src/fdi_delay.h" />
+        <file file_name="src/fdi_gpio.h" />
+        <file file_name="src/fdi_i2c.h" />
+        <file file_name="src/fdi_instrument.c" />
+        <file file_name="src/fdi_instrument.h" />
+        <file file_name="src/fdi_interrupt.h" />
+        <file file_name="src/fdi_relay_instrument.c" />
+        <file file_name="src/fdi_relay_instrument.h" />
+        <file file_name="src/fdi_relay.c" />
+        <file file_name="src/fdi_relay.h" />
+        <file file_name="src/fdi_usb.h" />
+      </folder>
+      <file file_name="src/fdi_apic.c" />
+      <file file_name="src/fdi_apic.h" />
+    </folder>
+  </project>
+  <project Name="input_output_instrument">
+    <configuration
+      CMSIS_CORE="Yes"
+      Name="Common"
+      Placement="Flash"
+      Target="STM32L486RG"
+      arm_architecture="v7EM"
+      arm_core_type="Cortex-M4"
+      arm_fp_abi="Soft"
+      arm_fpu_type="FPv4-SP-D16"
+      arm_linker_heap_size="0"
+      arm_linker_jtag_pad_pre_dr="1"
+      arm_linker_jtag_pad_pre_ir="5"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_simulator_memory_simulation_filename="$(TargetsDir)/STM32/STM32SimulatorMemory$(HostDLL)"
+      arm_simulator_memory_simulation_parameter="STM32L486RG;0x100000;0x20000"
+      arm_target_loader_applicable_loaders="Flash"
+      arm_target_loader_default_loader="Flash"
+      arm_target_trace_interface_type="None"
+      c_preprocessor_definitions="FDI_INSTRUMENT_INPUT_OUTPUT"
+      c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32_cube;$(ProjectDir)/../src;$(TargetsDir)/STM32/include;$(ProjectDir)/external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc"
+      debug_register_definition_file="$(TargetsDir)/STM32/STM32L4x6_Peripherals.xml"
+      linker_memory_map_file="$(TargetsDir)/STM32/STM32L486RG_MemoryMap.xml"
+      linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
+      macros="DeviceVectorsFile=STM32L486xx.vec"
+      project_directory=""
+      project_type="Executable"
+      property_groups_file_path="$(TargetsDir)/STM32/propertyGroups.xml"
+      target_get_partname_script="GetPartName()"
+      target_match_partname_script="MatchPartName(&quot;$(Target)&quot;)"
+      target_script_file="$(TargetsDir)/STM32/STM32_Target.js"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <configuration Name="RAM" target_reset_script="Reset()" />
+    <configuration
+      Name="Flash"
+      arm_target_flash_loader_file_path="$(LOADER:$(TargetsDir)/STM32/Release/STM32L4_Loader_rpc.elf)"
+      arm_target_loader_can_erase_all="Yes"
+      arm_target_loader_can_lock_all="No"
+      arm_target_loader_can_lock_range="No"
+      arm_target_loader_can_unlock_all="No"
+      arm_target_loader_can_unlock_range="No"
+      target_reset_script="FLASHReset()" />
+    <folder Name="System Files">
+      <file file_name="$(StudioDir)/source/thumb_crt0.s" />
+      <file file_name="$(TargetsDir)/STM32/STM32_Startup.s" />
+      <file file_name="$(TargetsDir)/STM32/$(DeviceVectorsFile)" />
+    </folder>
+    <configuration
+      Name="Release"
+      c_preprocessor_definitions="NDEBUG"
+      gcc_debugging_level="None"
+      gcc_optimization_level="Level 1" />
+    <folder Name="Source Files">
+      <folder Name="firefly ice firmware">
+        <file file_name="../src/fd_binary.c" />
+        <file file_name="../src/fd_binary.h" />
+        <file file_name="../src/fd_log.h" />
+        <file file_name="../src/fd_log_null.c" />
+        <file file_name="../src/fd_sha.c" />
+        <file file_name="../src/fd_sha.h" />
+        <file file_name="../src/sha.h" />
+        <file file_name="../src/sha1.c" />
+        <file file_name="../src/fd_gpio.h" />
+        <file file_name="../src/fd_delay.h" />
+        <file file_name="../src/fd_detour.c" />
+        <file file_name="../src/fd_detour.h" />
+      </folder>
+      <folder Name="STM32 Cube">
+        <folder Name="HAL_Driver">
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_gpio.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_gpio_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_gpio.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_flash_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_flash.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_timebase_tim_template.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_tim.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_cortex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pcd_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pcd.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pcd_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pcd.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_usb.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_ll_usb.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_ll_adc.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_adc.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_i2c_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_i2c.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dma_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dma.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h" />
+        </folder>
+        <folder Name="USB_Device_Library">
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc/usbd_hid.h" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_core.h" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h" />
+          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c" />
+        </folder>
+      </folder>
+      <folder Name="stm32_cube">
+        <file file_name="src/stm32_cube/fdi_gpio.c" />
+        <file file_name="src/stm32_cube/stm32l4xx_hal_conf.h" />
+        <file file_name="src/stm32_cube/fdi_stm32.h" />
+        <file file_name="src/stm32_cube/stm32_assert.h" />
+        <file file_name="src/stm32_cube/fdi_clock.c" />
+        <file file_name="src/stm32_cube/fdi_interrupt.c" />
+        <file file_name="src/stm32_cube/fdi_usb.c" />
+        <file file_name="src/stm32_cube/system_stm32l4xx.c" />
+        <file file_name="src/stm32_cube/usbd_conf.c" />
+        <file file_name="src/stm32_cube/usbd_desc.c" />
+        <file file_name="src/stm32_cube/fdi_adc.c">
+          <configuration
+            Name="Common"
+            c_preprocessor_definitions="FDI_ADC_CONVERT_CONTINUOUS_UNSUPPORTED" />
+        </file>
+        <file file_name="src/stm32_cube/fdi_i2cs.c" />
+      </folder>
+      <folder Name="firefly instruments firmware">
+        <file file_name="src/fdi_api.h" />
+        <file file_name="src/fdi_api.c" />
+        <file file_name="src/fdi_clock.h" />
+        <file file_name="src/fdi_delay.c" />
+        <file file_name="src/fdi_delay.h" />
+        <file file_name="src/fdi_gpio.h" />
+        <file file_name="src/fdi_instrument.c" />
+        <file file_name="src/fdi_instrument.h" />
+        <file file_name="src/fdi_interrupt.h" />
+        <file file_name="src/fdi_relay_instrument.c" />
+        <file file_name="src/fdi_relay_instrument.h" />
+        <file file_name="src/fdi_relay.c" />
+        <file file_name="src/fdi_relay.h" />
+        <file file_name="src/fdi_i2cs.h" />
+      </folder>
+      <file file_name="src/fdi_input_output_instrument_main.c" />
+      <file file_name="src/fdi_voltage_instrument.c" />
+      <file file_name="src/fdi_voltage_instrument.h" />
+      <file file_name="src/fdi_adc.h" />
+      <file file_name="src/fdi_gpio_instrument.c" />
+      <file file_name="src/fdi_gpio_instrument.h" />
     </folder>
   </project>
 </solution>

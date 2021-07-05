@@ -36,6 +36,15 @@ void fdi_instrument_discover_instruments(uint64_t identifier __attribute__((unus
         fd_binary_put_varuint(&binary, instrument->identifier);
     }
 
+    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
+        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+        for (uint32_t j = 0; j < apic->instrument_count; ++j) {
+            fdi_apic_instrument_t *instrument = &apic->instruments[j];
+            fd_binary_put_string(&binary, instrument->category);
+            fd_binary_put_varuint(&binary, instrument->identifier);
+        }
+    }
+
     if (!fdi_api_send(apiIdentifierInstrumentManager, apiTypeDiscoverInstruments, binary.buffer, binary.put_index)) {
         fd_log_assert_fail("can't send");
     }
@@ -47,6 +56,11 @@ void fdi_instrument_reset_instruments(uint64_t identifier __attribute__((unused)
         if (instrument->reset) {
             instrument->reset(instrument->identifier, 0, 0);
         }
+    }
+
+    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
+        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+        fdi_apic_reset_instruments(apic);
     }
 }
 

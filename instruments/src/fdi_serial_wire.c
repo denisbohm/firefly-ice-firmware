@@ -90,19 +90,19 @@ void fdi_serial_wire_shift_in_bytes(fdi_serial_wire_t *serial_wire, uint8_t *dat
 }
 
 void fdi_serial_wire_set_direction_to_read(fdi_serial_wire_t *serial_wire) {
-    fdi_gpio_set_mode_in(serial_wire->gpio_data);
+    fdi_gpio_set_mode_input(serial_wire->gpio_data);
     fdi_gpio_off(serial_wire->gpio_direction);
 }
 
 void fdi_serial_wire_set_direction_to_write(fdi_serial_wire_t *serial_wire) {
     fdi_gpio_on(serial_wire->gpio_data);
     fdi_gpio_on(serial_wire->gpio_direction);
-    fdi_gpio_set_mode_out(serial_wire->gpio_data);
+    fdi_gpio_set_mode_output(serial_wire->gpio_data);
 }
 
 void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire) {
     fdi_gpio_off(serial_wire->gpio_power);
-    fdi_gpio_set_mode_in(serial_wire->gpio_data);
+    fdi_gpio_set_mode_input(serial_wire->gpio_data);
     fdi_gpio_off(serial_wire->gpio_direction);
     fdi_gpio_on(serial_wire->gpio_clock);
     fdi_gpio_off(serial_wire->gpio_reset);

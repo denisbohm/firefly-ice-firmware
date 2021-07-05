@@ -1,14 +1,15 @@
 #include "fdi_api.h"
 
 #include "fdi_interrupt.h"
-#include "fdi_usb.h"
 
 #include "fd_binary.h"
 #include "fd_log.h"
 
 #include <string.h>
 
-#define fdi_api_usb_send_limit 64
+fdi_api_configuration_t fdi_api_configuration;
+
+#define fdi_api_send_limit 64
 
 typedef struct {
     uint32_t ordinal;
@@ -62,11 +63,11 @@ fdi_api_function_t fdi_api_lookup(uint64_t identifier, uint64_t type) {
 }
 
 bool fdi_api_can_transmit(void) {
-    return fdi_usb_can_send();
+    return fdi_api_configuration.can_transmit();
 }
 
 void fdi_api_transmit(uint8_t *data, uint32_t length) {
-    fdi_usb_send(data, length);
+    fdi_api_configuration.transmit(data, length);
 }
 
 int fdi_api_transmit_count = 0;
@@ -106,9 +107,20 @@ void fdi_api_dispatch(uint64_t identifier, uint64_t type, fd_binary_t *binary) {
     if (function) {
         function(identifier, type, binary);
         fd_log_assert(binary->flags == 0);
-    } else {
-        fd_log_assert_fail("unknown function");
+        return;
     }
+
+    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
+        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+        if ((apic->identifier_min <= identifier) && (identifier <= apic->identifier_max)) {
+            uint8_t *content = &binary->buffer[binary->get_index];
+            size_t count = binary->size - binary->get_index;
+            fdi_apic_write(apic, identifier, type, content, count);
+            return;
+        }
+    }
+
+    fd_log_assert_fail("unknown api");
 }
 
 // remove data from rx buffer
@@ -152,6 +164,35 @@ bool fdi_api_process_rx(void) {
 
 void fdi_api_process(void) {
     while (fdi_api_process_tx());
+
+    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
+        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+        fdi_apic_response_t raw;
+        if (!fdi_apic_rx(apic, &raw)) {
+            continue;
+        }
+        fd_binary_t binary;
+        fd_binary_initialize(&binary, (uint8_t *)raw.data, raw.count);
+        uint64_t identifier = fd_binary_get_varuint(&binary);
+        uint64_t type = fd_binary_get_varuint(&binary);
+        if (identifier == 0) {
+            if (type == 0) {
+                // no response data pending
+            } else
+            if (type == 1 /* discover instruments */) {
+                fdi_apic_discover_instruments_response(apic, raw.data, raw.count);
+            } else {
+                fd_log_assert_fail("unexpected instrument manager response");
+            }
+            continue;
+        }
+        uint8_t *data = &binary.buffer[binary.get_index];
+        uint32_t count = binary.size - binary.get_index;
+        if (identifier == 0)
+        fdi_api_send(identifier, type, data, count);
+        while (fdi_api_process_tx());
+    }
+
     while (fdi_api_process_rx());
 }
 
@@ -181,7 +222,7 @@ bool fdi_api_send(uint64_t identifier, uint64_t type, uint8_t *data, uint32_t le
             fd_binary_put_varuint(&binary, type);
             fd_binary_put_varuint(&binary, length);
         }
-        uint32_t available = 1 + fdi_api_usb_send_limit - binary.put_index;
+        uint32_t available = 1 + fdi_api_send_limit - binary.put_index;
         uint32_t amount = data_remaining;
         if (amount > available) {
             amount = available;
@@ -255,7 +296,9 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
     }
 }
 
-void fdi_api_initialize(void) {
+void fdi_api_initialize(fdi_api_configuration_t configuration) {
+    fdi_api_configuration = configuration;
+
     fdi_api_entry_count = 0;
 
     fdi_api_tx_index = 0;
@@ -267,9 +310,4 @@ void fdi_api_initialize(void) {
     fdi_api_can_transmit_handler = fdi_api_can_transmit;
     fdi_api_transmit_handler = fdi_api_transmit;
     fdi_api_dispatch_handler = fdi_api_dispatch;
-}
-
-void fdi_api_initialize_usb(void) {
-    fdi_usb_set_data_callback(fdi_api_rx_callback);
-    fdi_usb_set_tx_ready_callback(fdi_api_tx_callback);
 }

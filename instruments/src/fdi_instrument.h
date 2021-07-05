@@ -3,8 +3,9 @@
 
 #include "fd_binary.h"
 
-#include "fdi_gpio.h"
+#include "fdi_apic.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct fdi_instrument_s {

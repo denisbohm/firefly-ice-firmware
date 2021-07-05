@@ -10,7 +10,41 @@
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeSet = 1;
 
-#define fdi_relay_instrument_count 9
+uint32_t fdi_relay_instrument_controls[] = {
+
+#ifdef FDI_INSTRUMENT_INPUT_OUTPUT
+    FDI_RELAY_IOA0,
+    FDI_RELAY_IOA1,
+    FDI_RELAY_IOA2,
+    FDI_RELAY_IOA3,
+    FDI_RELAY_IOA4,
+    FDI_RELAY_IOA5,
+    FDI_RELAY_IOA6,
+    FDI_RELAY_IOA7,
+    FDI_RELAY_IOR0,
+    FDI_RELAY_IOR1,
+    FDI_RELAY_IOR2,
+    FDI_RELAY_IOR3,
+#endif
+
+#ifdef FDI_INSTRUMENT_SERIAL_WIRE
+#endif
+
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
+    FDI_RELAY_ATE_BUTTON_EN,
+    FDI_RELAY_ATE_USB_5V_EN,
+    FDI_RELAY_ATE_USB_D_EN,
+    FDI_RELAY_ATE_MCU_VCC_SENSE,
+    FDI_RELAY_ATE_BATTERY_SENSE,
+    FDI_RELAY_ATE_FILL_EN,
+    FDI_RELAY_ATE_DRAIN_EN,
+    FDI_RELAY_ATE_BAT_CAP_EN,
+    FDI_RELAY_ATE_BAT_ADJ_EN,
+#endif
+
+};
+
+#define fdi_relay_instrument_count (sizeof(fdi_relay_instrument_controls) / sizeof(fdi_relay_instrument_controls[0]))
 fdi_relay_instrument_t fdi_relay_instruments[fdi_relay_instrument_count];
 
 uint32_t fdi_relay_instrument_get_count(void) {
@@ -59,23 +93,11 @@ void fdi_relay_instrument_api_set(uint64_t identifier, uint64_t type __attribute
 }
 
 void fdi_relay_instrument_initialize(void) {
-    uint32_t controls[] = {
-        FDI_RELAY_ATE_BUTTON_EN,
-        FDI_RELAY_ATE_USB_5V_EN,
-        FDI_RELAY_ATE_USB_D_EN,
-        FDI_RELAY_ATE_MCU_VCC_SENSE,
-        FDI_RELAY_ATE_BATTERY_SENSE,
-        FDI_RELAY_ATE_FILL_EN,
-        FDI_RELAY_ATE_DRAIN_EN,
-        FDI_RELAY_ATE_BAT_CAP_EN,
-        FDI_RELAY_ATE_BAT_ADJ_EN,
-    };
-
     for (int i = 0; i < fdi_relay_instrument_count; ++i) {
         fdi_relay_instrument_t *instrument = &fdi_relay_instruments[i];
         instrument->super.category = "Relay";
         instrument->super.reset = fdi_relay_instrument_api_reset;
-        instrument->control = controls[i];
+        instrument->control = fdi_relay_instrument_controls[i];
         fdi_instrument_register(&instrument->super);
         fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_relay_instrument_api_reset);
         fdi_api_register(instrument->super.identifier, apiTypeSet, fdi_relay_instrument_api_set);

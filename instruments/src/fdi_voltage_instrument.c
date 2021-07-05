@@ -33,13 +33,22 @@ fdi_voltage_instrument_t *fdi_voltage_instrument_get(uint64_t identifier) {
     return 0;
 }
 
+void fdi_voltage_instrument_reset(fdi_voltage_instrument_t *instrument) {
+    // nothing to do...
+}
+
 void fdi_voltage_instrument_api_reset(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
     fdi_voltage_instrument_t *instrument = fdi_voltage_instrument_get(identifier);
     if (instrument == 0) {
         return;
     }
 
-    // nothing to do...
+    fdi_voltage_instrument_reset(instrument);
+}
+
+float fdi_relay_instrument_convert(fdi_voltage_instrument_t *instrument) {
+    float voltage = fdi_adc_convert(instrument->channel) * instrument->multiplier;
+    return voltage;
 }
 
 void fdi_voltage_instrument_api_convert(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {
@@ -48,7 +57,7 @@ void fdi_voltage_instrument_api_convert(uint64_t identifier, uint64_t type __att
         return;
     }
 
-    float voltage = fdi_adc_convert(instrument->channel) * instrument->multiplier;
+    float voltage = fdi_relay_instrument_convert(instrument);
 
     uint8_t buffer[32];
     fd_binary_t response;

@@ -43,6 +43,47 @@
 #define FDI_GPIO_ATE_BAT_CAP_EN 28
 #define FDI_GPIO_ATE_BAT_ADJ_EN 29
 
+#define FDI_GPIO_IOA0 30
+#define FDI_GPIO_IOA1 31
+#define FDI_GPIO_IOA2 32
+#define FDI_GPIO_IOA3 33
+#define FDI_GPIO_IOA4 34
+#define FDI_GPIO_IOA5 35
+#define FDI_GPIO_IOA6 36
+#define FDI_GPIO_IOA7 37
+
+#define FDI_GPIO_IOR0 38
+#define FDI_GPIO_IOR1 39
+#define FDI_GPIO_IOR2 40
+#define FDI_GPIO_IOR3 41
+
+#define FDI_GPIO_DIO0 42
+#define FDI_GPIO_DIO1 43
+#define FDI_GPIO_DIO2 44
+#define FDI_GPIO_DIO3 45
+#define FDI_GPIO_DIO4 46
+#define FDI_GPIO_DIO5 47
+#define FDI_GPIO_DIO6 48
+#define FDI_GPIO_DIO7 49
+#define FDI_GPIO_DIO8 50
+#define FDI_GPIO_DIO9 51
+#define FDI_GPIO_DIO10 52
+#define FDI_GPIO_DIO11 53
+#define FDI_GPIO_DIO12 54
+#define FDI_GPIO_DIO13 55
+#define FDI_GPIO_DIO14 56
+#define FDI_GPIO_DIO15 57
+
+#define FDI_GPIO_RIO0 58
+#define FDI_GPIO_RIO1 59
+#define FDI_GPIO_RIO2 60
+#define FDI_GPIO_RIO3 61
+
+typedef enum {
+    fdi_gpio_mode_input,
+    fdi_gpio_mode_output,
+} fdi_gpio_mode_t;
+
 void fdi_gpio_initialize(void);
 
 void fdi_gpio_set(uint32_t identifier, bool value);
@@ -51,8 +92,9 @@ void fdi_gpio_off(uint32_t identifier);
 
 bool fdi_gpio_get(uint32_t identifier);
 
-void fdi_gpio_set_mode_in(uint32_t identifier);
-void fdi_gpio_set_mode_out(uint32_t identifier);
+void fdi_gpio_set_mode(uint32_t identifier, fdi_gpio_mode_t mode);
+void fdi_gpio_set_mode_input(uint32_t identifier);
+void fdi_gpio_set_mode_output(uint32_t identifier);
 
 // optimized spi bit-bang transfers -denis
 void fdi_gpio_spi_out(uint32_t clock, uint32_t mosi, uint32_t miso, uint8_t *out, uint32_t length);

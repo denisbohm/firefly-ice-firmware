@@ -378,27 +378,27 @@ bool fdi_gpio_get(uint32_t identifier) {
     return (gpio->port->IDR & (1 << gpio->pin)) != 0;
 }
 
-const int fdi_gpio_mode_input = 0b00;
-const int fdi_gpio_mode_output = 0b01;
-const int fdi_gpio_mode_alternate_function = 0b10;
-const int fdi_gpio_mode_analog = 0b11;
+const int fdi_gpio_moder_input = 0b00;
+const int fdi_gpio_moder_output = 0b01;
+const int fdi_gpio_moder_alternate_function = 0b10;
+const int fdi_gpio_moder_analog = 0b11;
 
-void fdi_gpio_set_mode(GPIO_TypeDef *port, int pin_index, int mode) {
+void fdi_gpio_set_moder(GPIO_TypeDef *port, int pin_index, int mode) {
     port->MODER = (port->MODER & ~(0b11 << (pin_index * 2))) | (mode << (pin_index * 2));
 }
 
-void fdi_gpio_set_mode_in(uint32_t identifier) {
+void fdi_gpio_set_mode_input(uint32_t identifier) {
     fd_log_assert(identifier < fdi_gpio_count);
 
     fdi_gpio_t *gpio = &fdi_gpios[identifier];
-    fdi_gpio_set_mode(gpio->port, gpio->pin, fdi_gpio_mode_input);
+    fdi_gpio_set_moder(gpio->port, gpio->pin, fdi_gpio_moder_input);
 }
 
-void fdi_gpio_set_mode_out(uint32_t identifier) {
+void fdi_gpio_set_mode_output(uint32_t identifier) {
     fd_log_assert(identifier < fdi_gpio_count);
 
     fdi_gpio_t *gpio = &fdi_gpios[identifier];
-    fdi_gpio_set_mode(gpio->port, gpio->pin, fdi_gpio_mode_output);
+    fdi_gpio_set_moder(gpio->port, gpio->pin, fdi_gpio_moder_output);
 }
 
 // optimized spi bit-bang transfer out -denis

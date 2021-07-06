@@ -35,8 +35,6 @@
 void fdi_main(void) {
     fdi_clock_start_high_speed_internal();
 
-    fdi_api_initialize();
-
     fdi_gpio_initialize();
     fdi_relay_initialize();
     fdi_i2c_initialize();
@@ -46,8 +44,13 @@ void fdi_main(void) {
     fdi_adc_initialize();
     fdi_adc_power_up();
 
+    fdi_api_initialize((fdi_api_configuration_t) {
+        .can_transmit = fdi_usb_can_send,
+        .transmit = fdi_usb_send,
+    });
     fdi_usb_initialize();
-    fdi_api_initialize_usb();
+    fdi_usb_set_data_callback(fdi_api_rx_callback);
+    fdi_usb_set_tx_ready_callback(fdi_api_tx_callback);
     fdi_usb_power_up();
 
     fdi_instrument_initialize();

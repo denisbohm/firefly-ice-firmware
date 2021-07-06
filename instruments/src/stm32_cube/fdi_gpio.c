@@ -830,6 +830,265 @@ fdi_gpio_t fdi_gpios[] = {
 };
 #endif
 
+#ifdef FDI_INSTRUMENT_POWER
+fdi_gpio_t fdi_gpios[] = {
+    { // ATE_USB_CS_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 7,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // FDI_ATE_BS_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 0,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // ATE_USB_5V_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 6,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // ATE_USB_D_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 8,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // ATE_BATTERY_SENSE
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 1,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // ATE_BUTTON_EN
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_MCU_VCC_SENSE
+        .status = fdi_gpio_status_invalid,
+    },
+
+    { // ATE_SWD1_DIR_TO_DUT
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD1_NRESET
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD1_SWDCLK
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD1_PWR
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD1_SWDIO
+        .status = fdi_gpio_status_invalid,
+    },
+
+    { // ATE_SWD2_DIR_TO_DUT
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD2_NRESET
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD2_SWDCLK
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD2_PWR
+        .status = fdi_gpio_status_invalid,
+    },
+    { // ATE_SWD2_SWDIO
+        .status = fdi_gpio_status_invalid,
+    },
+
+    { // LED R
+        .status = fdi_gpio_status_invalid,
+    },
+    { // LED G
+        .status = fdi_gpio_status_invalid,
+    },
+    { // LED B
+        .status = fdi_gpio_status_invalid,
+    },
+    { // SPI SCLK
+        .status = fdi_gpio_status_invalid,
+    },
+    { // SPI MOSI
+        .status = fdi_gpio_status_invalid,
+    },
+    { // SPI MISO
+        .status = fdi_gpio_status_invalid,
+    },
+    { // S25FL116K CSN
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_ATE_SWD1_SENSE_NRESET
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_ATE_SWD2_SENSE_NRESET
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_ATE_FILL_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 2,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // FDI_GPIO_ATE_DRAIN_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 3,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // FDI_GPIO_ATE_BAT_CAP_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 5,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // FDI_GPIO_ATE_BAT_ADJ_EN
+        .enable = fdi_gpio_clock_enable_c,
+        .port = GPIOC,
+        .pin  = 4,
+        .mode = GPIO_MODE_OUTPUT_PP,
+        .pull = GPIO_NOPULL,
+        .speed = GPIO_SPEED_FREQ_VERY_HIGH,
+        .alternate = 0,
+        .initially = false,
+    },
+    { // FDI_GPIO_IOA0
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA1
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA2
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA3
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA4
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA5
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA6
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOA7
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOR0
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOR1
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOR2
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_IOR3
+        .status = fdi_gpio_status_invalid,
+    },
+
+    { // FDI_GPIO_DIO0
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO1
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO2
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO3
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO4
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO5
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO6
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO7
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO8
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO9
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO10
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO11
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO12
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO13
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO14
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_DIO15
+        .status = fdi_gpio_status_invalid,
+    },
+
+    { // FDI_GPIO_RIO0
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_RIO1
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_RIO2
+        .status = fdi_gpio_status_invalid,
+    },
+    { // FDI_GPIO_RIO3
+        .status = fdi_gpio_status_invalid,
+    },
+};
+#endif
+
 #ifdef FDI_INSTRUMENT_ALL_IN_ONE
 fdi_gpio_t fdi_gpios[] = {
     { // ATE_USB_CS_EN

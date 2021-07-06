@@ -1,6 +1,7 @@
 #ifndef FDI_GPIO_INSTRUMENT_H
 #define FDI_GPIO_INSTRUMENT_H
 
+#include "fdi_gpio.h"
 #include "fdi_instrument.h"
 
 typedef struct {

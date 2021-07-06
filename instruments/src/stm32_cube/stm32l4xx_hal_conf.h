@@ -11,6 +11,8 @@
 #include "stm32l4xx_hal_dma.h"
 #include "stm32l4xx_hal_adc.h"
 #include "stm32l4xx_hal_adc_ex.h"
+#include "stm32l4xx_hal_dac.h"
+#include "stm32l4xx_hal_dac_ex.h"
 #include "stm32l4xx_hal_dma.h"
 #include "stm32l4xx_hal_dma_ex.h"
 #include "stm32l4xx_hal_flash.h"
@@ -27,6 +29,7 @@
 
 #define HAL_ADC_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
+#define HAL_DAC_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_I2C_MODULE_ENABLED

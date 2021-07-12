@@ -3,6 +3,7 @@
 #include "fdi_adc.h"
 #include "fdi_api.h"
 #include "fdi_current.h"
+#include "fdi_dac.h"
 #include "fdi_gpio.h"
 #include "fdi_instrument.h"
 #include "fdi_interrupt.h"

@@ -27,6 +27,16 @@ uint32_t fdi_relay_instrument_controls[] = {
     FDI_RELAY_IOR3,
 #endif
 
+#ifdef FDI_INSTRUMENT_POWER
+    FDI_RELAY_ATE_USB_5V_EN,
+    FDI_RELAY_ATE_USB_D_EN,
+    FDI_RELAY_ATE_BATTERY_SENSE,
+    FDI_RELAY_ATE_FILL_EN,
+    FDI_RELAY_ATE_DRAIN_EN,
+    FDI_RELAY_ATE_BAT_CAP_EN,
+    FDI_RELAY_ATE_BAT_ADJ_EN,
+#endif
+
 #ifdef FDI_INSTRUMENT_SERIAL_WIRE
 #endif
 

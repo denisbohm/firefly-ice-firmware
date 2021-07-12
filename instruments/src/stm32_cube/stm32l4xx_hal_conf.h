@@ -2,7 +2,6 @@
 #define stm32l4xx_hal_conf_h
 
 #include "stm32_assert.h"
-#include "stm32l486xx.h"
 
 #include "stm32l4xx_hal_cortex.h"
 #include "stm32l4xx_hal_def.h"

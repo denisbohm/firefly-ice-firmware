@@ -70,6 +70,20 @@ void fdi_voltage_instrument_api_convert(uint64_t identifier, uint64_t type __att
 }
 
 void fdi_voltage_instrument_initialize(void) {
+#ifdef FDI_INSTRUMENT_INPUT_OUTPUT
+    {
+        fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
+        instrument->super.category = "Voltage";
+        instrument->super.reset = fdi_voltage_instrument_api_reset;
+        instrument->channel = 5; // ADC12_IN5 IOA0
+        instrument->multiplier = 1.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
+        fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
+    }
+#endif
+
+#ifdef FDI_INSTRUMENT_POWER
     {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
         instrument->super.category = "Voltage";
@@ -102,4 +116,5 @@ void fdi_voltage_instrument_initialize(void) {
         fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
         fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
     }
+#endif
 }

@@ -6,6 +6,7 @@
 #include "fdi_relay_instrument.h"
 #include "fdi_voltage_instrument.h"
 
+#include "fdi_adc.h"
 #include "fdi_api.h"
 #include "fdi_clock.h"
 #include "fdi_delay.h"
@@ -25,6 +26,8 @@ void main(void) {
 
     fdi_gpio_initialize();
     fdi_relay_initialize();
+    fdi_adc_initialize();
+    fdi_adc_power_up();
 
     fdi_api_initialize((fdi_api_configuration_t) {
         .can_transmit = fdi_i2cs_can_transmit,
@@ -43,6 +46,10 @@ void main(void) {
 #if 1
     fdi_relay_instrument_t *relay = fdi_relay_instrument_get_at(0);
     fdi_relay_instrument_set(relay, true);
+
+    fd_gpio_t ad_0 = { .port = 0, .pin = 8 };
+    fd_gpio_configure_output(ad_0);
+    fd_gpio_set(ad_0, 1);
 
     fdi_voltage_instrument_t *voltage_instrument = fdi_voltage_instrument_get_at(0);
     float voltage = fdi_relay_instrument_convert(voltage_instrument);

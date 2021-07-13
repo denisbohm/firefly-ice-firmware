@@ -88,13 +88,25 @@ void fdi_voltage_instrument_initialize(void) {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
         instrument->super.category = "Voltage";
         instrument->super.reset = fdi_voltage_instrument_api_reset;
+        instrument->channel = 7; // PA2 ADC12_IN7 : battery voltage
+        instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
+        fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
+    }
+#endif
+
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
+    {
+        fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
+        instrument->super.category = "Voltage";
+        instrument->super.reset = fdi_voltage_instrument_api_reset;
         instrument->channel = 15; // battery voltage
         instrument->multiplier = 2.0f;
         fdi_instrument_register(&instrument->super);
         fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
         fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
     }
-
     {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[1];
         instrument->super.category = "Voltage";

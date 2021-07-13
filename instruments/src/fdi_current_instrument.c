@@ -89,7 +89,12 @@ void fdi_current_instrument_initialize(void) {
     instrument->super.category = "Current";
     instrument->super.reset = fdi_current_instrument_api_reset;
     instrument->enable = FDI_GPIO_ATE_USB_CS_EN;
+#ifdef FDI_INSTRUMENT_POWER
+    instrument->channel = 10; // PA5 ADC12_IN10 : USB current
+#endif
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
     instrument->channel = 6; // USB current
+#endif
     instrument->multiplier = fdi_current_sense_gain(0.1f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
     fdi_instrument_register(&instrument->super);
     fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_current_instrument_api_reset);

@@ -1,20 +1,24 @@
 #include "fdi_clock.h"
 
+#include "fd_log.h"
+
 #include "fdi_stm32.h"
 
 void fdi_clock_start_high_speed_internal(void) {
     HAL_Init();
 
-#if 0
+#ifdef FDI_INSTRUMENT_SERIAL_WIRE
+
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /* Enable the HSI48 Oscillator */
-  RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSI48;
   RCC_OscInitStruct.HSI48State          = RCC_HSI48_ON;
   RCC_OscInitStruct.PLL.PLLState        = RCC_PLL_OFF;
-  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  HAL_StatusTypeDef status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  fd_log_assert(status == HAL_OK);
 
   /* Enable MSI Oscillator and activate PLL with MSI as source   */
   /* (Default MSI Oscillator enabled at system reset remains ON) */
@@ -29,19 +33,17 @@ void fdi_clock_start_high_speed_internal(void) {
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLP = 7;
   RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    /* Initialization Error */
-    Error_Handler();
-  }
+  status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+  fd_log_assert(status == HAL_OK);
 
   /* Enable MSI Auto-calibration through LSE */
-  HAL_RCCEx_EnableMSIPLLMode();
+//  HAL_RCCEx_EnableMSIPLLMode();
 
   /* Select HSI48 output as USB clock source */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
   PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
-  HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+  status = HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+  fd_log_assert(status == HAL_OK);
 
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
@@ -50,12 +52,10 @@ void fdi_clock_start_high_speed_internal(void) {
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-  if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
-  {
-    /* Initialization Error */
-    Error_Handler();
-  }
-#endif
+  status = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4);
+  fd_log_assert(status == HAL_OK);
+
+#else
 
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -90,4 +90,5 @@ void fdi_clock_start_high_speed_internal(void) {
         while (1)
             ;
     }
+#endif
 }

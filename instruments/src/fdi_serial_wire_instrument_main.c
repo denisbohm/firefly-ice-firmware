@@ -63,7 +63,7 @@ void main(void) {
     fdi_gpio_initialize();
     fdi_relay_initialize();
     fdi_spi_initialize();
-    fdi_s25fl116k_initialize();
+//    fdi_s25fl116k_initialize();
     fdi_serial_wire_initialize();
     fd_i2cm_initialize(
         fdi_main_i2cm_buses, sizeof(fdi_main_i2cm_buses) / sizeof(fdi_main_i2cm_buses[0]),
@@ -82,16 +82,18 @@ void main(void) {
     fdi_instrument_initialize();
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
-    fdi_storage_instrument_initialize();
+//    fdi_storage_instrument_initialize();
 
+#if 0
     for (int i = 0; i < 2; ++i) {
         fdi_apic_t *apic = &fdi_main_apics[i];
         const fd_i2cm_device_t *device = &fdi_main_i2cm_devices[i];
         fdi_apic_initialize(apic, device);
         fdi_apic_discover_instruments(apic);
     }
+#endif
 
-#if 1
+#if 0
     fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
     fdi_serial_wire_reset(serial_wire);
     fdi_serial_wire_set_power(serial_wire, true);

@@ -316,9 +316,15 @@ void fdi_battery_instrument_initialize(void) {
     instrument->super.category = "Battery";
     instrument->super.reset = fdi_battery_instrument_api_reset;
     instrument->enable = FDI_GPIO_ATE_BS_EN;
+#ifdef FDI_INSTRUMENT_POWER
+    instrument->channel_high = 6; // PA1 ADC12_IN6 : battery current - high range
+    instrument->channel_low = 5; // PA0 ADC12_IN5 : battery current - low range
+#endif
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
     instrument->channel_high = 4; // battery current - high range
-    instrument->multiplier_high = fdi_current_sense_gain(4.7f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
     instrument->channel_low = 5; // battery current - low range
+#endif
+    instrument->multiplier_high = fdi_current_sense_gain(4.7f, 1800.0f, 12000.0f, 376.0f, 1000.0f);
     instrument->multiplier_low = fdi_current_sense_gain(4.7f, 4.7f, 10000.0f, 0.0f, 1000.0f);
     fdi_instrument_register(&instrument->super);
     fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_battery_instrument_api_reset);

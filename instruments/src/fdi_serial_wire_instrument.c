@@ -5,7 +5,7 @@
 #include "fdi_instrument.h"
 #include "fdi_serial_wire.h"
 #include "fdi_serial_wire_debug.h"
-#include "fdi_s25fl116k.h"
+#include "fdi_storage_instrument.h"
 
 #include "fd_log.h"
 
@@ -253,12 +253,17 @@ void fdi_serial_wire_instrument_api_write_from_storage(uint64_t identifier, uint
     uint32_t storage_identifier __attribute__((unused)) = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t storage_address = (uint32_t)fd_binary_get_varuint(binary);
 
+    fdi_storage_instrument_t *storage_instrument = fdi_storage_instrument_get(storage_identifier);
     bool success = true;
     fdi_serial_wire_debug_error_t error;
     memset(&error, 0, sizeof(error));
     uint8_t buffer[256];
     for (uint32_t offset = 0; offset < length; offset += sizeof(buffer)) {
-        fdi_s25fl116k_read(storage_address + offset, buffer, sizeof(buffer));
+        fdi_storage_instrument_read(
+            storage_instrument,
+            storage_address + offset, sizeof(buffer), 0, 0,
+            buffer, sizeof(buffer)
+        );
         success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address + offset, buffer, sizeof(buffer), &error);
         if (!success) {
             break;
@@ -285,12 +290,17 @@ void fdi_serial_wire_instrument_api_compare_memory_to_storage(uint64_t identifie
     uint32_t storage_identifier __attribute__((unused)) = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t storage_address = (uint32_t)fd_binary_get_varuint(binary);
 
+    fdi_storage_instrument_t *storage_instrument = fdi_storage_instrument_get(storage_identifier);
     bool success = true;
     fdi_serial_wire_debug_error_t error;
     memset(&error, 0, sizeof(error));
     uint8_t buffer[256];
     for (uint32_t offset = 0; offset < length; offset += sizeof(buffer)) {
-        fdi_s25fl116k_read(storage_address + offset, buffer, sizeof(buffer));
+        fdi_storage_instrument_read(
+            storage_instrument,
+            storage_address + offset, sizeof(buffer), 0, 0,
+            buffer, sizeof(buffer)
+        );
         uint8_t verify[256];
         success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address + offset, verify, sizeof(buffer), &error);
         if (!success) {

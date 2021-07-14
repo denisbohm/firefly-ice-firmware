@@ -12,14 +12,13 @@
 #include "fdi_delay.h"
 #include "fdi_gpio.h"
 #include "fdi_relay.h"
-#include "fdi_s25fl116k.h"
 #include "fdi_serial_wire.h"
 #include "fdi_serial_wire_debug.h"
-#include "fdi_spi.h"
 #include "fdi_usb.h"
 
 #include "fd_i2cm.h"
 #include "fd_log.h"
+#include "fd_sdcard.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -62,9 +61,16 @@ void main(void) {
 
     fdi_gpio_initialize();
     fdi_relay_initialize();
-    fdi_spi_initialize();
-//    fdi_s25fl116k_initialize();
+    fd_sdcard_spi_initialize();
+    fd_sdcard_initialize((fd_sdcard_spi_t) {
+        .set_chip_select = fd_sdcard_spi_set_chip_select,
+        .set_frequency_slow = fd_sdcard_spi_set_frequency_slow,
+        .set_frequency_fast = fd_sdcard_spi_set_frequency_fast,
+        .transceive = fd_sdcard_spi_transceive,
+    });
+
     fdi_serial_wire_initialize();
+
     fd_i2cm_initialize(
         fdi_main_i2cm_buses, sizeof(fdi_main_i2cm_buses) / sizeof(fdi_main_i2cm_buses[0]),
         fdi_main_i2cm_devices, sizeof(fdi_main_i2cm_devices) / sizeof(fdi_main_i2cm_devices[0])
@@ -82,7 +88,7 @@ void main(void) {
     fdi_instrument_initialize();
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
-//    fdi_storage_instrument_initialize();
+    fdi_storage_instrument_initialize();
 
 #if 0
     for (int i = 0; i < 2; ++i) {

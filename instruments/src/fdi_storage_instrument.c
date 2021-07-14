@@ -3,11 +3,16 @@
 #include "fdi_api.h"
 #include "fdi_gpio.h"
 #include "fdi_instrument.h"
+#ifdef FD_INSTRUMENT_ALL_IN_ONE
 #include "fdi_s25fl116k.h"
+#endif
 
 #include "fd_binary.h"
 #include "fd_log.h"
+#include "fd_sdcard.h"
 #include "fd_sha.h"
+
+#include <string.h>
 
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeErase = 1;
@@ -58,13 +63,17 @@ void fdi_storage_instrument_api_erase(uint64_t identifier, uint64_t type __attri
     uint32_t address = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
  
+#ifdef FD_INSTRUMENT_ALL_IN_ONE
     uint32_t end = address + length;
     while (address < end) {
         fdi_s25fl116k_enable_write();
         fdi_s25fl116k_erase_sector(address);
         address += fdi_s25fl116k_sector_size;
+        fdi_s25fl116k_wait_while_busy();
     }
-    fdi_s25fl116k_wait_while_busy();
+#else
+    fd_sdcard_erase(address, length);
+#endif
 }
 
 void fdi_storage_instrument_api_write(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -76,6 +85,7 @@ void fdi_storage_instrument_api_write(uint64_t identifier, uint64_t type __attri
     uint32_t address = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
 
+#ifdef FD_INSTRUMENT_ALL_IN_ONE
     uint32_t offset = 0;
     while (offset < length) {
         uint32_t sublength = length - offset;
@@ -87,10 +97,38 @@ void fdi_storage_instrument_api_write(uint64_t identifier, uint64_t type __attri
         }
         fdi_s25fl116k_enable_write();
         fdi_s25fl116k_write_page(lower_address, &binary->buffer[binary->get_index], sublength);
+        fdi_s25fl116k_wait_while_busy();
         binary->get_index += sublength;
         offset += sublength;
     }
-    fdi_s25fl116k_wait_while_busy();
+#else
+    fd_sdcard_write(address, &binary->buffer[binary->get_index], length);
+#endif
+}
+
+void fdi_storage_instrument_read(
+    fdi_storage_instrument_t *instrument,
+    uint32_t address, uint32_t length, uint32_t sublength, uint32_t substride,
+    uint8_t *buffer, uint32_t size
+) {
+    fd_log_assert(length <= size);
+    if (length > size) {
+        length = size;
+    }
+    if (sublength == 0) {
+        sublength = length;
+    }
+
+    uint32_t total = 0;
+    while (total < length) {
+#ifdef FD_INSTRUMENT_ALL_IN_ONE
+        fdi_s25fl116k_read(address, &buffer[total], sublength);
+#else
+        fd_sdcard_read(address, &buffer[total], sublength);
+#endif
+        total += sublength;
+        address += substride;
+    }
 }
 
 void fdi_storage_instrument_api_read(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -103,27 +141,13 @@ void fdi_storage_instrument_api_read(uint64_t identifier, uint64_t type __attrib
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t sublength = (uint32_t)fd_binary_get_varuint(binary);
     uint32_t substride = (uint32_t)fd_binary_get_varuint(binary);
-    fd_log_assert(length <= 4096);
-    if (length > 4096) {
-        length = 4096;
-    }
-    if (sublength == 0) {
-        sublength = length;
-    }
-
     uint8_t buffer[4096];
-    uint32_t total = 0;
-    while (total < length) {
-        fdi_s25fl116k_read(address, &buffer[total], sublength);
-        total += sublength;
-        address += substride;
-    }
+    fdi_storage_instrument_read(instrument, address, length, sublength, substride, buffer, sizeof(buffer));
 
     if (!fdi_api_send(instrument->super.identifier, apiTypeRead, buffer, length)) {
         fd_log_assert_fail("can't send");
     }
 }
-
 
 void fdi_storage_instrument_api_hash(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_storage_instrument_t *instrument = fdi_storage_instrument_get(identifier);
@@ -135,7 +159,11 @@ void fdi_storage_instrument_api_hash(uint64_t identifier, uint64_t type __attrib
     uint32_t length = (uint32_t)fd_binary_get_varuint(binary);
 
     uint8_t hash[FD_SHA_HASH_SIZE];
+#ifdef FD_INSTRUMENT_ALL_IN_ONE
     fd_sha1(fdi_s25fl116k_read, address, length, hash);
+#else
+    fd_sha1(fd_sdcard_read, address, length, hash);
+#endif
 
     if (!fdi_api_send(instrument->super.identifier, apiTypeHash, hash, FD_SHA_HASH_SIZE)) {
         fd_log_assert_fail("can't send");

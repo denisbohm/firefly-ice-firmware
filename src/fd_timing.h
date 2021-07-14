@@ -24,6 +24,7 @@ void fd_timing_clear(fd_timing_t *timing);
 void fd_timing_start(fd_timing_t *timing);
 void fd_timing_end(fd_timing_t *timing);
 void fd_timing_put_binary(fd_timing_t *timing, fd_binary_t *binary);
+void fd_timing_format(const fd_timing_t *timing, char *buffer, size_t size);
 
 void fd_hal_timing_initialize(void);
 bool fd_hal_timing_get_enable(void);

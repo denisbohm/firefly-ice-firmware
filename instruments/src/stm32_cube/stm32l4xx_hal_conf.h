@@ -23,6 +23,8 @@
 #include "stm32l4xx_hal_pcd.h"
 #include "stm32l4xx_hal_pwr.h"
 #include "stm32l4xx_hal_pwr_ex.h"
+#include "stm32l4xx_hal_spi.h"
+#include "stm32l4xx_hal_spi_ex.h"
 #include "stm32l4xx_hal_tim.h"
 #include "stm32l4xx_hal_tim_ex.h"
 
@@ -36,6 +38,7 @@
 #define HAL_PCD_MODULE_ENABLED
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
+#define HAL_SPI_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
 
 #define HSE_VALUE               8000000U

@@ -269,7 +269,7 @@
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
       arm_target_trace_interface_type="None"
-      c_preprocessor_definitions="FDI_INSTRUMENT_SERIAL_WIRE"
+      c_preprocessor_definitions="FDI_INSTRUMENT_SERIAL_WIRE;USBD_MAX_POWER=0xFAU"
       c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32_cube;$(ProjectDir)/../src;$(TargetsDir)/STM32/include;$(ProjectDir)/external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc"
       debug_register_definition_file="$(TargetsDir)/STM32/STM32L4x6_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/STM32/STM32L496RG_MemoryMap.xml"
@@ -339,6 +339,8 @@
         <file file_name="src/stm32_cube/usbd_conf.c" />
         <file file_name="src/stm32_cube/usbd_desc.c" />
         <file file_name="src/stm32_cube/fd_gpio.c" />
+        <file file_name="src/stm32_cube/usbd_hid.c" />
+        <file file_name="src/stm32_cube/usbd_hid.h" />
       </folder>
       <folder Name="STM32 Cube">
         <folder Name="HAL_Driver">
@@ -374,7 +376,6 @@
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_ll_usb.h" />
         </folder>
         <folder Name="USB_Device_Library">
-          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc/usbd_hid.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c" />
@@ -382,7 +383,6 @@
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h" />
-          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c" />
         </folder>
       </folder>
       <file file_name="src/fdi_s25fl116k.c" />

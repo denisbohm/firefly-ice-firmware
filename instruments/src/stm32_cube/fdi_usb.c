@@ -20,7 +20,6 @@ uint8_t fdi_usb_hid_data_out(struct _USBD_HandleTypeDef *pdev, uint8_t epnum __a
         fdi_usb_data_callback(fdi_usb_hid_rx_buffer, sizeof(fdi_usb_hid_rx_buffer));
     }
 
-#define HID_EPOUT_ADDR 0x01
     USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, fdi_usb_hid_rx_buffer, sizeof(fdi_usb_hid_rx_buffer));
     return USBD_OK;
 }
@@ -37,13 +36,13 @@ void fdi_usb_initialize(void) {
     fd_log_assert(status == USBD_OK);
 
     USBD_HID.DataOut = fdi_usb_hid_data_out;
-    USBD_LL_PrepareReceive(&USBD_Device, HID_EPOUT_ADDR, fdi_usb_hid_rx_buffer, sizeof(fdi_usb_hid_rx_buffer));
 }
 
 void fdi_usb_set_tx_ready_callback(fdi_usb_tx_ready_callback_t callback) {
 }
 
 void fdi_usb_set_data_callback(fdi_usb_data_callback_t callback) {
+    fdi_usb_data_callback = callback;
 }
 
 void fdi_usb_power_up(void) {
@@ -64,7 +63,6 @@ void fdi_usb_send(uint8_t *buffer, size_t length) {
     memset(&fdi_usb_send_data[length], 0, 64 - length);
     USBD_HID_SendReport(&USBD_Device, fdi_usb_send_data, 64);
 }
-
 
 void OTG_FS_IRQHandler(void) {
     HAL_PCD_IRQHandler(&hpcd);

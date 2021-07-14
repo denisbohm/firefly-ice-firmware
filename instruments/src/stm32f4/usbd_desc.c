@@ -52,7 +52,7 @@
 #define USBD_PID                     0x5710
 
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      "Firefly Design LCC"
+#define USBD_MANUFACTURER_STRING      "Firefly Design LLC"
 
 #define USBD_PRODUCT_HS_STRING        "Firefly Instruments"
 #define USBD_SERIALNUMBER_HS_STRING   "00000000011B"

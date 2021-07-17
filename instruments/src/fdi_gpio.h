@@ -79,6 +79,11 @@
 #define FDI_GPIO_RIO2 60
 #define FDI_GPIO_RIO3 61
 
+#define FDI_GPIO_AIO0 62
+#define FDI_GPIO_AIO1 63
+#define FDI_GPIO_AIO2 64
+#define FDI_GPIO_AIO3 65
+
 typedef enum {
     fdi_gpio_mode_input,
     fdi_gpio_mode_output,

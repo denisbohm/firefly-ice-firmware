@@ -6,9 +6,43 @@
 
 #include "fd_log.h"
 
+static const uint32_t fdi_adc_channel_lookup[] = {
+    ADC_CHANNEL_0,
+    ADC_CHANNEL_1,
+    ADC_CHANNEL_2,
+    ADC_CHANNEL_3,
+    ADC_CHANNEL_4,
+    ADC_CHANNEL_5,
+    ADC_CHANNEL_6,
+    ADC_CHANNEL_7,
+    ADC_CHANNEL_8,
+    ADC_CHANNEL_9,
+    ADC_CHANNEL_10,
+    ADC_CHANNEL_11,
+    ADC_CHANNEL_12,
+    ADC_CHANNEL_13,
+    ADC_CHANNEL_14,
+    ADC_CHANNEL_15,
+    ADC_CHANNEL_16,
+    ADC_CHANNEL_17,
+    ADC_CHANNEL_18,
+};
+
 static fdi_adc_callback_t fdi_adc_callback;
 
 ADC_HandleTypeDef hadc1;
+
+void fdi_adc_setup(uint32_t channel) {
+    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitStruct.Pin = 1 << channel;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = 0;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIOA->ASCR |= GPIO_InitStruct.Pin;
+}
 
 void fdi_adc_initialize(void) {
     fdi_adc_callback = 0;
@@ -71,29 +105,8 @@ void fdi_adc_power_down(void) {
 }
 
 float fdi_adc_convert(uint32_t channel) {
-    static const uint32_t adc_channel[] = {
-        ADC_CHANNEL_0,
-        ADC_CHANNEL_1,
-        ADC_CHANNEL_2,
-        ADC_CHANNEL_3,
-        ADC_CHANNEL_4,
-        ADC_CHANNEL_5,
-        ADC_CHANNEL_6,
-        ADC_CHANNEL_7,
-        ADC_CHANNEL_8,
-        ADC_CHANNEL_9,
-        ADC_CHANNEL_10,
-        ADC_CHANNEL_11,
-        ADC_CHANNEL_12,
-        ADC_CHANNEL_13,
-        ADC_CHANNEL_14,
-        ADC_CHANNEL_15,
-        ADC_CHANNEL_16,
-        ADC_CHANNEL_17,
-        ADC_CHANNEL_18,
-    };
     ADC_ChannelConfTypeDef sConfig;
-    sConfig.Channel = adc_channel[channel];
+    sConfig.Channel = fdi_adc_channel_lookup[channel];
     sConfig.Rank = 1;
     sConfig.SingleDiff = ADC_SINGLE_ENDED;
     sConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;

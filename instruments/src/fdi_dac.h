@@ -5,6 +5,7 @@
 
 void fdi_dac_initialize(void);
 
+void fdi_dac_setup(uint32_t channel);
 void fdi_dac_set(uint32_t channel, uint32_t value);
 
 #endif

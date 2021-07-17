@@ -8,6 +8,7 @@ void fdi_adc_initialize(void);
 void fdi_adc_power_up(void);
 void fdi_adc_power_down(void);
 
+void fdi_adc_setup(uint32_t channel);
 float fdi_adc_convert(uint32_t channel);
 
 // callback is called from interrupt context with dma buffer of values, so return ASAP

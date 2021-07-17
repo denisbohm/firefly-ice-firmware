@@ -548,9 +548,12 @@
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dma.c" />
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma_ex.h" />
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dac_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_dac.c" />
         </folder>
         <folder Name="USB_Device_Library">
-          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc/usbd_hid.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c" />
@@ -558,7 +561,6 @@
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h" />
-          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c" />
         </folder>
       </folder>
       <folder Name="stm32_cube">
@@ -572,13 +574,16 @@
         <file file_name="src/stm32_cube/system_stm32l4xx.c" />
         <file file_name="src/stm32_cube/usbd_conf.c" />
         <file file_name="src/stm32_cube/usbd_desc.c" />
+        <file file_name="src/stm32_cube/fdi_i2cs.c" />
+        <file file_name="src/stm32_cube/fd_gpio.c" />
+        <file file_name="src/stm32_cube/usbd_hid.c" />
+        <file file_name="src/stm32_cube/usbd_hid.h" />
+        <file file_name="src/stm32_cube/fdi_dac.c" />
         <file file_name="src/stm32_cube/fdi_adc.c">
           <configuration
             Name="Common"
             c_preprocessor_definitions="FDI_ADC_CONVERT_CONTINUOUS_UNSUPPORTED" />
         </file>
-        <file file_name="src/stm32_cube/fdi_i2cs.c" />
-        <file file_name="src/stm32_cube/fd_gpio.c" />
       </folder>
       <folder Name="firefly instruments firmware">
         <file file_name="src/fdi_api.h" />
@@ -597,11 +602,12 @@
         <file file_name="src/fdi_i2cs.h" />
         <file file_name="src/fdi_apic.c" />
         <file file_name="src/fdi_apic.h" />
+        <file file_name="src/fdi_dac.h" />
+        <file file_name="src/fdi_adc.h" />
       </folder>
       <file file_name="src/fdi_input_output_instrument_main.c" />
       <file file_name="src/fdi_voltage_instrument.c" />
       <file file_name="src/fdi_voltage_instrument.h" />
-      <file file_name="src/fdi_adc.h" />
       <file file_name="src/fdi_gpio_instrument.c" />
       <file file_name="src/fdi_gpio_instrument.h" />
     </folder>
@@ -729,7 +735,6 @@
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dac.h" />
         </folder>
         <folder Name="USB_Device_Library">
-          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc/usbd_hid.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c" />
@@ -737,7 +742,6 @@
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h" />
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h" />
-          <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c" />
         </folder>
       </folder>
       <folder Name="stm32_cube">
@@ -755,6 +759,8 @@
         <file file_name="src/stm32_cube/fdi_i2cs.c" />
         <file file_name="src/stm32_cube/fd_gpio.c" />
         <file file_name="src/stm32_cube/fdi_dac.c" />
+        <file file_name="src/stm32_cube/usbd_hid.c" />
+        <file file_name="src/stm32_cube/usbd_hid.h" />
       </folder>
       <folder Name="firefly instruments firmware">
         <file file_name="src/fdi_api.h" />

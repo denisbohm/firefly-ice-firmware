@@ -4,7 +4,6 @@
 #include "fdi_api.h"
 #include "fdi_gpio.h"
 #include "fdi_instrument.h"
-#include "fdi_relay.h"
 
 #include "fd_binary.h"
 #include "fd_log.h"
@@ -46,7 +45,7 @@ void fdi_voltage_instrument_api_reset(uint64_t identifier, uint64_t type __attri
     fdi_voltage_instrument_reset(instrument);
 }
 
-float fdi_relay_instrument_convert(fdi_voltage_instrument_t *instrument) {
+float fdi_voltage_instrument_convert(fdi_voltage_instrument_t *instrument) {
     float voltage = fdi_adc_convert(instrument->channel) * instrument->multiplier;
     return voltage;
 }
@@ -57,7 +56,7 @@ void fdi_voltage_instrument_api_convert(uint64_t identifier, uint64_t type __att
         return;
     }
 
-    float voltage = fdi_relay_instrument_convert(instrument);
+    float voltage = fdi_voltage_instrument_convert(instrument);
 
     uint8_t buffer[32];
     fd_binary_t response;

@@ -48,6 +48,10 @@ static void fd_gpio_configure(fd_gpio_t gpio, uint32_t mode) {
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = 0;
     HAL_GPIO_Init(fd_gpio_port(gpio.port), &GPIO_InitStruct);
+
+#if defined(GPIO_ASCR_ASC0)
+    GPIOA->ASCR &= ~GPIO_InitStruct.Pin;
+#endif
 }
 
 void fd_gpio_configure_output(fd_gpio_t gpio) {

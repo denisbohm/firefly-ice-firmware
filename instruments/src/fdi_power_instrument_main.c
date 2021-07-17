@@ -55,7 +55,7 @@ void main(void) {
     float battery_current = fdi_battery_instrument_convert(battery_instrument);
 
     fdi_voltage_instrument_t *voltage_instrument = fdi_voltage_instrument_get_at(0);
-    float battery_voltage = fdi_relay_instrument_convert(voltage_instrument);
+    float battery_voltage = fdi_voltage_instrument_convert(voltage_instrument);
 
     fdi_current_instrument_t *current_instrument = fdi_current_instrument_get_at(0);
     float usb_current = fdi_current_instrument_convert(current_instrument);

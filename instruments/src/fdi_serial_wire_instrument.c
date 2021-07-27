@@ -198,6 +198,16 @@ void fdi_serial_wire_instrument_api_set_enabled(uint64_t identifier, uint64_t ty
     fdi_serial_wire_set_power(instrument->serial_wire, enabled);
 }
 
+bool fdi_serial_wire_instrument_write_memory(
+    fdi_serial_wire_instrument_t *instrument,
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length,
+    fdi_serial_wire_debug_error_t *error
+) {
+    return fdi_serial_wire_debug_write_data(instrument->serial_wire, address, data, length, error);
+}
+
 void fdi_serial_wire_instrument_api_write_memory(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
@@ -221,6 +231,16 @@ void fdi_serial_wire_instrument_api_write_memory(uint64_t identifier, uint64_t t
     }
 }
 
+bool fdi_serial_wire_instrument_read_memory(
+    fdi_serial_wire_instrument_t *instrument,
+    uint32_t address,
+    uint8_t *data,
+    uint32_t length,
+    fdi_serial_wire_debug_error_t *error
+) {
+    return fdi_serial_wire_debug_read_data(instrument->serial_wire, address, data, length, error);
+}
+
 void fdi_serial_wire_instrument_api_read_memory(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
@@ -234,7 +254,7 @@ void fdi_serial_wire_instrument_api_read_memory(uint64_t identifier, uint64_t ty
     uint8_t data[32 + 4096];
     fdi_serial_wire_debug_error_t error;
     memset(&error, 0, sizeof(error));
-    bool success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address, &data[1], length, &error);
+    bool success = fdi_serial_wire_instrument_read_memory(instrument, address, &data[1], length, &error);
     data[0] = success ? 0 : error.code;
 
     if (!fdi_api_send(instrument->super.identifier, apiTypeReadMemory, data, 1 + length)) {
@@ -422,13 +442,28 @@ void fdi_serial_wire_instrument_api_transfer(uint64_t identifier, uint64_t type 
     }
 }
 
+void fdi_serial_wire_instrument_set_half_bit_delay(
+    fdi_serial_wire_instrument_t *instrument,
+    uint32_t half_bit_delay_ns
+) {
+    instrument->serial_wire->half_bit_delay_ns = half_bit_delay_ns;
+}
+
 void fdi_serial_wire_instrument_api_set_half_bit_delay(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get(identifier);
     if (instrument == 0) {
         return;
     }
 
-    instrument->serial_wire->half_bit_delay_ns = fd_binary_get_uint32(binary);
+    uint32_t half_bit_delay_ns = fd_binary_get_uint32(binary);
+    fdi_serial_wire_instrument_set_half_bit_delay(instrument, half_bit_delay_ns);
+}
+
+void fdi_serial_wire_instrument_set_target_id(
+    fdi_serial_wire_instrument_t *instrument,
+    uint32_t target_id
+) {
+    instrument->serial_wire->target_id = target_id;
 }
 
 void fdi_serial_wire_instrument_api_set_target_id(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -437,7 +472,15 @@ void fdi_serial_wire_instrument_api_set_target_id(uint64_t identifier, uint64_t 
         return;
     }
 
-    instrument->serial_wire->target_id = fd_binary_get_uint32(binary);
+    uint32_t target_id = fd_binary_get_uint32(binary);
+    fdi_serial_wire_instrument_set_target_id(instrument, target_id);
+}
+
+void fdi_serial_wire_instrument_set_access_port_id(
+    fdi_serial_wire_instrument_t *instrument,
+    uint8_t access_port_id
+) {
+    instrument->serial_wire->debug_port_access.fields.access_port_id = access_port_id;
 }
 
 void fdi_serial_wire_instrument_api_set_access_port_id(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary) {
@@ -445,8 +488,17 @@ void fdi_serial_wire_instrument_api_set_access_port_id(uint64_t identifier, uint
     if (instrument == 0) {
         return;
     }
+    
+    uint8_t access_port_id = fd_binary_get_uint8(binary);
+    fdi_serial_wire_instrument_set_access_port_id(instrument, access_port_id);
+}
 
-    instrument->serial_wire->debug_port_access.fields.access_port_id = fd_binary_get_uint8(binary);
+bool fdi_serial_wire_instrument_connect(
+    fdi_serial_wire_instrument_t *instrument,
+    uint32_t *dpid,
+    fdi_serial_wire_debug_error_t *error
+) {
+    return fdi_serial_wire_debug_connect(instrument->serial_wire, dpid, error);
 }
 
 void fdi_serial_wire_instrument_api_connect(uint64_t identifier, uint64_t type __attribute__((unused)), fd_binary_t *binary __attribute__((unused))) {
@@ -458,7 +510,7 @@ void fdi_serial_wire_instrument_api_connect(uint64_t identifier, uint64_t type _
     fdi_serial_wire_debug_error_t error;
     memset(&error, 0, sizeof(error));
     uint32_t dpid = 0;
-    bool success = fdi_serial_wire_debug_connect(instrument->serial_wire, &dpid, &error);
+    bool success = fdi_serial_wire_instrument_connect(instrument, &dpid, &error);
 
     uint8_t response_data[32];
     fd_binary_t response;
@@ -469,7 +521,6 @@ void fdi_serial_wire_instrument_api_connect(uint64_t identifier, uint64_t type _
         fd_log_assert_fail("can't send");
     }
 }
-
 
 void fdi_serial_wire_instrument_initialize(void) {
     for (int i = 0; i < fdi_serial_wire_count; ++i) {

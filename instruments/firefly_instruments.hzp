@@ -330,8 +330,6 @@
         <file file_name="../src/fd_graphics.h" />
         <file file_name="../src/fd_graphics_ssd1315.c" />
         <file file_name="../src/fd_graphics_ssd1315.h" />
-        <file file_name="../src/fd_ssd1315_bus_i2c.c" />
-        <file file_name="../src/fd_ssd1315_bus.h" />
         <file file_name="../src/fd_ssd1315.c" />
         <file file_name="../src/fd_ssd1315.h" />
         <file file_name="../src/fd_spim.c" />

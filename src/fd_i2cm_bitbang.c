@@ -7,6 +7,11 @@ void fd_i2cm_initialize(
     const fd_i2cm_bus_t *buses, uint32_t bus_count,
     const fd_i2cm_device_t *devices, uint32_t device_count
 ) {
+    for (uint32_t i = 0; i < bus_count; ++i) {
+        const fd_i2cm_bus_t *bus = &buses[i];
+        fd_gpio_configure_output_open_drain(bus->scl);
+        fd_gpio_configure_output_open_drain(bus->sda);
+    }
 }
 
 void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus) {
@@ -73,8 +78,10 @@ bool i2c_write_byte(const fd_i2cm_bus_t *bus, uint8_t byte, bool start, bool sto
         byte <<= 1;
     }
     
+    fd_gpio_configure_input(sda);
     uint8_t ack;
     i2c_read_bit(ack);
+    fd_gpio_configure_output_open_drain(sda);
 
     if (stop) {
         i2c_stop();
@@ -87,12 +94,14 @@ uint8_t i2c_read_byte(const fd_i2cm_bus_t *bus, bool ack, bool stop) {
     const fd_gpio_t scl = bus->scl;
     const fd_gpio_t sda = bus->sda;
 
+    fd_gpio_configure_input(sda);
     uint8_t byte = 0;
     for (int i = 0; i < 8; ++i) {
         bool bit;
         i2c_read_bit(bit);
         byte = (byte << 1) | (bit ? 1 : 0);
     }
+    fd_gpio_configure_output_open_drain(sda);
 
     i2c_write_bit(!ack);
 
@@ -124,15 +133,18 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
     const fd_gpio_t scl = bus->scl;
     const fd_gpio_t sda = bus->sda;
 
+    int last_direction = -1;
     bool ack = true;
     for (int i = 0; i < io->transfer_count; ++i) {
         bool stop = i == io->transfer_count - 1;
         const fd_i2cm_transfer_t *transfer = &io->transfers[i];
         switch (transfer->direction) {
             case fd_i2cm_direction_tx:
-                ack = i2c_write_byte(bus, (device->address << 1) | 1, true, false);
-                if (!ack) {
-                    goto stop;
+                if (transfer->direction != last_direction) {
+                    ack = i2c_write_byte(bus, device->address << 1, true, false);
+                    if (!ack) {
+                        goto stop;
+                    }
                 }
                 ack = fd_i2cm_bus_tx(bus, transfer->bytes, transfer->byte_count, stop);
                 if (!ack) {
@@ -140,15 +152,18 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
                 }
             break;
             case fd_i2cm_direction_rx:
-                ack = i2c_write_byte(bus, device->address << 1, true, false);
-                if (!ack) {
-                    goto stop;
+                if (transfer->direction != last_direction) {
+                    ack = i2c_write_byte(bus, (device->address << 1) | 1, true, false);
+                    if (!ack) {
+                        goto stop;
+                    }
                 }
                 fd_i2cm_bus_rx(bus, transfer->bytes, transfer->byte_count, stop);
             break;
             default:
             break;
         }
+        last_direction = transfer->direction;
     }
     
 stop:

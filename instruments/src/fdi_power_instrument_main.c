@@ -35,6 +35,7 @@ void main(void) {
         .transmit = fdi_i2cs_transmit,
     });
     fdi_i2cs_initialize((fdi_i2cs_configuration_t) {
+        .address = 0x30,
         .rx = fdi_api_rx_callback,
         .tx_ready = fdi_api_tx_callback,
     });

@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 typedef struct {
+    uint32_t address;
     void (*rx)(uint8_t *data, size_t size);
     void (*tx_ready)(void);
 } fdi_i2cs_configuration_t;

@@ -26,6 +26,7 @@ void main(void) {
     fdi_gpio_initialize();
     fdi_relay_initialize();
     fdi_adc_initialize();
+    fdi_adc_power_up();
     fdi_dac_initialize();
 
     fdi_api_initialize((fdi_api_configuration_t) {
@@ -33,6 +34,7 @@ void main(void) {
         .transmit = fdi_i2cs_transmit,
     });
     fdi_i2cs_initialize((fdi_i2cs_configuration_t) {
+        .address = 0x32,
         .rx = fdi_api_rx_callback,
         .tx_ready = fdi_api_tx_callback,
     });

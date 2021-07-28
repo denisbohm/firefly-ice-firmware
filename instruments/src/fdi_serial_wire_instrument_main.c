@@ -101,6 +101,16 @@ void main(void) {
     fd_ssd1315_write_image_end();
     fd_ssd1315_display_on();
 
+#if 1
+    fdi_apic_t *apic = &fdi_main_apics[0];
+    const fd_i2cm_device_t *device = &fdi_main_i2cm_devices[2];
+    fdi_apic_initialize(apic, device);
+    while (true) {
+        fdi_apic_discover_instruments(apic);
+        fdi_delay_ms(1000);
+    }
+#endif
+
     fdi_api_initialize((fdi_api_configuration_t) {
         .can_transmit = fdi_usb_can_send,
         .transmit = fdi_usb_send,
@@ -114,15 +124,6 @@ void main(void) {
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
     fdi_storage_instrument_initialize();
-
-#if 0
-    for (int i = 0; i < 2; ++i) {
-        fdi_apic_t *apic = &fdi_main_apics[i];
-        const fd_i2cm_device_t *device = &fdi_main_i2cm_devices[i];
-        fdi_apic_initialize(apic, device);
-        fdi_apic_discover_instruments(apic);
-    }
-#endif
 
 #if 0
     fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];

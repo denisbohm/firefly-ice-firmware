@@ -124,7 +124,7 @@ bool fd_i2cm_bus_tx(const fd_i2cm_bus_t *bus, const uint8_t *bytes, uint32_t cou
 
 void fd_i2cm_bus_rx(const fd_i2cm_bus_t *bus, uint8_t *bytes, uint32_t count, bool stop) {
     for (int i = 0; i < count; ++i) {
-        bytes[i] = i2c_read_byte(bus, false, stop && (i == (count - 1)));
+        bytes[i] = i2c_read_byte(bus, true, stop && (i == (count - 1)));
     }
 }
 

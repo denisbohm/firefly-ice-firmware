@@ -269,7 +269,7 @@
       arm_target_loader_applicable_loaders="Flash"
       arm_target_loader_default_loader="Flash"
       arm_target_trace_interface_type="None"
-      c_preprocessor_definitions="FDI_INSTRUMENT_SERIAL_WIRE;USBD_MAX_POWER=0xFAU"
+      c_preprocessor_definitions="FDI_INSTRUMENT_SERIAL_WIRE;USBD_MAX_POWER=0xFAU;STARTUP_FROM_RESET"
       c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32_cube;$(ProjectDir)/../src;$(TargetsDir)/STM32/include;$(ProjectDir)/external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc"
       debug_register_definition_file="$(TargetsDir)/STM32/STM32L4x6_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/STM32/STM32L496RG_MemoryMap.xml"

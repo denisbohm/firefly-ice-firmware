@@ -5,9 +5,11 @@
 
 typedef struct {
     fdi_instrument_t super;
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
     uint32_t led_r;
     uint32_t led_g;
     uint32_t led_b;
+#endif
 } fdi_indicator_instrument_t;
 
 void fdi_indicator_instrument_initialize(void);

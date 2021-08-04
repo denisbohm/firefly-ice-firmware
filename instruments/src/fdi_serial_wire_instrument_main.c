@@ -2,7 +2,7 @@
 
 #include "fdi_instrument.h"
 
-#include "fdi_relay_instrument.h"
+#include "fdi_indicator_instrument.h"
 #include "fdi_serial_wire_instrument.h"
 #include "fdi_storage_instrument.h"
 
@@ -119,7 +119,7 @@ void main(void) {
         .apic_count = apic_count,
         .apics = fdi_main_apics,
     });
-#if 0
+#if 1
     fdi_usb_initialize();
     fdi_usb_set_data_callback(fdi_api_rx_callback);
     fdi_usb_set_tx_ready_callback(fdi_api_tx_callback);
@@ -127,7 +127,7 @@ void main(void) {
 #endif
 
     fdi_instrument_initialize();
-    fdi_relay_instrument_initialize();
+    fdi_indicator_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
     fdi_storage_instrument_initialize();
 

@@ -41,8 +41,8 @@ void main(void) {
     fdi_instrument_initialize();
     fdi_gpio_instrument_initialize();
 
-#if 1
-    fdi_gpio_instrument_t *gpio_instrument = fdi_gpio_instrument_get_at(0);
+#if 0
+    fdi_gpio_instrument_t *gpio_instrument = fdi_gpio_instrument_get_at(FDI_INSTRUMENT_IDENTIFIER_MIN);
     fdi_gpio_instrument_configuration_t configuration = {
         .domain = fdi_gpio_instrument_domain_analog,
         .direction = fdi_gpio_instrument_direction_input

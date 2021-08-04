@@ -5,6 +5,8 @@
 #include "fd_binary.h"
 #include "fd_log.h"
 
+#include <string.h>
+
 static const uint64_t apiIdentifierInstrumentManager = 0;
 
 static const uint64_t apiTypeResetInstruments = 0;
@@ -13,8 +15,12 @@ static const uint64_t apiTypeEcho = 2;
 
 #define FDI_INSTRUMENT_LIMIT 32
 
-static uint32_t fdi_instrument_count;
-static fdi_instrument_t *fdi_instruments[FDI_INSTRUMENT_LIMIT];
+typedef struct {
+    uint32_t instrument_count;
+    fdi_instrument_t *instruments[FDI_INSTRUMENT_LIMIT];
+} fdi_instrument_manager_t;
+
+fdi_instrument_manager_t fdi_instrument_manager;
 
 void fdi_instrument_echo(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary) {
     uint8_t *data = &binary->buffer[binary->get_index];
@@ -28,15 +34,22 @@ void fdi_instrument_discover_instruments(uint64_t identifier __attribute__((unus
     uint8_t buffer[256];
     fd_binary_t binary;
     fd_binary_initialize(&binary, buffer, sizeof(buffer));
-    fd_binary_put_varuint(&binary, fdi_instrument_count);
+
+    uint32_t instrument_count = fdi_instrument_manager.instrument_count;
+    const fdi_api_configuration_t *configuration = fdi_api_get_configuration();
+    for (uint32_t i = 0; i < configuration->apic_count; ++i) {
+        fdi_apic_t *apic = &configuration->apics[i];
+        instrument_count += apic->instrument_count;
+    }
+
+    fd_binary_put_varuint(&binary, instrument_count);
     
-    for (uint32_t i = 0; i < fdi_instrument_count; ++i) {
-        fdi_instrument_t *instrument = fdi_instruments[i];
+    for (uint32_t i = 0; i < fdi_instrument_manager.instrument_count; ++i) {
+        fdi_instrument_t *instrument = fdi_instrument_manager.instruments[i];
         fd_binary_put_string(&binary, instrument->category);
         fd_binary_put_varuint(&binary, instrument->identifier);
     }
 
-    const fdi_api_configuration_t *configuration = fdi_api_get_configuration();
     for (uint32_t i = 0; i < configuration->apic_count; ++i) {
         fdi_apic_t *apic = &configuration->apics[i];
         for (uint32_t j = 0; j < apic->instrument_count; ++j) {
@@ -52,8 +65,8 @@ void fdi_instrument_discover_instruments(uint64_t identifier __attribute__((unus
 }
 
 void fdi_instrument_reset_instruments(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary_in __attribute__((unused))) {
-    for (uint32_t i = 0; i < fdi_instrument_count; ++i) {
-        fdi_instrument_t *instrument = fdi_instruments[i];
+    for (uint32_t i = 0; i < fdi_instrument_manager.instrument_count; ++i) {
+        fdi_instrument_t *instrument = fdi_instrument_manager.instruments[i];
         if (instrument->reset) {
             instrument->reset(instrument->identifier, 0, 0);
         }
@@ -67,15 +80,16 @@ void fdi_instrument_reset_instruments(uint64_t identifier __attribute__((unused)
 }
 
 void fdi_instrument_register(fdi_instrument_t *instrument) {
-    if (fdi_instrument_count >= FDI_INSTRUMENT_LIMIT) {
+    fd_log_assert(fdi_instrument_manager.instrument_count < FDI_INSTRUMENT_LIMIT);
+    if (fdi_instrument_manager.instrument_count >= FDI_INSTRUMENT_LIMIT) {
         return;
     }
-    fdi_instruments[fdi_instrument_count] = instrument;
-    instrument->identifier = ++fdi_instrument_count;
+    fdi_instrument_manager.instruments[fdi_instrument_manager.instrument_count++] = instrument;
+    instrument->identifier = FDI_INSTRUMENT_IDENTIFIER_MIN + fdi_instrument_manager.instrument_count;
 }
 
 void fdi_instrument_initialize(void) {
-    fdi_instrument_count = 0;
+    memset(&fdi_instrument_manager, 0, sizeof(fdi_instrument_manager));
 
     fdi_api_register(apiIdentifierInstrumentManager, apiTypeResetInstruments, fdi_instrument_reset_instruments);
     fdi_api_register(apiIdentifierInstrumentManager, apiTypeDiscoverInstruments, fdi_instrument_discover_instruments);

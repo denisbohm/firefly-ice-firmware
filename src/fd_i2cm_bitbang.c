@@ -9,12 +9,28 @@ void fd_i2cm_initialize(
 ) {
     for (uint32_t i = 0; i < bus_count; ++i) {
         const fd_i2cm_bus_t *bus = &buses[i];
+        fd_gpio_set(bus->scl, true);
         fd_gpio_configure_output_open_drain(bus->scl);
+        fd_gpio_set(bus->sda, true);
         fd_gpio_configure_output_open_drain(bus->sda);
+        fd_i2cm_clear_bus(bus);
     }
 }
 
+void fd_i2cm_delay(void) {
+    fd_delay_us(5);
+}
+
 void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus) {
+    fd_gpio_set(bus->scl, true);
+    fd_gpio_set(bus->sda, true);
+    fd_i2cm_delay();
+    for (int i = 0; i < 9; ++i) {
+        fd_gpio_set(bus->scl, false);
+        fd_i2cm_delay();
+        fd_gpio_set(bus->scl, true);
+        fd_i2cm_delay();
+    }
 }
 
 void fd_i2cm_bus_enable(const fd_i2cm_bus_t *bus) {
@@ -27,42 +43,38 @@ bool fd_i2cm_bus_is_enabled(const fd_i2cm_bus_t *bus) {
     return true;
 }
 
-void i2c_delay(void) {
-    fd_delay_us(5);
-}
-
 void fd_i2cm_start(const fd_i2cm_bus_t *bus) {
     fd_gpio_set(bus->scl, true);
     fd_gpio_set(bus->sda, true);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->sda, false);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->scl, false);
-    i2c_delay();
+    fd_i2cm_delay();
 }
 
 void fd_i2cm_stop(const fd_i2cm_bus_t *bus) {
     fd_gpio_set(bus->sda, false);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->scl, true);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->sda, true);
-    i2c_delay();
+    fd_i2cm_delay();
 }
 
 void fd_i2cm_write_bit(const fd_i2cm_bus_t *bus, bool bit) {
     fd_gpio_set(bus->sda, bit);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->scl, true);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->scl, false);
 }
 
 bool fd_i2cm_read_bit(const fd_i2cm_bus_t *bus) {
     fd_gpio_set(bus->sda, true);
-    i2c_delay();
+    fd_i2cm_delay();
     fd_gpio_set(bus->scl, true);
-    i2c_delay();
+    fd_i2cm_delay();
     bool bit = fd_gpio_get(bus->sda);
     fd_gpio_set(bus->scl, false);
     return bit;

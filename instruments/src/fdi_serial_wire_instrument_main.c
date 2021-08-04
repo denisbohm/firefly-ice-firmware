@@ -51,23 +51,31 @@ static fd_i2cm_bus_t fdi_main_i2cm_buses[] = {
 
 static fd_i2cm_device_t fdi_main_i2cm_devices[] = {
     {
-        .bus = &fdi_main_i2cm_buses[1],
-        .channel = 0,
-        .address = 0x3c, // display
-    },
-    {
-        .bus = &fdi_main_i2cm_buses[1],
-        .channel = 0,
-        .address = 0x30, // power board
-    },
-    {
         .bus = &fdi_main_i2cm_buses[2],
         .channel = 0,
         .address = 0x32, // input output board
     },
+    {
+        .bus = &fdi_main_i2cm_buses[2],
+        .channel = 0,
+        .address = 0x30, // power board
+    },
+    {
+        .bus = &fdi_main_i2cm_buses[1],
+        .channel = 0,
+        .address = 0x3c, // display
+    },
 };
 
-static fdi_apic_t fdi_main_apics[2];
+static fdi_apic_t fdi_main_apics[1]; // 2];
+
+bool fdi_main_usb_transmit(uint8_t *data, size_t length) {
+    if (!fdi_usb_can_send()) {
+        return false;
+    }
+    fdi_usb_send(data, length);
+    return true;
+}
 
 void main(void) {
     fdi_clock_start_high_speed_internal();
@@ -92,7 +100,7 @@ void main(void) {
         fdi_main_i2cm_devices, sizeof(fdi_main_i2cm_devices) / sizeof(fdi_main_i2cm_devices[0])
     );
 
-    fd_ssd1315_initialize(&fdi_main_i2cm_devices[0]);
+    fd_ssd1315_initialize(&fdi_main_i2cm_devices[2]);
     fd_ssd1315_write_image_start(0, 0, 128, 64);
     static const uint8_t image_data[8] = { 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f };
     for (int i = 0; i < 128; ++i) {
@@ -101,29 +109,31 @@ void main(void) {
     fd_ssd1315_write_image_end();
     fd_ssd1315_display_on();
 
-#if 1
-    fdi_apic_t *apic = &fdi_main_apics[0];
-    const fd_i2cm_device_t *device = &fdi_main_i2cm_devices[2];
-    fdi_apic_initialize(apic, device);
-    while (true) {
-        fdi_apic_discover_instruments(apic);
-        fdi_delay_ms(1000);
+    uint32_t apic_count = sizeof(fdi_main_apics) / sizeof(fdi_main_apics[0]);
+    for (uint32_t i = 0; i < apic_count; ++i) {
+        fdi_apic_initialize(&fdi_main_apics[i], &fdi_main_i2cm_devices[i]);
     }
-#endif
 
     fdi_api_initialize((fdi_api_configuration_t) {
-        .can_transmit = fdi_usb_can_send,
-        .transmit = fdi_usb_send,
+        .transmit = fdi_main_usb_transmit,
+        .apic_count = apic_count,
+        .apics = fdi_main_apics,
     });
+#if 0
     fdi_usb_initialize();
     fdi_usb_set_data_callback(fdi_api_rx_callback);
     fdi_usb_set_tx_ready_callback(fdi_api_tx_callback);
     fdi_usb_power_up();
+#endif
 
     fdi_instrument_initialize();
     fdi_relay_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
     fdi_storage_instrument_initialize();
+
+    for (uint32_t i = 0; i < apic_count; ++i) {
+        fdi_apic_discover_instruments(&fdi_main_apics[i]);
+    }
 
 #if 0
     fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
@@ -149,7 +159,7 @@ void main(void) {
     success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
 #endif
 
-#if 1
+#if 0
     fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
     fdi_serial_wire_reset(serial_wire);
     fdi_serial_wire_set_power(serial_wire, true);

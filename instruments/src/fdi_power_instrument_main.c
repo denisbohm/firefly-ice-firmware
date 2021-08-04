@@ -31,7 +31,6 @@ void main(void) {
     fdi_adc_power_up();
 
     fdi_api_initialize((fdi_api_configuration_t) {
-        .can_transmit = fdi_i2cs_can_transmit,
         .transmit = fdi_i2cs_transmit,
     });
     fdi_i2cs_initialize((fdi_i2cs_configuration_t) {

@@ -1,6 +1,7 @@
 #include "fdi_apic.h"
 
-#include "fd_detour.h"
+#include "fdi_detour.h"
+
 #include "fd_log.h"
 
 #include <string.h>
@@ -67,9 +68,9 @@ bool fdi_apic_write(
 }
 
 bool fdi_apic_rx(fdi_apic_t *apic, fdi_apic_response_t *response) {
-    fd_detour_t detour;
-    fd_detour_initialize(&detour, apic->data, sizeof(apic->data));
-    while (detour.state != fd_detour_state_success) {
+    fdi_detour_t detour;
+    fdi_detour_initialize(&detour, apic->data, sizeof(apic->data));
+    while (detour.state != fdi_detour_state_success) {
         fd_i2cm_transfer_t transfers[] = {
             {
                 .direction = fd_i2cm_direction_rx,
@@ -84,8 +85,8 @@ bool fdi_apic_rx(fdi_apic_t *apic, fdi_apic_response_t *response) {
         if (!fd_i2cm_device_io(apic->device, &io)) {
             return false;
         }
-        fd_detour_event(&detour, apic->subdata, sizeof(apic->subdata));
-        if (detour.state == fd_detour_state_error) {
+        fdi_detour_event(&detour, apic->subdata, sizeof(apic->subdata));
+        if (detour.state == fdi_detour_state_error) {
             return false;
         }
     }
@@ -100,9 +101,11 @@ bool fdi_apic_read(
     uint32_t api,
     fdi_apic_response_t *response
 ) {
-    fdi_apic_response_t raw;
-    if (!fdi_apic_rx(apic, &raw)) {
-        return false;
+    fdi_apic_response_t raw = { .data = 0, .count = 0 };
+    while (raw.count == 0) {
+        if (!fdi_apic_rx(apic, &raw)) {
+            return false;
+        }
     }
 
     fd_binary_initialize(&apic->packet, (uint8_t *)raw.data, raw.count);
@@ -150,7 +153,7 @@ void fdi_apic_discover_instruments_response(
         memcpy(instrument->category, category.data, category.length);
         instrument->category[category.length] = '\0';
         instrument->identifier = identifier;
-        if (i = 0) {
+        if (i == 0) {
             apic->identifier_min = identifier;
             apic->identifier_max = identifier;
         } else {

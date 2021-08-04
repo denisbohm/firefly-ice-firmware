@@ -36,8 +36,9 @@ void fdi_instrument_discover_instruments(uint64_t identifier __attribute__((unus
         fd_binary_put_varuint(&binary, instrument->identifier);
     }
 
-    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
-        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+    const fdi_api_configuration_t *configuration = fdi_api_get_configuration();
+    for (uint32_t i = 0; i < configuration->apic_count; ++i) {
+        fdi_apic_t *apic = &configuration->apics[i];
         for (uint32_t j = 0; j < apic->instrument_count; ++j) {
             fdi_apic_instrument_t *instrument = &apic->instruments[j];
             fd_binary_put_string(&binary, instrument->category);
@@ -58,8 +59,9 @@ void fdi_instrument_reset_instruments(uint64_t identifier __attribute__((unused)
         }
     }
 
-    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
-        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+    const fdi_api_configuration_t *configuration = fdi_api_get_configuration();
+    for (uint32_t i = 0; i < configuration->apic_count; ++i) {
+        fdi_apic_t *apic = &configuration->apics[i];
         fdi_apic_reset_instruments(apic);
     }
 }

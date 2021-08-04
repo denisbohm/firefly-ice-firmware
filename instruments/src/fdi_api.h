@@ -14,15 +14,13 @@ typedef void (*fdi_api_transmit_handler_t)(uint8_t *data, uint32_t length);
 typedef void (*fdi_api_dispatch_handler_t)(uint64_t identifier, uint64_t type, fd_binary_t *binary);
 
 typedef struct {
-    bool (*can_transmit)(void);
-    void (*transmit)(uint8_t *data, size_t length);
+    bool (*transmit)(uint8_t *data, size_t length);
     uint32_t apic_count;
-    fdi_apic_t apics[2];
+    fdi_apic_t *apics;
 } fdi_api_configuration_t;
 
-extern fdi_api_configuration_t fdi_api_configuration;
-
 void fdi_api_initialize(fdi_api_configuration_t configuration);
+const fdi_api_configuration_t *fdi_api_get_configuration(void);
 void fdi_api_rx_callback(uint8_t *data, uint32_t length);
 void fdi_api_tx_callback(void);
 

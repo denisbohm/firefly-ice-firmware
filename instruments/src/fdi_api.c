@@ -7,8 +7,6 @@
 
 #include <string.h>
 
-fdi_api_configuration_t fdi_api_configuration;
-
 #define fdi_api_send_limit 64
 
 typedef struct {
@@ -17,8 +15,6 @@ typedef struct {
     uint32_t offset;
 } fdi_api_merge_t;
 
-fdi_api_merge_t fdi_api_merge;
-
 typedef struct {
     uint64_t identifier;
     uint64_t type;
@@ -26,35 +22,51 @@ typedef struct {
 } fdi_api_entry_t;
 
 #define fdi_api_entry_size 512
-fdi_api_entry_t fdi_api_entrys[fdi_api_entry_size];
-uint32_t fdi_api_entry_count;
 
-uint32_t fdi_api_tx_index;
-uint32_t fdi_api_tx_length;
+typedef struct {
+    uint64_t identifier;
+    uint64_t type;
+} fdi_api_event_t;
+
 #define fdi_api_tx_size 5120
-uint8_t fdi_api_tx_buffer[fdi_api_tx_size];
-
-uint32_t fdi_api_rx_index;
-uint32_t fdi_api_rx_length;
 #define fdi_api_rx_size 5120
-uint8_t fdi_api_rx_buffer[fdi_api_rx_size];
 
-fdi_api_can_transmit_handler_t fdi_api_can_transmit_handler;
-fdi_api_transmit_handler_t fdi_api_transmit_handler;
-fdi_api_dispatch_handler_t fdi_api_dispatch_handler;
+typedef struct {
+    fdi_api_configuration_t configuration;
+
+    fdi_api_merge_t merge;
+
+    fdi_api_entry_t entrys[fdi_api_entry_size];
+    uint32_t entry_count;
+
+    uint32_t tx_index;
+    uint32_t tx_length;
+    uint8_t tx_buffer[fdi_api_tx_size];
+
+    uint32_t rx_index;
+    uint32_t rx_length;
+    uint8_t rx_buffer[fdi_api_rx_size];
+
+    int transmit_count;
+
+    fdi_api_event_t event_history[256];
+    uint32_t event_history_index;
+} fdi_api_t;
+
+fdi_api_t fdi_api;
 
 void fdi_api_register(uint64_t identifier, uint64_t type, fdi_api_function_t function) {
-    fd_log_assert(fdi_api_entry_count < fdi_api_entry_size);
-    fdi_api_entry_t *entry = &fdi_api_entrys[fdi_api_entry_count];
+    fd_log_assert(fdi_api.entry_count < fdi_api_entry_size);
+    fdi_api_entry_t *entry = &fdi_api.entrys[fdi_api.entry_count];
     entry->identifier = identifier;
     entry->type = type;
     entry->function = function;
-    fdi_api_entry_count += 1;
+    fdi_api.entry_count += 1;
 }
 
 fdi_api_function_t fdi_api_lookup(uint64_t identifier, uint64_t type) {
-    for (uint32_t i = 0; i < fdi_api_entry_count; ++i) {
-        fdi_api_entry_t *entry = &fdi_api_entrys[i];
+    for (uint32_t i = 0; i < fdi_api.entry_count; ++i) {
+        fdi_api_entry_t *entry = &fdi_api.entrys[i];
         if ((entry->identifier == identifier) && (entry->type == type)) {
             return entry->function;
         }
@@ -62,44 +74,29 @@ fdi_api_function_t fdi_api_lookup(uint64_t identifier, uint64_t type) {
     return 0;
 }
 
-bool fdi_api_can_transmit(void) {
-    return fdi_api_configuration.can_transmit();
-}
-
-void fdi_api_transmit(uint8_t *data, uint32_t length) {
-    fdi_api_configuration.transmit(data, length);
-}
-
-int fdi_api_transmit_count = 0;
-
 // remove data from tx buffer
 bool fdi_api_process_tx(void) {
-    if ((fdi_api_tx_length > 0) && fdi_api_can_transmit_handler()) {
-        uint8_t length = fdi_api_tx_buffer[fdi_api_tx_index];
-        fd_log_assert((fdi_api_tx_index + length) <= fdi_api_tx_length);
-        fdi_api_tx_index += 1;
-        ++fdi_api_transmit_count;
-        fdi_api_transmit_handler(&fdi_api_tx_buffer[fdi_api_tx_index], length);
-        fdi_api_tx_index += length;
-        if (fdi_api_tx_index == fdi_api_tx_length) {
-            fdi_api_tx_index = 0;
-            fdi_api_tx_length = 0;
-        }
-        return true;
+    if (fdi_api.tx_length == 0) {
+        return false;
     }
-    return false;
+
+    uint8_t length = fdi_api.tx_buffer[fdi_api.tx_index];
+    fd_log_assert((fdi_api.tx_index + length) <= fdi_api.tx_length);
+    if (!fdi_api.configuration.transmit(&fdi_api.tx_buffer[fdi_api.tx_index + 1], length)) {
+        return false;
+    }
+
+    ++fdi_api.transmit_count;
+    fdi_api.tx_index += 1 + length;
+    if (fdi_api.tx_index == fdi_api.tx_length) {
+        fdi_api.tx_index = 0;
+        fdi_api.tx_length = 0;
+    }
+    return true;
 }
 
-typedef struct {
-    uint64_t identifier;
-    uint64_t type;
-} fdi_api_event_t;
-
-fdi_api_event_t fdi_api_event_history[256];
-uint32_t fdi_api_event_history_index = 0;
-
 void fdi_api_dispatch(uint64_t identifier, uint64_t type, fd_binary_t *binary) {
-    fdi_api_event_t *event = &fdi_api_event_history[fdi_api_event_history_index++ & 0xff];
+    fdi_api_event_t *event = &fdi_api.event_history[fdi_api.event_history_index++ & 0xff];
     event->identifier = identifier;
     event->type = type;
     
@@ -110,8 +107,8 @@ void fdi_api_dispatch(uint64_t identifier, uint64_t type, fd_binary_t *binary) {
         return;
     }
 
-    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
-        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+    for (uint32_t i = 0; i < fdi_api.configuration.apic_count; ++i) {
+        fdi_apic_t *apic = &fdi_api.configuration.apics[i];
         if ((apic->identifier_min <= identifier) && (identifier <= apic->identifier_max)) {
             uint8_t *content = &binary->buffer[binary->get_index];
             size_t count = binary->size - binary->get_index;
@@ -126,8 +123,8 @@ void fdi_api_dispatch(uint64_t identifier, uint64_t type, fd_binary_t *binary) {
 // remove data from rx buffer
 bool fdi_api_process_rx(void) {
     uint32_t primask = fdi_interrupt_disable();
-    uint32_t index = fdi_api_rx_index;
-    uint32_t length = fdi_api_rx_length;
+    uint32_t index = fdi_api.rx_index;
+    uint32_t length = fdi_api.rx_length;
     fdi_interrupt_restore(primask);
 
     if (index >= length) {
@@ -135,7 +132,7 @@ bool fdi_api_process_rx(void) {
     }
 
     fd_binary_t binary;
-    fd_binary_initialize(&binary, &fdi_api_rx_buffer[index], length - index);
+    fd_binary_initialize(&binary, &fdi_api.rx_buffer[index], length - index);
     uint32_t function_length = (uint32_t)fd_binary_get_uint16(&binary);
     do {
         uint64_t identifier = fd_binary_get_varuint(&binary);
@@ -143,7 +140,7 @@ bool fdi_api_process_rx(void) {
         uint32_t content_length = (uint32_t)fd_binary_get_varuint(&binary);
         uint32_t content_index = binary.get_index;
         if (binary.flags == 0) {
-            fdi_api_dispatch_handler(identifier, type, &binary);
+            fdi_api_dispatch(identifier, type, &binary);
         } else {
             fd_log_assert_fail("underflow");
         }
@@ -152,11 +149,11 @@ bool fdi_api_process_rx(void) {
     } while (binary.get_index < binary.size);
 
     primask = fdi_interrupt_disable();
-    fdi_api_rx_index += 2 + function_length;
+    fdi_api.rx_index += 2 + function_length;
     // if buffer is empty and there isn't a transfer occurring reset the buffer
-    if ((fdi_api_rx_index >= fdi_api_rx_length) && (fdi_api_merge.length == 0)) {
-        fdi_api_rx_index = 0;
-        fdi_api_rx_length = 0;
+    if ((fdi_api.rx_index >= fdi_api.rx_length) && (fdi_api.merge.length == 0)) {
+        fdi_api.rx_index = 0;
+        fdi_api.rx_length = 0;
     }
     fdi_interrupt_restore(primask);
     return true;
@@ -165,8 +162,8 @@ bool fdi_api_process_rx(void) {
 void fdi_api_process(void) {
     while (fdi_api_process_tx());
 
-    for (uint32_t i = 0; i < fdi_api_configuration.apic_count; ++i) {
-        fdi_apic_t *apic = &fdi_api_configuration.apics[i];
+    for (uint32_t i = 0; i < fdi_api.configuration.apic_count; ++i) {
+        fdi_apic_t *apic = &fdi_api.configuration.apics[i];
         fdi_apic_response_t raw;
         if (!fdi_apic_rx(apic, &raw)) {
             continue;
@@ -175,6 +172,9 @@ void fdi_api_process(void) {
         fd_binary_initialize(&binary, (uint8_t *)raw.data, raw.count);
         uint64_t identifier = fd_binary_get_varuint(&binary);
         uint64_t type = fd_binary_get_varuint(&binary);
+        if (binary.flags & FD_BINARY_FLAG_OVERFLOW) {
+            continue;
+        }
         if (identifier == 0) {
             if (type == 0) {
                 // no response data pending
@@ -188,7 +188,6 @@ void fdi_api_process(void) {
         }
         uint8_t *data = &binary.buffer[binary.get_index];
         uint32_t count = binary.size - binary.get_index;
-        if (identifier == 0)
         fdi_api_send(identifier, type, data, count);
         while (fdi_api_process_tx());
     }
@@ -207,13 +206,13 @@ bool fdi_api_send(uint64_t identifier, uint64_t type, uint8_t *data, uint32_t le
     uint32_t header_length = binary.put_index;
     uint32_t content_length = header_length + length;
 
-    uint32_t buffer_index = fdi_api_tx_length;
+    uint32_t buffer_index = fdi_api.tx_length;
     uint32_t data_index = 0;
     uint32_t data_remaining = length;
     uint64_t ordinal = 0;
     while ((ordinal == 0) || (data_remaining > 0)) {
         uint32_t free = fdi_api_tx_size - buffer_index;
-        fd_binary_initialize(&binary, &fdi_api_tx_buffer[buffer_index], free);
+        fd_binary_initialize(&binary, &fdi_api.tx_buffer[buffer_index], free);
         fd_binary_put_uint8(&binary, 0 /* length placeholder */);
         fd_binary_put_varuint(&binary, ordinal);
         if (ordinal == 0) {
@@ -229,21 +228,23 @@ bool fdi_api_send(uint64_t identifier, uint64_t type, uint8_t *data, uint32_t le
         }
         fd_binary_put_bytes(&binary, &data[data_index], amount);
         if (binary.flags & FD_BINARY_FLAG_OVERFLOW) {
+            fdi_api.tx_index = 0;
+            fdi_api.tx_length = 0;
             return false;
         }
         data_index += amount;
         data_remaining -= amount;
-        fdi_api_tx_buffer[buffer_index] = binary.put_index - 1;
+        fdi_api.tx_buffer[buffer_index] = binary.put_index - 1;
         buffer_index += binary.put_index;
         ordinal += 1;
     }
 
-    fdi_api_tx_length = buffer_index;
+    fdi_api.tx_length = buffer_index;
     return true;
 }
 
 void fdi_api_merge_clear(void) {
-    memset(&fdi_api_merge, 0, sizeof(fdi_api_merge));
+    memset(&fdi_api.merge, 0, sizeof(fdi_api.merge));
 }
 
 // called from interrupt context
@@ -260,54 +261,47 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
     uint64_t ordinal = fd_binary_get_varuint(&binary);
     if (ordinal == 0) {
         // start of sequence
-        fd_log_assert(fdi_api_merge.ordinal == 0);
+        fd_log_assert(fdi_api.merge.ordinal == 0);
         fdi_api_merge_clear();
-        fdi_api_merge.length = (uint32_t)fd_binary_get_varuint(&binary);
-        fd_log_assert(fdi_api_merge.length < fdi_api_rx_size);
+        fdi_api.merge.length = (uint32_t)fd_binary_get_varuint(&binary);
+        fd_log_assert(fdi_api.merge.length < fdi_api_rx_size);
         fd_binary_t binary_rx;
-        fd_binary_initialize(&binary_rx, &fdi_api_rx_buffer[fdi_api_rx_length], fdi_api_rx_size - fdi_api_rx_length);
-        fd_binary_put_uint16(&binary_rx, fdi_api_merge.length);
+        fd_binary_initialize(&binary_rx, &fdi_api.rx_buffer[fdi_api.rx_length], fdi_api_rx_size - fdi_api.rx_length);
+        fd_binary_put_uint16(&binary_rx, fdi_api.merge.length);
     } else {
-        if (ordinal != (fdi_api_merge.ordinal + 1)) {
+        if (ordinal != (fdi_api.merge.ordinal + 1)) {
             fd_log_assert_fail("out of sequence");
             fdi_api_merge_clear();
             return;
         }
-        fdi_api_merge.ordinal += 1;
+        fdi_api.merge.ordinal += 1;
     }
 
     uint8_t *content_data = &data[binary.get_index];
     uint32_t content_length = length - binary.get_index;
 
-    uint32_t rx_free = fdi_api_rx_size - (fdi_api_rx_length + 2 + fdi_api_merge.offset + content_length);
+    uint32_t rx_free = fdi_api_rx_size - (fdi_api.rx_length + 2 + fdi_api.merge.offset + content_length);
     if (content_length > rx_free) {
         fd_log_assert_fail("overflow");
         fdi_api_merge_clear();
         return;
     }
 
-    memcpy(&fdi_api_rx_buffer[fdi_api_rx_length + 2 + fdi_api_merge.offset], content_data, content_length);
-    fdi_api_merge.offset += content_length;
+    memcpy(&fdi_api.rx_buffer[fdi_api.rx_length + 2 + fdi_api.merge.offset], content_data, content_length);
+    fdi_api.merge.offset += content_length;
 
-    if (fdi_api_merge.offset >= fdi_api_merge.length) {
+    if (fdi_api.merge.offset >= fdi_api.merge.length) {
         // merge complete
-        fdi_api_rx_length += 2 + fdi_api_merge.length;
+        fdi_api.rx_length += 2 + fdi_api.merge.length;
         fdi_api_merge_clear();
     }
 }
 
+const fdi_api_configuration_t *fdi_api_get_configuration(void) {
+    return &fdi_api.configuration;
+}
+
 void fdi_api_initialize(fdi_api_configuration_t configuration) {
-    fdi_api_configuration = configuration;
-
-    fdi_api_entry_count = 0;
-
-    fdi_api_tx_index = 0;
-    fdi_api_tx_length = 0;
-
-    fdi_api_rx_index = 0;
-    fdi_api_rx_length = 0;
-
-    fdi_api_can_transmit_handler = fdi_api_can_transmit;
-    fdi_api_transmit_handler = fdi_api_transmit;
-    fdi_api_dispatch_handler = fdi_api_dispatch;
+    memset(&fdi_api, 0, sizeof(fdi_api));
+    fdi_api.configuration = configuration;
 }

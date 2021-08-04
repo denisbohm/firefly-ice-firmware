@@ -24,6 +24,7 @@ typedef struct {
     DMA_HandleTypeDef hdma_rx;
 #endif
     bool has_pending_tx;
+    bool send_pending_tx;
     bool tx_underflow;
     bool tx_overflow;
     bool rx_underflow;
@@ -144,17 +145,22 @@ void fdi_i2cs_initialize(fdi_i2cs_configuration_t configuration) {
 #endif
 }
 
-bool fdi_i2cs_can_transmit(void) {
-    return !fdi_i2cs.has_pending_tx;
-}
+bool fdi_i2cs_transmit(uint8_t *data, size_t size) {
+    if (fdi_i2cs.has_pending_tx) {
+        return false;
+    }
 
-void fdi_i2cs_transmit(uint8_t *data, size_t size) {
     fd_log_assert(size <= sizeof(fdi_i2cs.tx_buffer));
-    fd_log_assert(!fdi_i2cs.has_pending_tx);
-    fdi_i2cs.has_pending_tx = true;
 
     memcpy(fdi_i2cs.tx_buffer, data, size);
     memset(&fdi_i2cs.tx_buffer[size], 0, sizeof(fdi_i2cs.tx_buffer) - size);
+#if 0
+    for (int i = 0; i < 64; ++i) {
+        fdi_i2cs.tx_buffer[i] = i;
+    }
+#endif
+    fdi_i2cs.has_pending_tx = true;
+    return true;
 }
 
 #ifdef FDI_I2CS_HAL
@@ -208,6 +214,8 @@ void I2C1_EV_IRQHandler(void) {
 #endif
             I2C1->ISR |= I2C_ISR_TXE;
             I2C1->CR1 |= I2C_CR1_TXIE;
+
+            fdi_i2cs.send_pending_tx = fdi_i2cs.has_pending_tx;
         } else {
             // write
 
@@ -243,7 +251,7 @@ void I2C1_EV_IRQHandler(void) {
     }
 
     if ((isr & I2C_ISR_DIR) && (isr & I2C_ISR_TXIS)) {
-        if (fdi_i2cs.has_pending_tx && (fdi_i2cs.tx_index < sizeof(fdi_i2cs.tx_buffer))) {
+        if (fdi_i2cs.send_pending_tx && (fdi_i2cs.tx_index < sizeof(fdi_i2cs.tx_buffer))) {
             I2C1->TXDR = fdi_i2cs.tx_buffer[fdi_i2cs.tx_index++];
         } else {
             I2C1->TXDR = 0x00;
@@ -259,6 +267,7 @@ void I2C1_EV_IRQHandler(void) {
             fdi_i2cs.rx_underflow = true;
         }
 
+        fdi_i2cs.send_pending_tx = false;
         if (fdi_i2cs.tx_index == sizeof(fdi_i2cs.tx_buffer)) {
             fdi_i2cs.has_pending_tx = false;
             fdi_i2cs.configuration.tx_ready();

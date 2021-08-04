@@ -27,94 +27,75 @@ bool fd_i2cm_bus_is_enabled(const fd_i2cm_bus_t *bus) {
     return true;
 }
 
-#define I2C_SET_SCL() fd_gpio_set(scl, true)
-#define I2C_CLR_SCL() fd_gpio_set(scl, false)
-#define I2C_SET_SDA() fd_gpio_set(sda, true)
-#define I2C_CLR_SDA() fd_gpio_set(sda, false)
-#define I2C_DELAY() fd_delay_us(5)
+void i2c_delay(void) {
+    fd_delay_us(5);
+}
 
-#define i2c_start()\
-    I2C_SET_SCL();\
-    I2C_SET_SDA();\
-    I2C_DELAY();\
-    I2C_CLR_SDA();\
-    I2C_DELAY();\
-    I2C_CLR_SCL();\
-    I2C_DELAY()
+void fd_i2cm_start(const fd_i2cm_bus_t *bus) {
+    fd_gpio_set(bus->scl, true);
+    fd_gpio_set(bus->sda, true);
+    i2c_delay();
+    fd_gpio_set(bus->sda, false);
+    i2c_delay();
+    fd_gpio_set(bus->scl, false);
+    i2c_delay();
+}
 
-#define i2c_stop()\
-    I2C_CLR_SDA();\
-    I2C_DELAY();\
-    I2C_SET_SCL();\
-    I2C_DELAY();\
-    I2C_SET_SDA();\
-    I2C_DELAY();
+void fd_i2cm_stop(const fd_i2cm_bus_t *bus) {
+    fd_gpio_set(bus->sda, false);
+    i2c_delay();
+    fd_gpio_set(bus->scl, true);
+    i2c_delay();
+    fd_gpio_set(bus->sda, true);
+    i2c_delay();
+}
 
-#define i2c_write_bit(b)\
-    fd_gpio_set(sda, b);\
-    I2C_DELAY();\
-    I2C_SET_SCL();\
-    I2C_DELAY();\
-    I2C_CLR_SCL();
+void fd_i2cm_write_bit(const fd_i2cm_bus_t *bus, bool bit) {
+    fd_gpio_set(bus->sda, bit);
+    i2c_delay();
+    fd_gpio_set(bus->scl, true);
+    i2c_delay();
+    fd_gpio_set(bus->scl, false);
+}
 
-#define i2c_read_bit(b)\
-    I2C_SET_SDA();\
-    I2C_DELAY();\
-    I2C_SET_SCL();\
-    I2C_DELAY();\
-    b = fd_gpio_get(sda);\
-    I2C_CLR_SCL();
+bool fd_i2cm_read_bit(const fd_i2cm_bus_t *bus) {
+    fd_gpio_set(bus->sda, true);
+    i2c_delay();
+    fd_gpio_set(bus->scl, true);
+    i2c_delay();
+    bool bit = fd_gpio_get(bus->sda);
+    fd_gpio_set(bus->scl, false);
+    return bit;
+}
 
-bool i2c_write_byte(const fd_i2cm_bus_t *bus, uint8_t byte, bool start, bool stop) {
-    const fd_gpio_t scl = bus->scl;
-    const fd_gpio_t sda = bus->sda;
-
-    if (start) {
-        i2c_start();
-    }
-
+bool fd_i2cm_write_byte(const fd_i2cm_bus_t *bus, uint8_t byte) {
     for (int i = 0; i < 8; ++i) {
-        i2c_write_bit((byte & 0x80) != 0);
+        fd_i2cm_write_bit(bus, (byte & 0x80) != 0);
         byte <<= 1;
     }
-    
-    fd_gpio_configure_input(sda);
-    uint8_t ack;
-    i2c_read_bit(ack);
-    fd_gpio_configure_output_open_drain(sda);
 
-    if (stop) {
-        i2c_stop();
-    }
-    
+    fd_gpio_set(bus->sda, true);
+    fd_gpio_configure_input(bus->sda);
+    bool ack = fd_i2cm_read_bit(bus);
+    fd_gpio_configure_output_open_drain(bus->sda);
     return !ack;
 }
 
-uint8_t i2c_read_byte(const fd_i2cm_bus_t *bus, bool ack, bool stop) {
-    const fd_gpio_t scl = bus->scl;
-    const fd_gpio_t sda = bus->sda;
-
-    fd_gpio_configure_input(sda);
+uint8_t fd_i2cm_read_byte(const fd_i2cm_bus_t *bus, bool ack) {
+    fd_gpio_configure_input(bus->sda);
     uint8_t byte = 0;
     for (int i = 0; i < 8; ++i) {
-        bool bit;
-        i2c_read_bit(bit);
+        bool bit = fd_i2cm_read_bit(bus);
         byte = (byte << 1) | (bit ? 1 : 0);
     }
-    fd_gpio_configure_output_open_drain(sda);
-
-    i2c_write_bit(!ack);
-
-    if (stop) {
-        i2c_stop();
-    }
-
+    fd_gpio_configure_output_open_drain(bus->sda);
+    fd_i2cm_write_bit(bus, !ack);
     return byte;
 }
 
-bool fd_i2cm_bus_tx(const fd_i2cm_bus_t *bus, const uint8_t *bytes, uint32_t count, bool stop) {
+bool fd_i2cm_bus_tx(const fd_i2cm_bus_t *bus, const uint8_t *bytes, uint32_t count) {
     for (int i = 0; i < count; ++i) {
-        bool ack = i2c_write_byte(bus, bytes[i], false, stop && (i == (count - 1)));
+        bool ack = fd_i2cm_write_byte(bus, bytes[i]);
         if (!ack) {
             return false;
         }
@@ -122,43 +103,51 @@ bool fd_i2cm_bus_tx(const fd_i2cm_bus_t *bus, const uint8_t *bytes, uint32_t cou
     return true;
 }
 
-void fd_i2cm_bus_rx(const fd_i2cm_bus_t *bus, uint8_t *bytes, uint32_t count, bool stop) {
+void fd_i2cm_bus_rx(const fd_i2cm_bus_t *bus, uint8_t *bytes, uint32_t count, bool ack) {
     for (int i = 0; i < count; ++i) {
-        bytes[i] = i2c_read_byte(bus, true, stop && (i == (count - 1)));
+        bytes[i] = fd_i2cm_read_byte(bus, ack || (i < (count - 1)));
     }
 }
 
-bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
-    const fd_i2cm_bus_t *bus = device->bus;
-    const fd_gpio_t scl = bus->scl;
-    const fd_gpio_t sda = bus->sda;
+bool fd_i2cm_start_write(const fd_i2cm_device_t *device) {
+    fd_i2cm_start(device->bus);
+    return fd_i2cm_write_byte(device->bus, device->address << 1);
+}
 
+bool fd_i2cm_start_read(const fd_i2cm_device_t *device) {
+    fd_i2cm_start(device->bus);
+    return fd_i2cm_write_byte(device->bus, (device->address << 1) | 1);
+}
+
+bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
     int last_direction = -1;
     bool ack = true;
     for (int i = 0; i < io->transfer_count; ++i) {
-        bool stop = i == io->transfer_count - 1;
         const fd_i2cm_transfer_t *transfer = &io->transfers[i];
         switch (transfer->direction) {
             case fd_i2cm_direction_tx:
                 if (transfer->direction != last_direction) {
-                    ack = i2c_write_byte(bus, device->address << 1, true, false);
+                    ack = fd_i2cm_start_write(device);
                     if (!ack) {
                         goto stop;
                     }
                 }
-                ack = fd_i2cm_bus_tx(bus, transfer->bytes, transfer->byte_count, stop);
+                ack = fd_i2cm_bus_tx(device->bus, transfer->bytes, transfer->byte_count);
                 if (!ack) {
                     goto stop;
                 }
             break;
             case fd_i2cm_direction_rx:
                 if (transfer->direction != last_direction) {
-                    ack = i2c_write_byte(bus, (device->address << 1) | 1, true, false);
+                    ack = fd_i2cm_start_read(device);
                     if (!ack) {
                         goto stop;
                     }
                 }
-                fd_i2cm_bus_rx(bus, transfer->bytes, transfer->byte_count, stop);
+                bool rx_ack =
+                    (i < io->transfer_count - 1) ||
+                    (io->transfers[i + 1].direction == fd_i2cm_direction_rx);
+                fd_i2cm_bus_rx(device->bus, transfer->bytes, transfer->byte_count, rx_ack);
             break;
             default:
             break;
@@ -167,7 +156,7 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
     }
     
 stop:
-    i2c_stop();
+    fd_i2cm_stop(device->bus);
     return ack;
 }
 

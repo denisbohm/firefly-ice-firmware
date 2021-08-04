@@ -13,7 +13,6 @@ typedef struct {
 
 void fdi_i2cs_initialize(fdi_i2cs_configuration_t configuration);
 
-bool fdi_i2cs_can_transmit(void);
-void fdi_i2cs_transmit(uint8_t *data, size_t size);
+bool fdi_i2cs_transmit(uint8_t *data, size_t size);
 
 #endif

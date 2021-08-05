@@ -112,7 +112,7 @@ uint32_t fdi_gpio_instrument_get_capabilities(fdi_gpio_instrument_t *instrument)
     if (instrument->setup->has_auxiliary) {
         capabilities |= 0x00000004;
     }
-    return 0;
+    return capabilities;
 }
 
 void fdi_gpio_instrument_api_get_capabilities(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary __attribute((unused))) {

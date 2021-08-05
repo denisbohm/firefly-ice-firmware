@@ -168,6 +168,7 @@ void fdi_api_process(void) {
         fd_binary_initialize(&binary, (uint8_t *)raw.data, raw.count);
         uint64_t identifier = fd_binary_get_varuint(&binary);
         uint64_t type = fd_binary_get_varuint(&binary);
+        uint64_t length = fd_binary_get_varuint(&binary);
         if (binary.flags & FD_BINARY_FLAG_OVERFLOW) {
             continue;
         }
@@ -184,6 +185,7 @@ void fdi_api_process(void) {
         }
         uint8_t *data = &binary.buffer[binary.get_index];
         uint32_t count = binary.size - binary.get_index;
+        fd_log_assert(length == count);
         fdi_api_send(identifier, type, data, count);
         while (fdi_api_process_tx());
     }

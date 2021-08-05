@@ -34,8 +34,6 @@ typedef struct {
 typedef struct {
     fdi_api_configuration_t configuration;
 
-    fdi_api_merge_t merge;
-
     fdi_api_entry_t entrys[fdi_api_entry_size];
     uint32_t entry_count;
 
@@ -43,11 +41,10 @@ typedef struct {
     uint32_t tx_length;
     uint8_t tx_buffer[fdi_api_tx_size];
 
+    fdi_api_merge_t merge;
     uint32_t rx_index;
     uint32_t rx_length;
     uint8_t rx_buffer[fdi_api_rx_size];
-
-    int transmit_count;
 
     fdi_api_event_t event_history[256];
     uint32_t event_history_index;
@@ -86,7 +83,6 @@ bool fdi_api_process_tx(void) {
         return false;
     }
 
-    ++fdi_api.transmit_count;
     fdi_api.tx_index += 1 + length;
     if (fdi_api.tx_index == fdi_api.tx_length) {
         fdi_api.tx_index = 0;
@@ -125,16 +121,16 @@ bool fdi_api_process_rx(void) {
     uint32_t primask = fdi_interrupt_disable();
     uint32_t index = fdi_api.rx_index;
     uint32_t length = fdi_api.rx_length;
+    fd_binary_t binary;
+    fd_binary_initialize(&binary, &fdi_api.rx_buffer[index], length - index);
     fdi_interrupt_restore(primask);
 
     if (index >= length) {
         return false;
     }
 
-    fd_binary_t binary;
-    fd_binary_initialize(&binary, &fdi_api.rx_buffer[index], length - index);
-    uint32_t function_length = (uint32_t)fd_binary_get_uint16(&binary);
     do {
+        uint32_t function_length = (uint32_t)fd_binary_get_uint16(&binary);
         uint64_t identifier = fd_binary_get_varuint(&binary);
         uint64_t type = fd_binary_get_varuint(&binary);
         uint32_t content_length = (uint32_t)fd_binary_get_varuint(&binary);
@@ -149,7 +145,7 @@ bool fdi_api_process_rx(void) {
     } while (binary.get_index < binary.size);
 
     primask = fdi_interrupt_disable();
-    fdi_api.rx_index += 2 + function_length;
+    fdi_api.rx_index += binary.size;
     // if buffer is empty and there isn't a transfer occurring reset the buffer
     if ((fdi_api.rx_index >= fdi_api.rx_length) && (fdi_api.merge.length == 0)) {
         fdi_api.rx_index = 0;
@@ -256,6 +252,7 @@ void fdi_api_tx_callback(void) {
 // called from interrupt context
 // append data to rx buffer
 void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
+    uint32_t primask = fdi_interrupt_disable();
     fd_binary_t binary;
     fd_binary_initialize(&binary, data, length);
     uint64_t ordinal = fd_binary_get_varuint(&binary);
@@ -272,7 +269,7 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
         if (ordinal != (fdi_api.merge.ordinal + 1)) {
             fd_log_assert_fail("out of sequence");
             fdi_api_merge_clear();
-            return;
+            goto done;
         }
         fdi_api.merge.ordinal += 1;
     }
@@ -284,7 +281,7 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
     if (content_length > rx_free) {
         fd_log_assert_fail("overflow");
         fdi_api_merge_clear();
-        return;
+        goto done;
     }
 
     memcpy(&fdi_api.rx_buffer[fdi_api.rx_length + 2 + fdi_api.merge.offset], content_data, content_length);
@@ -295,6 +292,9 @@ void fdi_api_rx_callback(uint8_t *data, uint32_t length) {
         fdi_api.rx_length += 2 + fdi_api.merge.length;
         fdi_api_merge_clear();
     }
+
+done:
+    fdi_interrupt_restore(primask);
 }
 
 const fdi_api_configuration_t *fdi_api_get_configuration(void) {

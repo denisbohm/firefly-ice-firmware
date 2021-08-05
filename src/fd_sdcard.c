@@ -342,12 +342,13 @@ void fd_sdcard_read(uint32_t address, uint8_t *data, uint32_t length) {
         uint32_t offset = address - block_address;
         uint32_t remainder = sizeof(block) - offset;
         uint32_t sublength = length <= remainder ? length : remainder;
+        memset(block, 0, sizeof(block));
         fd_sdcard_read_block(block_address, block);
-        memcpy(data, &block[offset], remainder);
+        memcpy(data, &block[offset], sublength);
 
         address += sizeof(block);
-        data += remainder;
-        length -= remainder;
+        data += sublength;
+        length -= sublength;
     }
 }
 
@@ -358,13 +359,16 @@ void fd_sdcard_write(uint32_t address, const uint8_t *data, uint32_t length) {
         uint32_t offset = address - block_address;
         uint32_t remainder = sizeof(block) - offset;
         uint32_t sublength = length <= remainder ? length : remainder;
+        memset(block, 0, sizeof(block));
         fd_sdcard_read_block(block_address, block);
-        memcpy(&block[offset], data, remainder);
+        memcpy(&block[offset], data, sublength);
         fd_sdcard_write_block(block_address, block);
+        memset(block, 0, sizeof(block));
+        fd_sdcard_read_block(block_address, block);
 
         address += sizeof(block);
-        data += remainder;
-        length -= remainder;
+        data += sublength;
+        length -= sublength;
     }
 }
 

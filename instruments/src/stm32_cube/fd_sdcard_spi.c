@@ -1,8 +1,10 @@
 #include "fd_spim.h"
 
+#include "fdi_stm32.h"
+
 #include "fd_log.h"
 
-#include "fdi_stm32.h"
+#include <string.h>
 
 typedef struct {
     SPI_HandleTypeDef spi;
@@ -13,9 +15,9 @@ fd_sdcard_spi_t fd_sdcard_spi;
 void fd_sdcard_spi_initialize(void) {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     GPIO_InitTypeDef gpio_init = {
-        .Pin       = 4,
-        .Mode      = GPIO_MODE_AF_PP,
-        .Pull      = GPIO_PULLDOWN,
+        .Pin       = 1 << 4,
+        .Mode      = GPIO_MODE_OUTPUT_PP,
+        .Pull      = GPIO_NOPULL,
         .Speed     = GPIO_SPEED_FREQ_HIGH,
         .Alternate = 0,
     };
@@ -23,18 +25,20 @@ void fd_sdcard_spi_initialize(void) {
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
     // SCK
-    gpio_init.Pin       = 5,
+    gpio_init.Mode      = GPIO_MODE_AF_PP,
+    gpio_init.Pin       = 1 << 5,
     gpio_init.Alternate = GPIO_AF5_SPI1,
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
-    // MISO
-    gpio_init.Pin = GPIO_AF5_SPI1;
-    gpio_init.Alternate = 6;
+    // MOSI
+    gpio_init.Pin       = 1 << 7;
+    gpio_init.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
-    // MOSI
-    gpio_init.Pin = GPIO_AF5_SPI1;
-    gpio_init.Alternate = 7;
+    // MISO
+    gpio_init.Pull      = GPIO_PULLUP,
+    gpio_init.Pin       = 1 << 6;
+    gpio_init.Alternate = GPIO_AF5_SPI1;
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
     __HAL_RCC_SPI1_CLK_ENABLE();
@@ -84,7 +88,7 @@ void fd_sdcard_spi_set_frequency_slow(void) {
 
 // frequency <= 25 MHz
 void fd_sdcard_spi_set_frequency_fast(void) {
-    fd_sdcard_spi_set_frequency(SPI_BAUDRATEPRESCALER_4);
+    fd_sdcard_spi_set_frequency(SPI_BAUDRATEPRESCALER_8);
 }
 
 void fd_sdcard_spi_transceive(const uint8_t *tx, size_t tx_count, uint8_t *rx, size_t rx_count) {
@@ -102,9 +106,10 @@ void fd_sdcard_spi_transceive(const uint8_t *tx, size_t tx_count, uint8_t *rx, s
         fd_log_assert(status == HAL_OK);
     } else
     if (tx_count == 0) {
+        memset(rx, 0xff, rx_count);
         uint8_t *data = rx;
         uint16_t size = (uint16_t)rx_count;
-        HAL_StatusTypeDef status = HAL_SPI_Receive(&fd_sdcard_spi.spi, data, size, 100);
+        HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&fd_sdcard_spi.spi, data, data, size, 100);
         fd_log_assert(status == HAL_OK);
     } else
     if (tx_count < rx_count) {

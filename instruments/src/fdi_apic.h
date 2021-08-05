@@ -50,9 +50,9 @@ bool fdi_apic_call(
     fdi_apic_response_t *response
 );
 
-bool fdi_apic_discover_instruments(fdi_apic_t *apic);
-
 bool fdi_apic_reset_instruments(fdi_apic_t *apic);
+bool fdi_apic_discover_instruments(fdi_apic_t *apic);
+bool fdi_apic_echo(fdi_apic_t *apic, const uint8_t *data, size_t count);
 
 fdi_apic_instrument_t *fdi_apic_get_instrument(fdi_apic_t *apic, uint32_t identifier);
 

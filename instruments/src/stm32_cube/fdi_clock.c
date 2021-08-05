@@ -9,51 +9,51 @@ void fdi_clock_start_high_speed_internal(void) {
 
 #ifdef FDI_INSTRUMENT_SERIAL_WIRE
 
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
-  /* Enable the HSI48 Oscillator */
-  RCC_OscInitStruct.OscillatorType      = RCC_OSCILLATORTYPE_HSI48;
-  RCC_OscInitStruct.HSI48State          = RCC_HSI48_ON;
-  RCC_OscInitStruct.PLL.PLLState        = RCC_PLL_OFF;
-  HAL_StatusTypeDef status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  fd_log_assert(status == HAL_OK);
+    /* Enable the HSI48 Oscillator */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48;
+    RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_OFF;
+    HAL_StatusTypeDef status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+    fd_log_assert(status == HAL_OK);
 
-  /* Enable MSI Oscillator and activate PLL with MSI as source   */
-  /* (Default MSI Oscillator enabled at system reset remains ON) */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
-  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_7; /*!< MSI = 8 MHz. Do not modify this value used as SAI Source, MMC  */
-  RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
-  RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 20;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLP = 7;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
-  status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  fd_log_assert(status == HAL_OK);
+    /* Enable MSI Oscillator and activate PLL with MSI as source   */
+    /* (Default MSI Oscillator enabled at system reset remains ON) */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+    RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+    RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_7; /*!< MSI = 8 MHz. Do not modify this value used as SAI Source, MMC  */
+    RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+    RCC_OscInitStruct.PLL.PLLM = 1;
+    RCC_OscInitStruct.PLL.PLLN = 20;
+    RCC_OscInitStruct.PLL.PLLR = 2;
+    RCC_OscInitStruct.PLL.PLLP = 7;
+    RCC_OscInitStruct.PLL.PLLQ = 4;
+    status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
+    fd_log_assert(status == HAL_OK);
 
-  /* Enable MSI Auto-calibration through LSE */
-//  HAL_RCCEx_EnableMSIPLLMode();
+    /* Enable MSI Auto-calibration through LSE */
+    //  HAL_RCCEx_EnableMSIPLLMode();
 
-  /* Select HSI48 output as USB clock source */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
-  PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
-  status = HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
-  fd_log_assert(status == HAL_OK);
+    /* Select HSI48 output as USB clock source */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
+    PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
+    status = HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+    fd_log_assert(status == HAL_OK);
 
-  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
-  RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-  status = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4);
-  fd_log_assert(status == HAL_OK);
+    RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    status = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4);
+    fd_log_assert(status == HAL_OK);
 
 #else
 
@@ -91,4 +91,11 @@ void fdi_clock_start_high_speed_internal(void) {
             ;
     }
 #endif
+
+    FLASH->ACR |= FLASH_ACR_DCRST | FLASH_ACR_ICRST;
+    FLASH->ACR &= ~(FLASH_ACR_DCRST | FLASH_ACR_ICRST);
+    FLASH->ACR |= FLASH_ACR_DCEN | FLASH_ACR_ICEN;
+
+    extern void SystemCoreClockUpdate(void);
+    SystemCoreClockUpdate();
 }

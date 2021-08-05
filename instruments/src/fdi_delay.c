@@ -10,7 +10,7 @@ void fdi_delay_3x_cycles(uint32_t cycles __attribute__((unused))) {
     );
 }
 
-#define CYCLES_PER_MICROSECOND 84U
+#define CYCLES_PER_MICROSECOND 80U
 
 void fdi_delay_ns(uint32_t ns) {
     fdi_delay_3x_cycles(1 + ns * CYCLES_PER_MICROSECOND / (1000U * 3U));

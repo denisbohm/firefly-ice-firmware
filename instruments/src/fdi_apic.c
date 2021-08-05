@@ -167,6 +167,25 @@ void fdi_apic_discover_instruments_response(
     }
 }
 
+bool fdi_apic_reset_instruments(fdi_apic_t *apic) {
+    const uint32_t identifier = 0;
+    if (!fdi_apic_write(apic, identifier, apiTypeResetInstruments, 0, 0)) {
+        return false;
+    }
+    return true;
+}
+
+bool fdi_apic_echo(fdi_apic_t *apic, const uint8_t *data, size_t count) {
+    const uint32_t identifier = 0;
+    fdi_apic_response_t response;
+    if (!fdi_apic_call(apic, identifier, apiTypeEcho, data, count, &response)) {
+        return false;
+    }
+
+    fd_log_assert((response.count == count) && (memcmp(response.data, data, count) == 0));
+    return true;
+}
+
 bool fdi_apic_discover_instruments(fdi_apic_t *apic) {
     const uint32_t identifier = 0;
     fdi_apic_response_t response;
@@ -176,13 +195,6 @@ bool fdi_apic_discover_instruments(fdi_apic_t *apic) {
 
     fdi_apic_discover_instruments_response(apic, response.data, response.count);
     return true;
-}
-
-bool fdi_apic_reset_instruments(fdi_apic_t *apic) {
-    const uint32_t identifier = 0;
-    if (!fdi_apic_write(apic, identifier, apiTypeResetInstruments, 0, 0)) {
-        return false;
-    }
 }
 
 fdi_apic_instrument_t *fdi_apic_get_instrument(fdi_apic_t *apic, uint32_t identifier) {

@@ -20,10 +20,12 @@
 #include "fd_log.h"
 #include "fd_sdcard.h"
 #include "fd_ssd1315.h"
+#include "fd_timing.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 static fd_i2cm_bus_t fdi_main_i2cm_buses[] = {
     {
@@ -83,7 +85,6 @@ void main(void) {
     fdi_gpio_initialize();
     fdi_relay_initialize();
 
-#if 0
     fd_sdcard_spi_initialize();
     fd_sdcard_initialize((fd_sdcard_spi_t) {
         .set_chip_select = fd_sdcard_spi_set_chip_select,
@@ -91,7 +92,13 @@ void main(void) {
         .set_frequency_fast = fd_sdcard_spi_set_frequency_fast,
         .transceive = fd_sdcard_spi_transceive,
     });
-#endif
+
+    uint32_t address = 0;
+    uint8_t data[] = { 0xf0 };
+    fd_sdcard_write(address, data, sizeof(data));
+    uint8_t verify[sizeof(data)] = { 0 };
+    fd_sdcard_read(address, verify, sizeof(verify));
+    fd_log_assert(memcmp(verify, data, sizeof(data)) == 0);
 
     fdi_serial_wire_initialize();
 
@@ -119,20 +126,30 @@ void main(void) {
         .apic_count = apic_count,
         .apics = fdi_main_apics,
     });
-#if 1
     fdi_usb_initialize();
     fdi_usb_set_data_callback(fdi_api_rx_callback);
     fdi_usb_set_tx_ready_callback(fdi_api_tx_callback);
     fdi_usb_power_up();
-#endif
 
     fdi_instrument_initialize();
     fdi_indicator_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
     fdi_storage_instrument_initialize();
 
+    uint32_t retries = 0;
     for (uint32_t i = 0; i < apic_count; ++i) {
-        fdi_apic_discover_instruments(&fdi_main_apics[i]);
+        // wait for instrument board to power up and start responding
+        fdi_apic_t *apic = &fdi_main_apics[i];
+        uint8_t data[] = { 'e', 'c', 'h', 'o' };
+        for (uint32_t j = 0; j < 100; ++j) {
+            if (fdi_apic_echo(apic, data, sizeof(data))) {
+                break;
+            }
+            ++retries;
+            fdi_delay_ms(100);
+        }
+
+        fdi_apic_discover_instruments(apic);
     }
 
 #if 0

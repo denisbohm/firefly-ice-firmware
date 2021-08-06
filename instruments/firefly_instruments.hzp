@@ -270,7 +270,7 @@
       arm_target_loader_default_loader="Flash"
       arm_target_trace_interface_type="None"
       c_preprocessor_definitions="FDI_INSTRUMENT_SERIAL_WIRE;FDI_INSTRUMENT_IDENTIFIER_MIN=0;USBD_MAX_POWER=0xFAU;STARTUP_FROM_RESET"
-      c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32_cube;$(ProjectDir)/../src;$(TargetsDir)/STM32/include;$(ProjectDir)/external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc"
+      c_user_include_directories="$(ProjectDir)/src;$(ProjectDir)/src/stm32_cube;$(ProjectDir)/../src;$(TargetsDir)/STM32/include;$(ProjectDir)/external/ff14a/source;$(ProjectDir)/external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;$(ProjectDir)/external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Class/HID/Inc"
       debug_register_definition_file="$(TargetsDir)/STM32/STM32L4x6_Peripherals.xml"
       linker_memory_map_file="$(TargetsDir)/STM32/STM32L496RG_MemoryMap.xml"
       linker_section_placement_file="$(StudioDir)/targets/Cortex_M/flash_placement.xml"
@@ -337,6 +337,7 @@
         <file file_name="../src/fd_sdcard.h" />
         <file file_name="../src/fd_timing.c" />
         <file file_name="../src/fd_timing.h" />
+        <file file_name="../src/fd_unused.h" />
       </folder>
       <folder Name="stm32_cube">
         <file file_name="src/stm32_cube/fdi_gpio.c" />
@@ -428,6 +429,15 @@
       </folder>
       <file file_name="src/fdi_apic.c" />
       <file file_name="src/fdi_apic.h" />
+      <folder Name="fatfs">
+        <file file_name="external/ff14a/source/diskio.h" />
+        <file file_name="external/ff14a/source/ff.c" />
+        <file file_name="external/ff14a/source/ff.h" />
+        <file file_name="external/ff14a/source/ffsystem.c" />
+        <file file_name="external/ff14a/source/ffunicode.c" />
+        <file file_name="src/ffconf.h" />
+      </folder>
+      <file file_name="src/fdi_fatfs_diskio.c" />
     </folder>
   </project>
   <project Name="input_output_instrument">

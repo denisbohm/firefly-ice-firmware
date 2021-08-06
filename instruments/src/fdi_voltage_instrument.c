@@ -11,7 +11,16 @@
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
 
+#ifdef FDI_INSTRUMENT_INPUT_OUTPUT
+#define fdi_voltage_instrument_count 1
+#endif
+#ifdef FDI_INSTRUMENT_POWER
+#define fdi_voltage_instrument_count 2
+#endif
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
 #define fdi_voltage_instrument_count 3
+#endif
+
 fdi_voltage_instrument_t fdi_voltage_instruments[fdi_voltage_instrument_count];
 
 uint32_t fdi_voltage_instrument_get_count(void) {
@@ -88,6 +97,16 @@ void fdi_voltage_instrument_initialize(void) {
         instrument->super.category = "Voltage";
         instrument->super.reset = fdi_voltage_instrument_api_reset;
         instrument->channel = 7; // PA2 ADC12_IN7 : battery voltage
+        instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
+        fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
+    }
+    {
+        fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[1];
+        instrument->super.category = "Voltage";
+        instrument->super.reset = fdi_voltage_instrument_api_reset;
+        instrument->channel = 8; // PA3 ADC12_IN8 : battery voltage
         instrument->multiplier = 2.0f;
         fdi_instrument_register(&instrument->super);
         fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);

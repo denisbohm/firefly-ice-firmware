@@ -27,6 +27,7 @@ typedef struct {
     uint32_t instance;
     fd_gpio_t scl;
     fd_gpio_t sda;
+    bool pullup;
     uint32_t frequency;
     uint32_t timeout;
 } fd_i2cm_bus_t;

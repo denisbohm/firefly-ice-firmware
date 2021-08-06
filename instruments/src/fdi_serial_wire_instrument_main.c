@@ -29,16 +29,10 @@
 
 static fd_i2cm_bus_t fdi_main_i2cm_buses[] = {
     {
-        .instance = 1,
-        .scl = { .port = 1, .pin = 8 },
-        .sda = { .port = 1, .pin = 9 },
-        .frequency = 100000,
-        .timeout = 1000,
-    },
-    {
         .instance = 2,
         .scl = { .port = 0, .pin = 9 },
         .sda = { .port = 0, .pin = 8 },
+        .pullup = false,
         .frequency = 100000,
         .timeout = 1000,
     },
@@ -46,6 +40,15 @@ static fd_i2cm_bus_t fdi_main_i2cm_buses[] = {
         .instance = 3,
         .scl = { .port = 2, .pin = 8 },
         .sda = { .port = 2, .pin = 9 },
+        .pullup = false,
+        .frequency = 100000,
+        .timeout = 1000,
+    },
+    {
+        .instance = 1,
+        .scl = { .port = 1, .pin = 8 },
+        .sda = { .port = 1, .pin = 9 },
+        .pullup = true,
         .frequency = 100000,
         .timeout = 1000,
     },
@@ -53,23 +56,23 @@ static fd_i2cm_bus_t fdi_main_i2cm_buses[] = {
 
 static fd_i2cm_device_t fdi_main_i2cm_devices[] = {
     {
-        .bus = &fdi_main_i2cm_buses[2],
-        .channel = 0,
-        .address = 0x32, // input output board
-    },
-    {
-        .bus = &fdi_main_i2cm_buses[2],
+        .bus = &fdi_main_i2cm_buses[0],
         .channel = 0,
         .address = 0x30, // power board
     },
     {
         .bus = &fdi_main_i2cm_buses[1],
         .channel = 0,
+        .address = 0x32, // input output board
+    },
+    {
+        .bus = &fdi_main_i2cm_buses[2],
+        .channel = 0,
         .address = 0x3c, // display
     },
 };
 
-static fdi_apic_t fdi_main_apics[1]; // 2];
+static fdi_apic_t fdi_main_apics[2];
 
 bool fdi_main_usb_transmit(uint8_t *data, size_t length) {
     if (!fdi_usb_can_send()) {

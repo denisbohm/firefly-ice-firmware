@@ -40,11 +40,11 @@ static GPIO_TypeDef *fd_gpio_port(uint32_t port) {
     return 0;
 }
 
-static void fd_gpio_configure(fd_gpio_t gpio, uint32_t mode) {
+static void fd_gpio_configure(fd_gpio_t gpio, uint32_t mode, uint32_t pull) {
     GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_InitStruct.Pin = 1 << gpio.pin;
     GPIO_InitStruct.Mode = mode;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = pull;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = 0;
     HAL_GPIO_Init(fd_gpio_port(gpio.port), &GPIO_InitStruct);
@@ -55,15 +55,23 @@ static void fd_gpio_configure(fd_gpio_t gpio, uint32_t mode) {
 }
 
 void fd_gpio_configure_output(fd_gpio_t gpio) {
-    fd_gpio_configure(gpio, GPIO_MODE_OUTPUT_PP);
+    fd_gpio_configure(gpio, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL);
 }
 
 void fd_gpio_configure_output_open_drain(fd_gpio_t gpio) {
-    fd_gpio_configure(gpio, GPIO_MODE_OUTPUT_OD);
+    fd_gpio_configure(gpio, GPIO_MODE_OUTPUT_OD, GPIO_NOPULL);
+}
+
+void fd_gpio_configure_output_open_drain_pull_up(fd_gpio_t gpio) {
+    fd_gpio_configure(gpio, GPIO_MODE_OUTPUT_OD, GPIO_PULLUP);
 }
 
 void fd_gpio_configure_input(fd_gpio_t gpio) {
-    fd_gpio_configure(gpio, GPIO_MODE_INPUT);
+    fd_gpio_configure(gpio, GPIO_MODE_INPUT, GPIO_NOPULL);
+}
+
+void fd_gpio_configure_input_pull_up(fd_gpio_t gpio) {
+    fd_gpio_configure(gpio, GPIO_MODE_INPUT, GPIO_PULLUP);
 }
 
 void fd_gpio_set(fd_gpio_t gpio, bool value) {

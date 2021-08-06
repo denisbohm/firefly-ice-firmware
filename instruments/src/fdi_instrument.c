@@ -31,7 +31,7 @@ void fdi_instrument_echo(uint64_t identifier __attribute__((unused)), uint64_t t
 }
 
 void fdi_instrument_discover_instruments(uint64_t identifier __attribute__((unused)), uint64_t type __attribute__((unused)), fd_binary_t *binary_in __attribute__((unused))) {
-    uint8_t buffer[256];
+    uint8_t buffer[512];
     fd_binary_t binary;
     fd_binary_initialize(&binary, buffer, sizeof(buffer));
 

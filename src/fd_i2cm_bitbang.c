@@ -3,22 +3,24 @@
 #include "fd_delay.h"
 #include "fd_gpio.h"
 
-void fd_i2cm_initialize(
-    const fd_i2cm_bus_t *buses, uint32_t bus_count,
-    const fd_i2cm_device_t *devices, uint32_t device_count
-) {
-    for (uint32_t i = 0; i < bus_count; ++i) {
-        const fd_i2cm_bus_t *bus = &buses[i];
-        fd_gpio_set(bus->scl, true);
-        fd_gpio_configure_output_open_drain(bus->scl);
-        fd_gpio_set(bus->sda, true);
-        fd_gpio_configure_output_open_drain(bus->sda);
-        fd_i2cm_clear_bus(bus);
+void fd_i2cm_delay(void) {
+    fd_delay_us(5);
+}
+
+void fd_i2cm_configure_in(const fd_i2cm_bus_t *bus) {
+    if (bus->pullup) {
+        fd_gpio_configure_input_pull_up(bus->sda);
+    } else {
+        fd_gpio_configure_input(bus->sda);
     }
 }
 
-void fd_i2cm_delay(void) {
-    fd_delay_us(5);
+void fd_i2cm_configure_out(const fd_i2cm_bus_t *bus) {
+    if (bus->pullup) {
+        fd_gpio_configure_output_open_drain_pull_up(bus->sda);
+    } else {
+        fd_gpio_configure_output_open_drain(bus->sda);
+    }
 }
 
 void fd_i2cm_clear_bus(const fd_i2cm_bus_t *bus) {
@@ -87,20 +89,20 @@ bool fd_i2cm_write_byte(const fd_i2cm_bus_t *bus, uint8_t byte) {
     }
 
     fd_gpio_set(bus->sda, true);
-    fd_gpio_configure_input(bus->sda);
+    fd_i2cm_configure_in(bus);
     bool ack = fd_i2cm_read_bit(bus);
-    fd_gpio_configure_output_open_drain(bus->sda);
+    fd_i2cm_configure_out(bus);
     return !ack;
 }
 
 uint8_t fd_i2cm_read_byte(const fd_i2cm_bus_t *bus, bool ack) {
-    fd_gpio_configure_input(bus->sda);
+    fd_i2cm_configure_in(bus);
     uint8_t byte = 0;
     for (int i = 0; i < 8; ++i) {
         bool bit = fd_i2cm_read_bit(bus);
         byte = (byte << 1) | (bit ? 1 : 0);
     }
-    fd_gpio_configure_output_open_drain(bus->sda);
+    fd_i2cm_configure_out(bus);
     fd_i2cm_write_bit(bus, !ack);
     return byte;
 }
@@ -174,4 +176,22 @@ stop:
 
 bool fd_i2cm_bus_wait(const fd_i2cm_bus_t *bus) {
     return true;
+}
+
+void fd_i2cm_initialize(
+    const fd_i2cm_bus_t *buses, uint32_t bus_count,
+    const fd_i2cm_device_t *devices, uint32_t device_count
+) {
+    for (uint32_t i = 0; i < bus_count; ++i) {
+        const fd_i2cm_bus_t *bus = &buses[i];
+        fd_gpio_set(bus->scl, true);
+        if (bus->pullup) {
+            fd_gpio_configure_output_open_drain_pull_up(bus->scl);
+        } else {
+            fd_gpio_configure_output_open_drain(bus->scl);
+        }
+        fd_gpio_set(bus->sda, true);
+        fd_i2cm_configure_out(bus);
+        fd_i2cm_clear_bus(bus);
+    }
 }

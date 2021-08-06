@@ -47,6 +47,8 @@ void fdi_dac_setup(uint32_t channel) {
 }
 
 void fdi_dac_initialize(void) {
+    __HAL_RCC_DAC1_CLK_ENABLE();
+
     fdi_dac.dac.Instance = DAC1;
     HAL_StatusTypeDef status = HAL_DAC_Init(&fdi_dac.dac);
     fd_log_assert(status == HAL_OK);
@@ -59,6 +61,6 @@ void fdi_dac_initialize(void) {
 }
 
 void fdi_dac_set(uint32_t channel, uint32_t value) {
-    HAL_StatusTypeDef status = HAL_DAC_SetValue(&fdi_dac.dac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 0x180);
+    HAL_StatusTypeDef status = HAL_DAC_SetValue(&fdi_dac.dac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value);
     fd_log_assert(status == HAL_OK);
 }

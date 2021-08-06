@@ -10,6 +10,7 @@
 #include "fdi_adc.h"
 #include "fdi_api.h"
 #include "fdi_clock.h"
+#include "fdi_dac.h"
 #include "fdi_delay.h"
 #include "fdi_gpio.h"
 #include "fdi_i2cs.h"
@@ -29,6 +30,7 @@ void main(void) {
     fdi_relay_initialize();
     fdi_adc_initialize();
     fdi_adc_power_up();
+    fdi_dac_initialize();
 
     fdi_api_initialize((fdi_api_configuration_t) {
         .transmit = fdi_i2cs_transmit,
@@ -45,8 +47,8 @@ void main(void) {
     fdi_current_instrument_initialize();
     fdi_battery_instrument_initialize();
 
-#if 1
-    fdi_relay_instrument_t *relay = fdi_relay_instrument_get_at(0);
+#if 0
+    fdi_relay_instrument_t *relay = fdi_relay_instrument_get_at(6);
     fdi_relay_instrument_set(relay, true);
 
     fdi_battery_instrument_t *battery_instrument = fdi_battery_instrument_get_at(0);

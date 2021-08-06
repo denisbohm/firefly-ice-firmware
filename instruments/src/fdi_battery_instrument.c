@@ -273,15 +273,17 @@ void fdi_battery_instrument_set_voltage(fdi_battery_instrument_t *instrument __a
     if (voltage > 4.2f) {
         voltage = 4.2f;
     }
+#ifdef FDI_INSTRUMENT_POWER
+    float multiplier = ((float)(1650 - 1345)) / (4.2f - 2.6f);
+    uint16_t value = 1650 - (int)((voltage - 2.6f) * multiplier);
+    fdi_dac_set(0, value);
+#endif
+#ifdef FDI_INSTRUMENT_ALL_IN_ONE
     // 12-bit ADC w/ 3.3V VDD reference, 0.4 V Reference in LDO, 650k over 100k (3 V)
     // 0x0222 = 546 = 2.75 V (battery cut-off) = 0.440 V ADC output
     // 0x010d = 269 = 4.2 V (max value) = 0.217 V ADC output
     float multiplier = ((float)(0x0222 - 0x010d)) / (4.2f - 2.75f);
     uint16_t value = 0x0222 - (int)((voltage - 2.75f) * multiplier);
-#ifdef FDI_INSTRUMENT_POWER
-    fdi_dac_set(0, value);
-#endif
-#ifdef FDI_INSTRUMENT_ALL_IN_ONE
     fdi_mcp4726_write_volatile_dac_register(value);
 #endif
 }

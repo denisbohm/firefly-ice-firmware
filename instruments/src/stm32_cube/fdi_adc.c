@@ -41,7 +41,9 @@ void fdi_adc_setup(uint32_t channel) {
     GPIO_InitStruct.Alternate = 0;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+#if defined(GPIO_ASCR_ASC0)
     GPIOA->ASCR |= GPIO_InitStruct.Pin;
+#endif
 }
 
 void fdi_adc_initialize(void) {
@@ -70,7 +72,9 @@ void fdi_adc_initialize(void) {
     GPIO_InitStruct.Alternate = 0;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+#if defined(GPIO_ASCR_ASC0)
     GPIOA->ASCR = GPIO_InitStruct.Pin;
+#endif
 }
 
 void fdi_adc_power_up(void) {

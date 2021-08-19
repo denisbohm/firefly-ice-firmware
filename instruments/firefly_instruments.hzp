@@ -392,6 +392,10 @@
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_spi.c" />
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi_ex.h" />
           <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc_ex.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_adc.c" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc_ex.h" />
+          <file file_name="external/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc.h" />
         </folder>
         <folder Name="USB_Device_Library">
           <file file_name="external/STM32CubeL4/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c" />
@@ -426,6 +430,9 @@
         <file file_name="src/fdi_detour.h" />
         <file file_name="src/fdi_indicator_instrument.c" />
         <file file_name="src/fdi_indicator_instrument.h" />
+        <file file_name="src/fdi_voltage_instrument.c" />
+        <file file_name="src/fdi_voltage_instrument.h" />
+        <file file_name="src/stm32_cube/fdi_adc.c" />
       </folder>
       <file file_name="src/fdi_apic.c" />
       <file file_name="src/fdi_apic.h" />

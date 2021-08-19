@@ -11,6 +11,9 @@
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeConvert = 1;
 
+#ifdef FDI_INSTRUMENT_SERIAL_WIRE
+#define fdi_voltage_instrument_count 2
+#endif
 #ifdef FDI_INSTRUMENT_INPUT_OUTPUT
 #define fdi_voltage_instrument_count 1
 #endif
@@ -78,12 +81,35 @@ void fdi_voltage_instrument_api_convert(uint64_t identifier, uint64_t type __att
 }
 
 void fdi_voltage_instrument_initialize(void) {
+#ifdef FDI_INSTRUMENT_SERIAL_WIRE
+    {
+        fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
+        instrument->super.category = "Voltage";
+        instrument->super.reset = fdi_voltage_instrument_api_reset;
+        instrument->channel = 5; // PA0 ADC12_IN5 : SWD 1
+        instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
+        fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
+    }
+    {
+        fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[1];
+        instrument->super.category = "Voltage";
+        instrument->super.reset = fdi_voltage_instrument_api_reset;
+        instrument->channel = 6; // PA1 ADC12_IN6 : SWD 2
+        instrument->multiplier = 2.0f;
+        fdi_instrument_register(&instrument->super);
+        fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);
+        fdi_api_register(instrument->super.identifier, apiTypeConvert, fdi_voltage_instrument_api_convert);
+    }
+#endif
+
 #ifdef FDI_INSTRUMENT_INPUT_OUTPUT
     {
         fdi_voltage_instrument_t *instrument = &fdi_voltage_instruments[0];
         instrument->super.category = "Voltage";
         instrument->super.reset = fdi_voltage_instrument_api_reset;
-        instrument->channel = 5; // ADC12_IN5 IOA0
+        instrument->channel = 5; // PA0 ADC12_IN5 IOA0
         instrument->multiplier = 1.0f;
         fdi_instrument_register(&instrument->super);
         fdi_api_register(instrument->super.identifier, apiTypeReset, fdi_voltage_instrument_api_reset);

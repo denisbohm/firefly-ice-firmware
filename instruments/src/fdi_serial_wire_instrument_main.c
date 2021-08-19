@@ -5,8 +5,10 @@
 #include "fdi_indicator_instrument.h"
 #include "fdi_serial_wire_instrument.h"
 #include "fdi_storage_instrument.h"
+#include "fdi_voltage_instrument.h"
 
 #include "fdi_api.h"
+#include "fdi_adc.h"
 #include "fdi_apic.h"
 #include "fdi_clock.h"
 #include "fdi_delay.h"
@@ -87,6 +89,8 @@ void main(void) {
 
     fdi_gpio_initialize();
     fdi_relay_initialize();
+    fdi_adc_initialize();
+    fdi_adc_power_up();
 
     fd_sdcard_spi_initialize();
     fd_sdcard_initialize((fd_sdcard_spi_t) {
@@ -96,12 +100,14 @@ void main(void) {
         .transceive = fd_sdcard_spi_transceive,
     });
 
+#if 0
     uint32_t address = 0;
     uint8_t data[] = { 0xf0 };
     fd_sdcard_write(address, data, sizeof(data));
     uint8_t verify[sizeof(data)] = { 0 };
     fd_sdcard_read(address, verify, sizeof(verify));
     fd_log_assert(memcmp(verify, data, sizeof(data)) == 0);
+#endif
 
     fdi_serial_wire_initialize();
 
@@ -138,6 +144,7 @@ void main(void) {
     fdi_indicator_instrument_initialize();
     fdi_serial_wire_instrument_initialize();
     fdi_storage_instrument_initialize();
+    fdi_voltage_instrument_initialize();
 
     uint32_t retries = 0;
     for (uint32_t i = 0; i < apic_count; ++i) {
@@ -156,9 +163,22 @@ void main(void) {
     }
 
 #if 0
+    fdi_apic_t *power_apic = &fdi_main_apics[0];
+    fdi_apic_instrument_t *relay_vusb_to_dut = fdi_apic_get_instrument(power_apic, 41);
+    // relay_vusb_to_dut.set(true);
+    const uint8_t content[] = { 1 };
+    bool ok = fdi_apic_write(power_apic, relay_vusb_to_dut->identifier, 1, content, sizeof(content));
+    fd_log_assert(ok);
+
     fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
     fdi_serial_wire_reset(serial_wire);
     fdi_serial_wire_set_power(serial_wire, true);
+
+    fdi_delay_ms(1000);
+
+    fdi_voltage_instrument_t *voltage_instrument = fdi_voltage_instrument_get_at(1);
+    float voltage = fdi_voltage_instrument_convert(voltage_instrument);
+    fd_log_assert(voltage > 1.7f);
 
     fdi_serial_wire_set_reset(serial_wire, true);
     fdi_delay_ms(100);
@@ -170,42 +190,80 @@ void main(void) {
     fdi_serial_wire_debug_error_t error = {};
     uint32_t dpid = 0;
     bool success = fdi_serial_wire_debug_connect(serial_wire, &dpid, &error);
+    fd_log_assert(success);
     fd_log_assert(dpid == 0x6ba02477);
+
+    fdi_serial_wire_debug_select_access_port_id(serial_wire, 0); // ahb app
+    uint32_t ahb_app_idr;
+    success = fdi_serial_wire_debug_select_and_read_access_port(
+        serial_wire, SWD_AP_IDR, &ahb_app_idr, &error
+    );
+    fd_log_assert(success);
+    fd_log_assert(ahb_app_idr == 0x84770001);
+
+    // erase all app and net
+    for (int ap = 2; ap <= 3; ++ap) {
+        fdi_serial_wire_debug_select_access_port_id(serial_wire, ap);
+        uint32_t ctrl_app_idr;
+        success = fdi_serial_wire_debug_select_and_read_access_port(
+            serial_wire, SWD_AP_IDR, &ctrl_app_idr, &error
+        );
+        fd_log_assert(success);
+        fd_log_assert(ctrl_app_idr == 0x12880000);
+
+        success = fdi_serial_wire_debug_select_and_write_access_port(
+            serial_wire, 0x04 /* erase all */, 1 /* erase */, &error
+        );
+        fd_log_assert(success);
+        uint32_t ctrl_app_erase_all_status;
+        success = fdi_serial_wire_debug_select_and_read_access_port(
+            serial_wire, 0x08 /* erase all status */, &ctrl_app_erase_all_status, &error
+        );
+        fd_log_assert(success);
+        fd_log_assert(ctrl_app_erase_all_status == 0x00000001);
+        fdi_delay_ms(500);
+        success = fdi_serial_wire_debug_select_and_read_access_port(
+            serial_wire, 0x08 /* erase all status */, &ctrl_app_erase_all_status, &error
+        );
+        fd_log_assert(success);
+        fd_log_assert(ctrl_app_erase_all_status == 0x00000000);
+    }
+
+    fdi_serial_wire_debug_select_access_port_id(serial_wire, 0); // ahb app
+    success = fdi_serial_wire_debug_select_and_read_access_port(
+        serial_wire, SWD_AP_IDR, &ahb_app_idr, &error
+    );
+    fd_log_assert(success);
+    fd_log_assert(ahb_app_idr == 0x84770001);
+
+    success = fdi_serial_wire_debug_select_and_write_access_port(
+        serial_wire, SWD_AP_CSW, SWD_AP_CSW_PROT | SWD_AP_CSW_ADDRINC_SINGLE | SWD_AP_CSW_SIZE_32BIT, &error
+    );
+    fd_log_assert(success);
+
+    success = fdi_serial_wire_debug_halt(serial_wire, &error);
+    fd_log_assert(success);
+
+    uint32_t erased = 0;
+    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x00000000, &erased, &error);
+    fd_log_assert(success);
+    fd_log_assert(erased == 0xffffffff);
 
     uint32_t address = 0x20000000;
     uint32_t value = 0x5af01234;
     success = fdi_serial_wire_debug_write_memory_uint32(serial_wire, address, value, &error);
-    value = 0;
-    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &value, &error);
-#endif
-
-#if 0
-    fdi_serial_wire_t *serial_wire = &fdi_serial_wires[1];
-    fdi_serial_wire_reset(serial_wire);
-    fdi_serial_wire_set_power(serial_wire, true);
-
-    fdi_serial_wire_set_reset(serial_wire, true);
-    fdi_delay_ms(100);
-    bool nreset = fdi_serial_wire_get_reset(serial_wire);
-    fdi_serial_wire_set_reset(serial_wire, false);
-    fdi_delay_ms(100);
-    nreset = fdi_serial_wire_get_reset(serial_wire);
-
-    fdi_serial_wire_instrument_t *instrument = fdi_serial_wire_instrument_get_at(1);
-    uint32_t dpid;
-    fdi_serial_wire_debug_error_t error;
-    bool success = fdi_serial_wire_instrument_connect(instrument, &dpid, &error);
-    fd_log_assert(success);
-    fd_log_assert(dpid == 0x6ba02477);
-    uint8_t access_port_id = 0;
-    fdi_serial_wire_instrument_set_access_port_id(instrument, access_port_id);
-    uint32_t address = 0x20000000;
-    uint32_t value = 0x5af01234;
-    success = fdi_serial_wire_instrument_write_memory(instrument, address, (uint8_t *)&value, sizeof(value), &error);
     fd_log_assert(success);
     uint32_t verify = 0;
-    success = fdi_serial_wire_instrument_read_memory(instrument, address, (uint8_t *)&verify, sizeof(value), &error);
+    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, address, &verify, &error);
     fd_log_assert(success);
+    fd_log_assert(verify == value);
+
+    success = fdi_serial_wire_debug_write_data(serial_wire, address, (uint8_t *)&value, sizeof(value), &error);
+    fd_log_assert(success);
+    uint32_t data = 0;
+    success = fdi_serial_wire_debug_read_data(serial_wire, address, (uint8_t *)&data, sizeof(data), &error);
+    fd_log_assert(success);
+    fd_log_assert(data == value);
 #endif
 
     while (true) {

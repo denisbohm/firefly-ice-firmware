@@ -62,16 +62,16 @@ bool fdi_serial_wire_debug_error_return(fdi_serial_wire_debug_error_t *error, ui
 #define SWD_AP_DBGDRAR 0xf8
 #define SWD_AP_IDR 0xfc
 
-#define SWD_AP_CSW_DBGSWENABLE FDSerialWireDebugBit(31)
-#define SWD_AP_CSW_MASTER_DEBUG FDSerialWireDebugBit(29)
-#define SWD_AP_CSW_HPROT FDSerialWireDebugBit(25)
-#define SWD_AP_CSW_SPIDEN FDSerialWireDebugBit(23)
-#define SWD_AP_CSW_TRIN_PROG FDSerialWireDebugBit(7)
-#define SWD_AP_CSW_DEVICE_EN FDSerialWireDebugBit(6)
-#define SWD_AP_CSW_INCREMENT_PACKED FDSerialWireDebugBit(5)
-#define SWD_AP_CSW_INCREMENT_SINGLE FDSerialWireDebugBit(4)
-#define SWD_AP_CSW_32BIT FDSerialWireDebugBit(1)
-#define SWD_AP_CSW_16BIT FDSerialWireDebugBit(0)
+#define SWD_AP_CSW_DBGSWENABLE    0x80000000
+#define SWD_AP_CSW_PROT           0x23000000
+#define SWD_AP_CSW_SPIDEN         0x00800000
+#define SWD_AP_CSW_TR_IN_PROG     0x00000080
+#define SWD_AP_CSW_DBG_STATUS     0x00000040
+#define SWD_AP_CSW_ADDRINC_SINGLE 0x00000010
+#define SWD_AP_CSW_ADDRINC_OFF    0x00000000
+#define SWD_AP_CSW_SIZE_32BIT     0x00000002
+#define SWD_AP_CSW_SIZE_16BIT     0x00000001
+#define SWD_AP_CSW_SIZE_8BIT      0x00000000
 
 #define SWD_MEMORY_CPUID 0xE000ED00
 #define SWD_MEMORY_DFSR  0xE000ED30
@@ -284,6 +284,20 @@ bool fdi_serial_wire_debug_write_debug_port(
 
 bool fdi_serial_wire_debug_initialize_access_port(
     fdi_serial_wire_t *serial_wire,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_select_and_read_access_port(
+    fdi_serial_wire_t *serial_wire,
+    uint8_t access_port_register,
+    uint32_t *value,
+    fdi_serial_wire_debug_error_t *error
+);
+
+bool fdi_serial_wire_debug_select_and_write_access_port(
+    fdi_serial_wire_t *serial_wire,
+    uint8_t access_port_register,
+    uint32_t value,
     fdi_serial_wire_debug_error_t *error
 );
 

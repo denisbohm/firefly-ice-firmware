@@ -595,13 +595,8 @@ bool fdi_serial_wire_debug_initialize_debug_port(
         return false;
     }
 
-    // cache values needed for various higher level routines (such as reading and writing to memory in bulk)
     uint32_t dpid;
     if (!fdi_serial_wire_debug_read_debug_port(serial_wire, SWD_DP_DPIDR, &dpid, error)) {
-        return false;
-    }
-    uint32_t apid;
-    if (!fdi_serial_wire_debug_select_and_read_access_port(serial_wire, SWD_AP_IDR, &apid, error)) {
         return false;
     }
 
@@ -612,7 +607,7 @@ bool fdi_serial_wire_debug_initialize_access_port(fdi_serial_wire_t *serial_wire
   return fdi_serial_wire_debug_select_and_write_access_port(
       serial_wire,
       SWD_AP_CSW,
-      SWD_AP_CSW_DBGSWENABLE | SWD_AP_CSW_MASTER_DEBUG | SWD_AP_CSW_HPROT | SWD_AP_CSW_INCREMENT_SINGLE | SWD_AP_CSW_32BIT,
+      SWD_AP_CSW_PROT | SWD_AP_CSW_ADDRINC_SINGLE | SWD_AP_CSW_SIZE_32BIT,
       error);
 }
 
@@ -743,14 +738,6 @@ bool fdi_serial_wire_debug_connect(
 
     if (success) {
         success = fdi_serial_wire_debug_initialize_debug_port(serial_wire, error);
-    }
-
-    if (success) {
-        success = fdi_serial_wire_debug_initialize_access_port(serial_wire, error);
-    }
-
-    if (success) {
-        success = fdi_serial_wire_debug_halt(serial_wire, error);
     }
 
     return success;

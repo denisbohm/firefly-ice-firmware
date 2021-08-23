@@ -299,7 +299,7 @@ bool fdi_storage_instrument_file_address(fdi_storage_instrument_t *instrument, c
     FIL file;
     FRESULT result = f_open(&file, name, FA_READ | FA_OPEN_EXISTING);
     if (result == FR_OK) {
-        *address = file.obj.fs->database + file.obj.fs->csize * (file.obj.sclust - 2);
+        *address = 512 * (file.obj.fs->database + file.obj.fs->csize * (file.obj.sclust - 2));
     }
     return result == FR_OK;
 }

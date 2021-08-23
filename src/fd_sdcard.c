@@ -338,12 +338,12 @@ void fd_sdcard_write_multiple_blocks_end(void) {
 void fd_sdcard_read(uint32_t address, uint8_t *data, uint32_t length) {
     uint8_t block[512];
     while (length > 0) {
-        uint32_t block_address = address & (sizeof(block) - 1);
+        uint32_t block_address = address & ~(sizeof(block) - 1);
         uint32_t offset = address - block_address;
         uint32_t remainder = sizeof(block) - offset;
         uint32_t sublength = length <= remainder ? length : remainder;
         memset(block, 0, sizeof(block));
-        fd_sdcard_read_block(block_address, block);
+        fd_sdcard_read_block(block_address / sizeof(block), block);
         memcpy(data, &block[offset], sublength);
 
         address += sizeof(block);
@@ -355,16 +355,16 @@ void fd_sdcard_read(uint32_t address, uint8_t *data, uint32_t length) {
 void fd_sdcard_write(uint32_t address, const uint8_t *data, uint32_t length) {
     uint8_t block[512];
     while (length > 0) {
-        uint32_t block_address = address & (sizeof(block) - 1);
+        uint32_t block_address = address & ~(sizeof(block) - 1);
         uint32_t offset = address - block_address;
         uint32_t remainder = sizeof(block) - offset;
         uint32_t sublength = length <= remainder ? length : remainder;
         memset(block, 0, sizeof(block));
-        fd_sdcard_read_block(block_address, block);
+        fd_sdcard_read_block(block_address / sizeof(block), block);
         memcpy(&block[offset], data, sublength);
-        fd_sdcard_write_block(block_address, block);
+        fd_sdcard_write_block(block_address / sizeof(block), block);
         memset(block, 0, sizeof(block));
-        fd_sdcard_read_block(block_address, block);
+        fd_sdcard_read_block(block_address / sizeof(block), block);
 
         address += sizeof(block);
         data += sublength;

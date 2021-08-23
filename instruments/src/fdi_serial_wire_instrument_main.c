@@ -193,7 +193,7 @@ void main(void) {
     fd_log_assert(success);
     fd_log_assert(dpid == 0x6ba02477);
 
-    fdi_serial_wire_debug_select_access_port_id(serial_wire, 0); // ahb app
+    fdi_serial_wire_debug_select_access_port_id(serial_wire, 1); // ahb net
     uint32_t ahb_app_idr;
     success = fdi_serial_wire_debug_select_and_read_access_port(
         serial_wire, SWD_AP_IDR, &ahb_app_idr, &error
@@ -230,6 +230,7 @@ void main(void) {
     }
 
     fdi_serial_wire_debug_select_access_port_id(serial_wire, 0); // ahb app
+
     success = fdi_serial_wire_debug_select_and_read_access_port(
         serial_wire, SWD_AP_IDR, &ahb_app_idr, &error
     );
@@ -243,13 +244,44 @@ void main(void) {
 
     success = fdi_serial_wire_debug_halt(serial_wire, &error);
     fd_log_assert(success);
+    bool halted = false;
+    success = fdi_serial_wire_debug_is_halted(serial_wire, &halted, &error);
+    fd_log_assert(success);
+    fd_log_assert(halted);
+
+    uint32_t reset_network_forceoff = 0;
+    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x50005614, &reset_network_forceoff, &error);
+    fd_log_assert(success);
+    success = fdi_serial_wire_debug_write_memory_uint32(serial_wire, 0x50005614, 0, &error);
+    fd_log_assert(success);
+    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x50005614, &reset_network_forceoff, &error);
+    fd_log_assert(success);
+
+    fdi_serial_wire_debug_select_access_port_id(serial_wire, 1); // ahb net
+    success = fdi_serial_wire_debug_select_and_read_access_port(
+        serial_wire, SWD_AP_IDR, &ahb_app_idr, &error
+    );
+    fd_log_assert(success);
+    fd_log_assert(ahb_app_idr == 0x84770001);
+
+    success = fdi_serial_wire_debug_select_and_write_access_port(
+        serial_wire, SWD_AP_CSW, SWD_AP_CSW_PROT | SWD_AP_CSW_ADDRINC_SINGLE | SWD_AP_CSW_SIZE_32BIT, &error
+    );
+    fd_log_assert(success);
+
+    success = fdi_serial_wire_debug_halt(serial_wire, &error);
+    fd_log_assert(success);
+    halted = false;
+    success = fdi_serial_wire_debug_is_halted(serial_wire, &halted, &error);
+    fd_log_assert(success);
+    fd_log_assert(halted);
 
     uint32_t erased = 0;
-    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x00000000, &erased, &error);
+    success = fdi_serial_wire_debug_read_memory_uint32(serial_wire, 0x01000000, &erased, &error);
     fd_log_assert(success);
     fd_log_assert(erased == 0xffffffff);
 
-    uint32_t address = 0x20000000;
+    uint32_t address = 0x21000000;
     uint32_t value = 0x5af01234;
     success = fdi_serial_wire_debug_write_memory_uint32(serial_wire, address, value, &error);
     fd_log_assert(success);
@@ -264,6 +296,13 @@ void main(void) {
     success = fdi_serial_wire_debug_read_data(serial_wire, address, (uint8_t *)&data, sizeof(data), &error);
     fd_log_assert(success);
     fd_log_assert(data == value);
+
+    uint32_t r0 = 0;
+    success = fdi_serial_wire_debug_write_register(serial_wire, 0, r0, &error);
+    fd_log_assert(success);
+    uint32_t r0_verify = 0;
+    success = fdi_serial_wire_debug_read_register(serial_wire, 0, &r0_verify, &error);
+    fd_log_assert(success);
 #endif
 
     while (true) {

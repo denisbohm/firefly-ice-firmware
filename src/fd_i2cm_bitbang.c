@@ -159,7 +159,7 @@ bool fd_i2cm_device_io(const fd_i2cm_device_t *device, const fd_i2cm_io_t *io) {
                     }
                 }
                 bool rx_ack =
-                    (i < io->transfer_count - 1) ||
+                    (i < io->transfer_count - 1) &&
                     (io->transfers[i + 1].direction == fd_i2cm_direction_rx);
                 fd_i2cm_bus_rx(device->bus, transfer->bytes, transfer->byte_count, rx_ack);
             break;

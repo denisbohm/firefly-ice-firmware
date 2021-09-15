@@ -643,7 +643,7 @@ bool fdi_serial_wire_debug_wait_for_register_ready(
     fdi_serial_wire_t *serial_wire,
     fdi_serial_wire_debug_error_t *error
 ) {
-        uint32_t dhcsr = 0xf;
+    uint32_t dhcsr = 0xf;
     uint32_t retry_count = serial_wire->register_retry_count;
     for (uint32_t retry = 0; retry < retry_count; ++retry) {
         if (!fdi_serial_wire_debug_read_memory_uint32(serial_wire, SWD_MEMORY_DHCSR, &dhcsr, error)) {

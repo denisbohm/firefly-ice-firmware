@@ -108,8 +108,8 @@ void fdi_serial_wire_reset(fdi_serial_wire_t *serial_wire) {
     fdi_gpio_off(serial_wire->gpio_reset);
 
     serial_wire->overrun_detection_enabled = false;
-    serial_wire->ack_wait_retry_count = 3;
-    serial_wire->register_retry_count = 3;
+    serial_wire->ack_wait_retry_count = 30;
+    serial_wire->register_retry_count = 30;
     serial_wire->half_bit_delay_ns = 0;
 
     serial_wire->target_id = 0;
@@ -126,8 +126,8 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->gpio_data = FDI_GPIO_ATE_SWD1_SWDIO;
         serial_wire->gpio_sense_reset = FDI_GPIO_ATE_SWD1_SENSE_NRESET;
         serial_wire->overrun_detection_enabled = false;
-        serial_wire->ack_wait_retry_count = 3;
-        serial_wire->register_retry_count = 3;
+        serial_wire->ack_wait_retry_count = 30;
+        serial_wire->register_retry_count = 30;
         serial_wire->half_bit_delay_ns = 0;
         serial_wire->target_id = 0;
         serial_wire->debug_port_access.value = 0;
@@ -141,8 +141,8 @@ void fdi_serial_wire_initialize(void) {
         serial_wire->gpio_data = FDI_GPIO_ATE_SWD2_SWDIO;
         serial_wire->gpio_sense_reset = FDI_GPIO_ATE_SWD2_SENSE_NRESET;
         serial_wire->overrun_detection_enabled = false;
-        serial_wire->ack_wait_retry_count = 3;
-        serial_wire->register_retry_count = 3;
+        serial_wire->ack_wait_retry_count = 30;
+        serial_wire->register_retry_count = 30;
         serial_wire->half_bit_delay_ns = 0;
         serial_wire->target_id = 0;
         serial_wire->debug_port_access.value = 0;

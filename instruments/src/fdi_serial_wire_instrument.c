@@ -279,12 +279,16 @@ void fdi_serial_wire_instrument_api_write_from_storage(uint64_t identifier, uint
     memset(&error, 0, sizeof(error));
     uint8_t buffer[256];
     for (uint32_t offset = 0; offset < length; offset += sizeof(buffer)) {
+        uint32_t sublength = length - offset;
+        if (sublength > sizeof(buffer)) {
+            sublength = sizeof(buffer);
+        }
         fdi_storage_instrument_read(
             storage_instrument,
-            storage_address + offset, sizeof(buffer), 0, 0,
+            storage_address + offset, sublength, 0, 0,
             buffer, sizeof(buffer)
         );
-        success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address + offset, buffer, sizeof(buffer), &error);
+        success = fdi_serial_wire_debug_write_data(instrument->serial_wire, address + offset, buffer, sublength, &error);
         if (!success) {
             break;
         }
@@ -316,17 +320,21 @@ void fdi_serial_wire_instrument_api_compare_memory_to_storage(uint64_t identifie
     memset(&error, 0, sizeof(error));
     uint8_t buffer[256];
     for (uint32_t offset = 0; offset < length; offset += sizeof(buffer)) {
+        uint32_t sublength = length - offset;
+        if (sublength > sizeof(buffer)) {
+            sublength = sizeof(buffer);
+        }
         fdi_storage_instrument_read(
             storage_instrument,
-            storage_address + offset, sizeof(buffer), 0, 0,
+            storage_address + offset, sublength, 0, 0,
             buffer, sizeof(buffer)
         );
         uint8_t verify[256];
-        success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address + offset, verify, sizeof(buffer), &error);
+        success = fdi_serial_wire_debug_read_data(instrument->serial_wire, address + offset, verify, sublength, &error);
         if (!success) {
             break;
         }
-        if (memcmp(buffer, verify, sizeof(buffer)) != 0) {
+        if (memcmp(buffer, verify, sublength) != 0) {
             success = fdi_serial_wire_debug_error_return(&error, fdi_serial_wire_debug_error_mismatch, 0);
             break;
         }

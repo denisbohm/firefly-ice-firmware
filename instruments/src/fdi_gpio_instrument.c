@@ -25,14 +25,14 @@ static const uint64_t apiTypeSetAuxiliaryOutput = 11;
 static const fdi_gpio_instrument_setup_t fdi_gpio_instrument_setups[] = {
 
 #ifdef FDI_INSTRUMENT_INPUT_OUTPUT
-    { .gpio = FDI_GPIO_IOA0, .has_adc = true, .adc_channel = 0, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO0, },
-    { .gpio = FDI_GPIO_IOA1, .has_adc = true, .adc_channel = 1, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO1, },
-    { .gpio = FDI_GPIO_IOA2, .has_adc = true, .adc_channel = 2, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO2, },
-    { .gpio = FDI_GPIO_IOA3, .has_adc = true, .adc_channel = 3, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO3, },
-    { .gpio = FDI_GPIO_IOA4, .has_adc = true, .adc_channel = 4, .has_dac = true, .dac_channel = 4, },
-    { .gpio = FDI_GPIO_IOA5, .has_adc = true, .adc_channel = 5, .has_dac = true, .dac_channel = 5, },
-    { .gpio = FDI_GPIO_IOA6, .has_adc = true, .adc_channel = 6, },
-    { .gpio = FDI_GPIO_IOA7, .has_adc = true, .adc_channel = 7, },
+    { .gpio = FDI_GPIO_IOA0, .has_adc = true, .adc_channel = 5, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO0, },
+    { .gpio = FDI_GPIO_IOA1, .has_adc = true, .adc_channel = 6, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO1, },
+    { .gpio = FDI_GPIO_IOA2, .has_adc = true, .adc_channel = 7, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO2, },
+    { .gpio = FDI_GPIO_IOA3, .has_adc = true, .adc_channel = 8, .has_auxiliary = true, .auxiliary_gpio = FDI_GPIO_AIO3, },
+    { .gpio = FDI_GPIO_IOA4, .has_adc = true, .adc_channel = 9, .has_dac = true, .dac_channel = 4, },
+    { .gpio = FDI_GPIO_IOA5, .has_adc = true, .adc_channel = 10, .has_dac = true, .dac_channel = 5, },
+    { .gpio = FDI_GPIO_IOA6, .has_adc = true, .adc_channel = 11, },
+    { .gpio = FDI_GPIO_IOA7, .has_adc = true, .adc_channel = 12, },
     { .gpio = FDI_GPIO_DIO0, },
     { .gpio = FDI_GPIO_DIO1, },
     { .gpio = FDI_GPIO_DIO2, },

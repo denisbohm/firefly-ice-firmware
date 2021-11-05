@@ -9,6 +9,8 @@
 #include "fd_binary.h"
 #include "fd_log.h"
 
+#include <string.h>
+
 static const uint64_t apiTypeReset = 0;
 static const uint64_t apiTypeGetCapabilities = 1;
 static const uint64_t apiTypeGetConfiguration = 2;
@@ -85,9 +87,28 @@ fdi_gpio_instrument_t *fdi_gpio_instrument_get(uint64_t identifier) {
 }
 
 void fdi_gpio_instrument_reset(fdi_gpio_instrument_t *instrument) {
-    fdi_gpio_instrument_configuration_t configuration = {};
-    fdi_gpio_instrument_set_configuration(instrument, &configuration);
+    if (instrument->setup->has_adc) {
+        fdi_gpio_instrument_configuration_t configuration = {
+            .domain = fdi_gpio_instrument_domain_analog,
+        };
+        fdi_gpio_instrument_set_configuration(instrument, &configuration);
+    } else {
+        if (instrument->setup->has_auxiliary) {
+            fdi_gpio_instrument_configuration_t configuration = {
+                .domain = fdi_gpio_instrument_domain_digital,
+                .direction = fdi_gpio_instrument_direction_output,
+            };
+            fdi_gpio_instrument_set_configuration(instrument, &configuration);
+        } else {
+            fdi_gpio_instrument_configuration_t configuration = {
+                .domain = fdi_gpio_instrument_domain_digital,
+                .direction = fdi_gpio_instrument_direction_input,
+            };
+            fdi_gpio_instrument_set_configuration(instrument, &configuration);
+        }
+    }
     if (instrument->setup->has_auxiliary) {
+        fdi_gpio_instrument_configuration_t configuration = {};
         fdi_gpio_instrument_set_auxiliary_configuration(instrument, &configuration);
     }
 }
@@ -197,6 +218,7 @@ void fdi_gpio_instrument_configure(
 
 void fdi_gpio_instrument_set_configuration(fdi_gpio_instrument_t *instrument, const fdi_gpio_instrument_configuration_t *configuration) {
     fdi_gpio_instrument_configure(instrument, instrument->setup->gpio, configuration);
+    memcpy(&instrument->configuration, configuration, sizeof(fdi_gpio_instrument_configuration_t));
 }
 
 void fdi_gpio_instrument_api_set_configuration(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary) {
@@ -205,12 +227,12 @@ void fdi_gpio_instrument_api_set_configuration(uint64_t identifier, uint64_t typ
         return;
     }
 
-    fdi_gpio_instrument_configuration_t *configuration = &instrument->configuration;
-    configuration->domain = fd_binary_get_uint8(binary);
-    configuration->direction = fd_binary_get_uint8(binary);
-    configuration->drive = fd_binary_get_uint8(binary);
-    configuration->pull = fd_binary_get_uint8(binary);
-    fdi_gpio_instrument_set_configuration(instrument, configuration);
+    fdi_gpio_instrument_configuration_t configuration;
+    configuration.domain = fd_binary_get_uint8(binary);
+    configuration.direction = fd_binary_get_uint8(binary);
+    configuration.drive = fd_binary_get_uint8(binary);
+    configuration.pull = fd_binary_get_uint8(binary);
+    fdi_gpio_instrument_set_configuration(instrument, &configuration);
 }
 
 bool fdi_gpio_instrument_get_digital_input(fdi_gpio_instrument_t *instrument) {
@@ -309,6 +331,7 @@ void fdi_gpio_instrument_api_get_auxiliary_configuration(uint64_t identifier, ui
 
 void fdi_gpio_instrument_set_auxiliary_configuration(fdi_gpio_instrument_t *instrument, const fdi_gpio_instrument_configuration_t *configuration) {
     fdi_gpio_instrument_configure(instrument, instrument->setup->auxiliary_gpio, configuration);
+    memcpy(&instrument->auxiliary_configuration, configuration, sizeof(fdi_gpio_instrument_configuration_t));
 }
 
 void fdi_gpio_instrument_api_set_auxiliary_configuration(uint64_t identifier, uint64_t type __attribute((unused)), fd_binary_t *binary) {
@@ -317,12 +340,12 @@ void fdi_gpio_instrument_api_set_auxiliary_configuration(uint64_t identifier, ui
         return;
     }
 
-    fdi_gpio_instrument_configuration_t *configuration = &instrument->auxiliary_configuration;
-    configuration->domain = fd_binary_get_uint8(binary);
-    configuration->direction = fd_binary_get_uint8(binary);
-    configuration->drive = fd_binary_get_uint8(binary);
-    configuration->pull = fd_binary_get_uint8(binary);
-    fdi_gpio_instrument_set_auxiliary_configuration(instrument, configuration);
+    fdi_gpio_instrument_configuration_t configuration;
+    configuration.domain = fd_binary_get_uint8(binary);
+    configuration.direction = fd_binary_get_uint8(binary);
+    configuration.drive = fd_binary_get_uint8(binary);
+    configuration.pull = fd_binary_get_uint8(binary);
+    fdi_gpio_instrument_set_auxiliary_configuration(instrument, &configuration);
 }
 
 bool fdi_gpio_instrument_get_auxiliary_input(fdi_gpio_instrument_t *instrument) {

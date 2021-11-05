@@ -50,7 +50,11 @@ static void fd_gpio_configure(fd_gpio_t gpio, uint32_t mode, uint32_t pull) {
     HAL_GPIO_Init(fd_gpio_port(gpio.port), &GPIO_InitStruct);
 
 #if defined(GPIO_ASCR_ASC0)
-    GPIOA->ASCR &= ~GPIO_InitStruct.Pin;
+    if (mode == GPIO_MODE_ANALOG) {
+        GPIOA->ASCR |= GPIO_InitStruct.Pin;
+    } else {
+        GPIOA->ASCR &= ~GPIO_InitStruct.Pin;
+    }
 #endif
 }
 
